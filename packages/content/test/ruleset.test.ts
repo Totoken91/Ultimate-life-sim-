@@ -90,9 +90,31 @@ describe('pack de contenu « Le Rivage »', () => {
   });
 
   it('contient assez de contenu pour la Phase 1', () => {
-    expect(EVENTS.length).toBeGreaterThanOrEqual(90);
-    expect(BIRTHS.length).toBeGreaterThanOrEqual(20);
-    expect(Object.keys(TRAITS).length).toBeGreaterThanOrEqual(50);
+    expect(EVENTS.length).toBeGreaterThanOrEqual(100);
+    expect(BIRTHS.length).toBeGreaterThanOrEqual(25);
+    expect(Object.keys(TRAITS).length).toBeGreaterThanOrEqual(55);
     expect(Object.keys(JOBS).length).toBeGreaterThanOrEqual(20);
+  });
+
+  it('chaque condition de naissance difficile est jouable', () => {
+    // Doc 09 §5bis : une condition sans événement dédié n'est qu'un malus.
+    for (const traitId of ['esprit_a_part', 'voix', 'manchot', 'simple']) {
+      expect(TRAITS[traitId], traitId).toBeDefined();
+      const reachable = EVENTS.some((e) => e.requires && e.id.startsWith('diff.'));
+      expect(reachable, `aucun événement pour ${traitId}`).toBe(true);
+    }
+    const born = BIRTHS.filter((b) =>
+      ['esprit_ailleurs', 'enfant_qui_entend', 'mutile_enfance'].includes(b.id),
+    );
+    expect(born.length).toBe(3);
+    for (const b of born) expect(b.weight).toBeGreaterThan(0);
+  });
+
+  it('aucune de ces conditions n\'est seulement une perte', () => {
+    // Un trait qui ne fait que retirer n'est pas un personnage, c'est une punition.
+    for (const id of ['esprit_a_part', 'voix', 'manchot']) {
+      const stats = Object.values(TRAITS[id]?.stats ?? {});
+      expect(stats.some((v) => v > 0), `${id} ne donne rien`).toBe(true);
+    }
   });
 });

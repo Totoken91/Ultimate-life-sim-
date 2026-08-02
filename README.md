@@ -14,12 +14,12 @@ Interface menu-based. Objectif : générer des **histoires uniques** par émerge
 ```bash
 pnpm install
 pnpm play          # jouer une vie
-pnpm test          # 86 tests
+pnpm test          # 88 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm typecheck
 ```
 
-Contenu actuel : **98 événements**, 22 scénarios de naissance, 56 traits, 22 métiers,
+Contenu actuel : **104 événements**, 25 scénarios de naissance, 59 traits, 22 métiers,
 16 compétences, 16 actions, 3 cultures, 6 implantations.
 
 Ce qui marche déjà : naissance conditionnée avec vérité cachée · 6 attributs + 8 attributs
@@ -46,6 +46,10 @@ PNJ complète, intrigues multi-années, voies de pouvoir, conflits, paliers LOD 
 temps élastique, transcendance. Voir la [roadmap](docs/06-roadmap.md).
 
 ## Lire dans cet ordre
+
+**[Vision — mots d'origine](docs/vision-source.md)** : le texte de Kenny, non reformulé,
+avec le suivi de couverture demande par demande. En cas de contradiction avec un doc de
+conception, c'est cette page qui a raison.
 
 | Doc | Contenu |
 |---|---|

@@ -28,6 +28,27 @@ const INNES = make('inne', [
   { id: 'muet', label: 'Muet', desc: 'Vous n\'avez jamais parlé. Vous écoutez mieux que quiconque.', stats: { charisme: -10, intelligence: 4 } },
   { id: 'marque', label: 'Marqué', desc: 'Une tache de naissance que les vieilles femmes regardent trop longtemps.' },
   { id: 'jumeau', label: 'Jumeau', desc: 'Il y a quelqu\'un qui a votre visage.' },
+
+  // Doc 09 §5bis. Aucune de ces conditions n'est seulement une perte, et le
+  // monde n'a pas le vocabulaire pour les nommer : il a seulement un regard.
+  {
+    id: 'esprit_a_part',
+    label: 'L\'esprit à part',
+    desc: 'Vous ne regardez pas les gens et vous voyez ce qu\'ils ne voient pas. Les foules vous font mal.',
+    stats: { intelligence: 9, charisme: -13, volonte: 4 },
+  },
+  {
+    id: 'voix',
+    label: 'Celui qui entend',
+    desc: 'Il y a quelque chose qui parle. Vous n\'avez jamais su si c\'était dehors ou dedans.',
+    stats: { charisme: -7, volonte: -5, intelligence: 3 },
+  },
+  {
+    id: 'manchot',
+    label: 'Manchot',
+    desc: 'Il vous manque un bras depuis si longtemps que vous avez oublié le geste.',
+    stats: { force: -15, agilite: -7, volonte: 6 },
+  },
 ]);
 
 const ACQUIS = make('acquis', [

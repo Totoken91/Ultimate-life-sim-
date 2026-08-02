@@ -178,6 +178,109 @@ export const BIRTHS: BirthScenario[] = [
     },
   },
 
+  {
+    id: 'esprit_ailleurs',
+    label: 'L\'enfant qui ne regarde personne',
+    tier: 'catastrophe',
+    weight: 1.6,
+    setup(ctx) {
+      ctx.place('orin');
+      const mere = ctx.spawn({ age: ctx.rng.int(22, 38), sex: 'f', socialClass: 'pauvre' });
+      const pere = ctx.spawn({ age: ctx.rng.int(26, 44), sex: 'm', socialClass: 'pauvre' });
+      ctx.parentOf(mere, ctx.player);
+      ctx.parentOf(pere, ctx.player);
+      // La mère a compris avant tout le monde qu'il n'y avait rien à réparer.
+      ctx.bond(mere, ctx.player, 'sang', 'fils', { affection: 60, trust: 50 });
+      ctx.bond(pere, ctx.player, 'sang', 'fils', { affection: 5, respect: -15 });
+      ctx.remember(
+        ctx.player,
+        'Ma mère a arrêté d\'essayer de me faire regarder les gens. C\'est là que ça a été mieux.',
+        80,
+        [mere],
+        ['origine'],
+      );
+      return {
+        opening:
+          'Vous avez parlé à quatre ans, et d\'un coup, en phrases entières. Vous ne regardez personne ' +
+          'dans les yeux et vous savez combien il y a de marches dans l\'escalier du moulin, de la mairie ' +
+          'et du temple. Votre père en a honte. Votre mère a cessé d\'essayer de vous corriger, et c\'est ' +
+          'le plus grand cadeau qu\'on vous ait fait.',
+        condition: 'né avec l\'esprit à part',
+        socialClass: 'pauvre',
+        wealth: 60,
+        traits: ['esprit_a_part'],
+        stats: { intelligence: 62 },
+        hidden: { potentiel: 72, destinee: 45 },
+      };
+    },
+  },
+  {
+    id: 'enfant_qui_entend',
+    label: 'L\'enfant qui entend',
+    tier: 'catastrophe',
+    weight: 1.6,
+    setup(ctx) {
+      ctx.place('orin');
+      const mere = ctx.spawn({ age: ctx.rng.int(20, 36), sex: 'f', socialClass: 'pauvre' });
+      const vieille = ctx.spawn({ age: ctx.rng.int(58, 76), sex: 'f', socialClass: 'pauvre' });
+      ctx.parentOf(mere, ctx.player);
+      ctx.pair(ctx.player, vieille, 'mentorat', 'la vieille du gué', 'le petit qui entend', {
+        affection: 30,
+        respect: 35,
+      });
+      ctx.remember(
+        ctx.player,
+        'La vieille du gué est la seule qui ne m\'ait jamais demandé de me taire.',
+        82,
+        [vieille],
+        ['origine'],
+      );
+      ctx.seed('seed.difforme.presage', 8, 20, [], 'ce que la voix veut vraiment');
+      return {
+        opening:
+          'Il y a quelque chose qui vous parle depuis toujours. Vous avez mis des années à comprendre ' +
+          'que les autres n\'entendaient rien. Dans les vallées d\'Orin, on ne dit pas de mot pour ça — ' +
+          'on dit seulement « celui qui entend », et on ne le dit pas devant vous.',
+        condition: 'né en entendant ce que les autres n\'entendent pas',
+        socialClass: 'pauvre',
+        wealth: 30,
+        traits: ['voix'],
+        hidden: { destinee: 66, folie: 30, potentiel: 58 },
+      };
+    },
+  },
+  {
+    id: 'mutile_enfance',
+    label: 'Mutilé avant de savoir marcher',
+    tier: 'catastrophe',
+    weight: 1.6,
+    setup(ctx) {
+      ctx.place('vardhen');
+      const pere = ctx.spawn({ age: ctx.rng.int(28, 46), sex: 'm', socialClass: 'miserable' });
+      ctx.parentOf(pere, ctx.player);
+      ctx.bond(pere, ctx.player, 'sang', 'fils', { affection: 20, trust: 15 });
+      ctx.remember(
+        ctx.player,
+        'La roue du treuil. Mon père n\'en a jamais reparlé une seule fois.',
+        88,
+        [pere],
+        ['origine', 'corps'],
+      );
+      return {
+        opening:
+          'La roue du treuil, sur le quai, l\'année de vos deux ans. On vous a recousu à la poix et vous ' +
+          'avez survécu, ce qui a étonné tout le monde. Il vous manque un bras et vous ne vous rappelez ' +
+          'pas l\'avoir eu. Votre père n\'en a plus jamais reparlé.',
+        condition: 'mutilé à deux ans par la roue d\'un treuil',
+        socialClass: 'miserable',
+        wealth: 5,
+        health: 62,
+        traits: ['manchot', 'survivant'],
+        hidden: { destinee: 55, ambition: 60 },
+      };
+    },
+  },
+
   // ─── MISÈRE ───────────────────────────────────────────────────────────────
   {
     id: 'orphelinat',

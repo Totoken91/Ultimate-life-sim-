@@ -188,6 +188,32 @@ donc l'ordre de grandeur démographique honnête de votre dynastie.
 C'est ce qui fait que le milliard de descendants **veut dire quelque chose** : on ne
 l'atteint pas en restant paysan.
 
+### Ce que chaque ère met entre les mains
+
+Le palier technologique entre au carré dans la formule de conflit : c'est ce qui rend
+crédible qu'une escouade blindée efface mille lanciers, et désirable de faire avancer
+son monde.
+
+| Ère | Corps à corps | Distance | Manœuvre | Ce qui efface une ville |
+|---|---|---|---|---|
+| Fer | couteau, hache, lance | arc, fronde | cavalerie | le siège et la famine |
+| Poudre | sabre, baïonnette | mousquet, canon | vaisseaux de ligne | le bombardement, l'incendie |
+| Industriel | baïonnette | fusil à répétition, mitrailleuse | train, cuirassé, **sous-marin** | l'artillerie lourde, le gaz |
+| Atomique | couteau de tranchée | fusil d'assaut | **blindés, avions, hélicoptères** | **l'arme nucléaire** |
+| Information | lame monofilament | armes guidées | **drones**, satellites | la frappe de précision, le réseau coupé |
+| Orbital | exosquelette | railgun | **marcheurs et araignées robots** | la masse jetée depuis l'orbite |
+| Interplanétaire | armure de combat | lasers | flottes, porteurs | l'astéroïde redirigé |
+| Interstellaire | champs de force | armes à antimatière | vaisseaux de ligne stellaires | l'extinction d'une étoile |
+| Post-matière | — | manipulation des lois | ce qui n'a plus de nom | l'effacement d'une causalité |
+
+Deux règles de conception :
+
+- **on ne saute pas d'ère par volonté**, seulement par accumulation de savoir — et une
+  civilisation peut *régresser* (effondrement, guerre, perte de la chaîne technique) ;
+- **chaque palier rend le précédent dérisoire mais pas inutile** : un couteau tue encore
+  très bien un général qui dort, à n'importe quelle ère. C'est ce qui garde la voie
+  criminelle et la voie mystique jouables jusqu'au bout.
+
 ---
 
 ## 4. Patrimoine — du taudis au vaisseau-planète
@@ -217,6 +243,29 @@ C'est comme ça qu'on obtient le fantasme *et* la tension.
 
 ---
 
+## 4bis. Ce qu'on possède, en détail
+
+Le `Holding` du §4 couvre aussi ce qui ne sert à rien d'autre qu'à être possédé — et
+c'est important, parce que c'est le seul endroit du jeu où la richesse devient *visible*.
+
+| Palier | Logis | Transport | Domesticité |
+|---|---|---|---|
+| 0 | une paillasse dans une pièce commune | ses pieds | — |
+| 3 | une maison à soi | une mule, une barque | une servante |
+| 7 | un hôtel particulier | un attelage, un navire marchand | une douzaine |
+| 11 | un domaine muré | une écurie de **voitures de course** | trois cents |
+| 15 | une arcologie privée | un yacht orbital | des milliers |
+| 19 | une lune aménagée | une flotte personnelle | des centaines de milliers |
+| 20 | **un astronef de la taille d'une planète** | il *est* le transport | **des millions** |
+
+Et la contrepartie, toujours la même : l'entretien annuel. Un astronef-planète coûte
+l'économie d'un système. Le jour où vos revenus passent sous l'entretien, il ne disparaît
+pas d'un coup — **il s'éteint par étages**, et vos millions de serviteurs partent les
+premiers. C'est une des plus belles scènes que le jeu puisse produire, et elle est
+gratuite : elle tombe d'une soustraction.
+
+---
+
 ## 5. Continuations — « son descendant ou un gars random »
 
 **Livré.** À la mort, trois voies :
@@ -234,6 +283,45 @@ ruelle et réapparaître dans la vie de quelqu'un qui, lui, a une place.
 
 À venir (Phase 6) : réincarnation avec souvenirs fragmentaires, clone, transfert de
 conscience, ascension divine.
+
+---
+
+## 5bis. Corps et esprits — les naissances difficiles
+
+La demande d'origine est explicite : on doit pouvoir partir *démembré, attardé, autiste,
+schizophrène*. Ce sont des conditions de naissance à part entière, et elles méritent
+mieux qu'un malus de statistiques.
+
+### Trois règles
+
+1. **Aucune condition n'est seulement une perte.** Une différence qui ne fait que retirer
+   n'est pas un personnage, c'est une punition. Chacune ouvre quelque chose que les autres
+   n'auront pas.
+2. **Le monde n'a pas le vocabulaire.** Sur le Rivage médiéval, personne ne dit
+   « autisme » ni « schizophrénie ». On dit *l'esprit ailleurs*, *celui qui entend*,
+   *l'idiot du bourg*, *le possédé*. Le regard des autres change avec l'ère, la culture et
+   la religion — et c'est ça, la mécanique.
+3. **Le regard est la difficulté, pas la condition.** Ce qui coûte, ce n'est pas d'entendre
+   des voix : c'est ce que le village en fait. Un même trait peut mener au bûcher dans une
+   vallée superstitieuse et au sommet d'un ordre religieux dans une cité qui vénère les
+   visionnaires.
+
+### Ce qui est livré
+
+| Trait | Le monde dit | Ce que ça coûte | Ce que ça ouvre |
+|---|---|---|---|
+| *L'esprit à part* | « il ne regarde jamais personne » | social, imprévu, bruit et foule | mémoire exacte, motifs que nul ne voit, incorruptible |
+| *Celui qui entend* | « il parle à ce qui n'est pas là » | stabilité, peur des autres, crédit | accès mystique, présages, une lucidité qui dérange |
+| *L'esprit lent* | « le simple du bourg » | apprentissage, ruse | on baisse la garde devant lui, personne ne se méfie |
+| *Mutilé* | « celui à qui il manque un bras » | force, métiers fermés | on le sous-estime toujours une fois de trop |
+
+Chacun a son scénario de naissance et ses événements dédiés. Un enfant dont la mère meurt
+en couches et qui entend des voix n'aura pas la même vie selon qu'il naît à Orin (présage)
+ou à Kaleth (on l'envoie aux archives).
+
+**Ce qui est refusé :** faire de ces conditions un ressort comique, ou l'inverse — une
+leçon de morale. Ce sont des vies, jouées comme les autres, avec leurs portes ouvertes et
+leurs portes fermées.
 
 ---
 

@@ -15,6 +15,7 @@ import { ADULT_EVENTS } from './events/adult.js';
 import { FAMILY_EVENTS } from './events/family.js';
 import { SHADOW_EVENTS } from './events/shadow.js';
 import { LATE_EVENTS } from './events/late.js';
+import { DIFFERENCE_EVENTS } from './events/differences.js';
 import { SEED_EVENTS } from './events/seeds.js';
 
 export const EVENTS: EventDef[] = [
@@ -24,6 +25,7 @@ export const EVENTS: EventDef[] = [
   ...FAMILY_EVENTS,
   ...SHADOW_EVENTS,
   ...LATE_EVENTS,
+  ...DIFFERENCE_EVENTS,
   ...SEED_EVENTS,
 ];
 
