@@ -43,16 +43,20 @@ export function renderEntry(e: ChronicleEntry): string {
       return `${who} s'éleva : ${str(e, 'quoi')}.`;
     case 'chute':
       return `${who} tomba : ${str(e, 'quoi')}.`;
-    case 'trahison':
-      return `${other ?? 'Quelqu\'un'} trahit ${who}. ${str(e, 'quoi')}`.trim();
+    case 'trahison': {
+      const how = str(e, 'quoi');
+      return `${other ?? 'Quelqu\'un'} trahit ${who}${how ? `, ${how}` : ''}.`;
+    }
     case 'crime':
       return `${who} ${str(e, 'quoi', 'commit un crime')}.`;
     case 'violence':
       return `${who} ${str(e, 'quoi', 'versa le sang')}.`;
     case 'fondation':
       return `${who} fonda la Maison ${str(e, 'maison')}.`;
-    case 'rencontre':
-      return `${who} rencontra ${other ?? 'quelqu\'un'}. ${str(e, 'quoi')}`.trim();
+    case 'rencontre': {
+      const what = str(e, 'quoi');
+      return `${who} rencontra ${other ?? 'quelqu\'un'}${what ? ` — ${what}` : ''}.`;
+    }
     case 'blessure':
       return `${who} y laissa quelque chose : ${str(e, 'quoi')}.`;
     case 'fortune':

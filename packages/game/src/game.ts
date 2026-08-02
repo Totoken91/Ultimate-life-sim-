@@ -4,10 +4,13 @@ import {
   World,
   ageOf,
   continueAsHeir,
+  continueAsNewborn,
+  continueAsStranger,
   createLife,
   fullName,
   heirsOf,
   makeEventCtx,
+  strangersFor,
   applyEffects,
   migrate,
   restore,
@@ -19,6 +22,7 @@ import {
   type HeirOption,
   type PendingEvent,
   type Ruleset,
+  type StrangerOption,
   type WorldMode,
   type WorldSnapshot,
 } from '@ed/engine';
@@ -50,6 +54,8 @@ export type Command =
   | { t: 'action'; actionId: string }
   | { t: 'interact'; targetId: EntityId; kind: InteractionKind }
   | { t: 'continueAs'; heirId: EntityId }
+  | { t: 'follow'; id: EntityId }
+  | { t: 'newborn' }
   | { t: 'end' };
 
 export type InteractionKind = 'parler' | 'offrir' | 'disputer' | 'courtiser' | 'demander';
@@ -138,6 +144,12 @@ export class Game {
         return;
       case 'continueAs':
         this.continueAs(cmd.heirId);
+        return;
+      case 'follow':
+        this.follow(cmd.id);
+        return;
+      case 'newborn':
+        this.newborn();
         return;
       case 'end':
         this.phase = 'fin';
@@ -305,15 +317,53 @@ export class Game {
     return heirsOf(this.world, this.player);
   }
 
+  /**
+   * Trois vies qu'on pourrait reprendre à la place de la sienne. Recalculées à
+   * chaque appel depuis un flux forké sur l'année : stable tant que l'année
+   * l'est, donc l'écran de mort n'a pas la bougeotte.
+   */
+  strangers(count = 3): StrangerOption[] {
+    return strangersFor(
+      this.world,
+      this.ruleset,
+      new Rng(this.world.seed).fork('death.strangers', this.world.year),
+      count,
+    );
+  }
+
+  private follow(id: EntityId): void {
+    if (this.phase !== 'mort') return;
+    const rng = new Rng(this.world.seed).fork('follow', this.world.year, id);
+    if (continueAsStranger(this.world, this.ruleset, id, rng)) this.resumeAfterDeath();
+  }
+
+  private newborn(): void {
+    if (this.phase !== 'mort') return;
+    const life = continueAsNewborn(
+      this.world,
+      this.ruleset,
+      new Rng(this.world.seed).fork('newborn', this.world.year),
+    );
+    this.opening = life.result.opening;
+    this.birth = life.result;
+    this.pending = [];
+    this.outcome = null;
+    this.actionUsed = false;
+    this.yearLog = this.world.drainLog();
+    this.phase = 'naissance';
+  }
+
+  private resumeAfterDeath(): void {
+    this.pending = [];
+    this.outcome = null;
+    this.actionUsed = false;
+    this.yearLog = this.world.drainLog();
+    this.phase = 'annee';
+  }
+
   private continueAs(heirId: EntityId): void {
     if (this.phase !== 'mort') return;
-    if (continueAsHeir(this.world, this.ruleset, heirId)) {
-      this.pending = [];
-      this.outcome = null;
-      this.actionUsed = false;
-      this.yearLog = this.world.drainLog();
-      this.phase = 'annee';
-    }
+    if (continueAsHeir(this.world, this.ruleset, heirId)) this.resumeAfterDeath();
   }
 
   // ─── sauvegarde ───────────────────────────────────────────────────────────

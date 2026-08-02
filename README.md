@@ -26,8 +26,9 @@ Ce qui marche déjà : naissance conditionnée avec vérité cachée · 6 attrib
 cachés · traits innés et acquis · santé, mortalité infantile réelle, vieillissement ·
 relations **dirigées** (A peut aimer B qui le méprise) · mémoire budgétée avec oubli ·
 **graines** (conséquences différées jusqu'à 30 ans) · économie de survie · métiers et
-compétences · mariage, enfants, génétique héritée · maisons · mort, héritage et reprise
-avec un héritier (dettes et rancunes comprises) · Chronique exportable en Markdown ·
+compétences · mariage, enfants, génétique héritée · maisons · mort et **trois façons de
+continuer** — un héritier (avec les biens et les inimitiés), suivre quelqu'un d'autre dans
+le monde, ou repartir d'un nouveau-né sans effacer l'histoire · Chronique exportable ·
 sauvegarde versionnée avec migrations · déterminisme strict vérifié en CI.
 
 Ce qui n'existe pas encore : agentivité PNJ complète, intrigues multi-années, voies de
@@ -47,6 +48,7 @@ Voir la [roadmap](docs/06-roadmap.md).
 | [06 — Roadmap](docs/06-roadmap.md) | 8 phases, chacune jouable, avec critères de sortie |
 | [07 — Risques](docs/07-risques.md) | Ce qui va casser le projet et comment l'éviter |
 | [08 — Décisions (ADR)](docs/08-decisions.md) | Choix techniques tranchés + alternatives rejetées |
+| [09 — Échelle totale](docs/09-echelle-totale.md) | Métiers compositionnels, conflits de la rixe à la guerre stellaire, ères, patrimoine |
 
 ## Code
 

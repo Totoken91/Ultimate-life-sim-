@@ -88,6 +88,9 @@ dynasties naissent et meurent, les guerres ne sont ni continues ni absentes.
 ## Phase 4 — Voies de pouvoir
 *Objectif : deux parties ne se ressemblent plus du tout.*
 
+- **occupations compositionnelles** ([doc 09](09-echelle-totale.md) §1) : le métier n'est plus
+  une entrée de table mais `Verbe × Domaine × Institution × Échelle × Ère × Légitimité`
+- **conflits paliers 0–3** (duel → bataille rangée), système unique à deux couches
 - les 5 voies, ~15 rangs chacune, avec actions exclusives
 - 5 attributs restants (Chance, Créativité, Leadership, Aura, Spiritualité) + leurs consommateurs
 - corruption, folie, karma pleinement branchés
@@ -103,6 +106,11 @@ des fins différents.
 ## Phase 5 — Empire & ères
 *Objectif : le temps change d'échelle.*
 
+- **ères technologiques** (fer → post-matière), qui débloquent domaines, échelles et `K`
+- **conflits paliers 4–6** : campagne, guerre planétaire, bombardement orbital
+- **patrimoine** ([doc 09](09-echelle-totale.md) §4) : du taudis au vaisseau-planète, même
+  schéma, l'entretien annuel comme seule vraie friction
+- institutions fondables (culte, corporation, syndicat) — chacune ouvre ses métiers
 - titres, vassalité, gouvernance, lois
 - guerres à l'échelle des royaumes
 - **mode Dynastie et mode Ère** (temps élastique, résolution agrégée)

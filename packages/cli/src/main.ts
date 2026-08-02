@@ -18,6 +18,16 @@ import { EndOfInput, Input } from './input.js';
 const SAVE_DIR = resolve(process.cwd(), 'saves');
 const input = new Input();
 
+/** Message affiché une fois sous le prochain écran (saisie invalide, refus). */
+let notice: string | null = null;
+
+function showNotice(): void {
+  if (!notice) return;
+  say(c(`  ${notice}`, 'red'));
+  say();
+  notice = null;
+}
+
 async function ask(prompt = '> '): Promise<string> {
   return input.question(c(prompt, 'yellow'));
 }
@@ -75,6 +85,7 @@ function mainScreen(): void {
   renderLog();
   say();
   say(rule());
+  showNotice();
   menu([
     { key: '1', label: 'Passer l\'année' },
     {
@@ -102,6 +113,7 @@ function eventScreen(): void {
   for (const line of wrap(ev.text)) say(`  ${line}`);
   say();
   say(rule());
+  showNotice();
   for (const [i, opt] of ev.options.entries()) {
     const key = String(i + 1);
     const hint = opt.hint ? c(`  ${opt.hint}`, 'magenta', 'italic') : '';
@@ -170,31 +182,63 @@ function deathScreen(): void {
     for (const w of wrap(line, 70)) say(`   ${w}`);
   }
   say();
-  const heirs = game.heirs();
   say(rule());
-  if (heirs.length === 0) {
-    say(c('  Personne ne reprend le nom. La lignée s\'arrête ici.', 'red'));
-    say();
-    menu([
-      { key: '1', label: 'Voir la chronique complète' },
-      { key: '2', label: 'Nouvelle vie' },
-      { key: '0', label: 'Quitter' },
-    ]);
-  } else {
-    say(c('  Continuer avec', 'grey'));
-    heirs.forEach((h, i) => {
+
+  // Le monde continue sans vous. La question n'est pas « rejouer ? » mais
+  // « le fil de qui suit-on maintenant ? » (doc 09 §5).
+  const heirs = game.heirs();
+  const strangers = game.strangers(3);
+  deathChoices = [];
+
+  if (heirs.length > 0) {
+    say(c('  Votre sang', 'grey'));
+    for (const h of heirs) {
       const note = h.note ? c(`  (${h.note})`, 'grey', 'italic') : '';
-      say(`${c(` ${i + 1} `, 'bold', 'yellow')} ${h.name}, ${h.age} ans — ${h.relation}${note}`);
-    });
+      deathChoices.push({ kind: 'heir', id: h.id });
+      say(
+        `${c(` ${pad(String(deathChoices.length), 2)} `, 'bold', 'yellow')} ` +
+          `${pad(h.name, 24)} ${h.age} ans — ${h.relation}${note}`,
+      );
+    }
     say();
-    menu([
-      { key: 'c', label: 'Voir la chronique complète' },
-      { key: 'n', label: 'Nouvelle vie (abandonner la lignée)' },
-      { key: '0', label: 'Quitter' },
-    ]);
+  } else {
+    say(c('  Personne de votre sang ne reprend le nom.', 'red'));
+    say();
   }
+
+  if (strangers.length > 0) {
+    say(c('  Suivre quelqu\'un d\'autre', 'grey'));
+    for (const st of strangers) {
+      deathChoices.push({ kind: 'stranger', id: st.id });
+      say(
+        `${c(` ${pad(String(deathChoices.length), 2)} `, 'bold', 'cyan')} ` +
+          `${pad(st.name, 24)} ${pad(`${st.age} ans`, 8)} ${c(`${st.hook} · ${st.place}`, 'grey')}`,
+      );
+    }
+    say();
+  }
+
+  deathChoices.push({ kind: 'newborn' });
+  say(
+    `${c(` ${pad(String(deathChoices.length), 2)} `, 'bold', 'magenta')} ` +
+      `${pad('Un nouveau-né, ailleurs', 24)} ${c('le monde garde ses années', 'grey')}`,
+  );
   say();
+  menu([
+    { key: 'c', label: 'Voir la chronique complète' },
+    { key: 'r', label: 'Recommencer un monde neuf' },
+    { key: '0', label: 'Quitter' },
+  ]);
+  say();
+  showNotice();
 }
+
+type DeathChoice =
+  | { kind: 'heir'; id: EntityId }
+  | { kind: 'stranger'; id: EntityId }
+  | { kind: 'newborn' };
+
+let deathChoices: DeathChoice[] = [];
 
 // ─── sous-menus ─────────────────────────────────────────────────────────────
 
@@ -521,6 +565,8 @@ async function loop(): Promise<void> {
         else if (answer === '6') await chronicleMenu();
         else if (answer === '0') {
           if ((await systemMenu()) === 'quit') return;
+        } else {
+          notice = 'Choix inconnu. Tapez un chiffre du menu.';
         }
         break;
       }
@@ -530,7 +576,17 @@ async function loop(): Promise<void> {
         const ev = game.pending[0];
         if (!ev) break;
         const opt = ev.options[Number(answer) - 1];
-        if (opt && !opt.locked) game.submit({ t: 'choose', optionId: opt.id });
+        if (!opt) {
+          notice = `Tapez un nombre entre 1 et ${ev.options.length}.`;
+          break;
+        }
+        if (opt.locked) {
+          // Sans ce retour, choisir une option verrouillée ne fait rien et le
+          // joueur reste coincé sur le même écran sans comprendre pourquoi.
+          notice = `Cette option vous est fermée : ${opt.lockedReason ?? 'vous n\'avez pas ce qu\'il faut'}.`;
+          break;
+        }
+        game.submit({ t: 'choose', optionId: opt.id });
         break;
       }
       case 'resultat': {
@@ -542,18 +598,23 @@ async function loop(): Promise<void> {
       case 'mort': {
         deathScreen();
         const answer = await ask();
-        const heirs = game.heirs();
         if (answer === '0') return;
-        if (answer === 'c' || (heirs.length === 0 && answer === '1')) {
+        if (answer === 'c') {
           await chronicleMenu();
           break;
         }
-        if (answer === 'n' || (heirs.length === 0 && answer === '2')) {
+        if (answer === 'r') {
           game = Game.create(ruleset, {});
           break;
         }
-        const heir = heirs[Number(answer) - 1];
-        if (heir) game.submit({ t: 'continueAs', heirId: heir.id });
+        const choice = deathChoices[Number(answer) - 1];
+        if (!choice) {
+          notice = `Tapez un nombre entre 1 et ${deathChoices.length}, ou c / r / 0.`;
+          break;
+        }
+        if (choice.kind === 'heir') game.submit({ t: 'continueAs', heirId: choice.id });
+        else if (choice.kind === 'stranger') game.submit({ t: 'follow', id: choice.id });
+        else game.submit({ t: 'newborn' });
         break;
       }
       case 'fin':

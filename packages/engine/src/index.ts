@@ -100,8 +100,13 @@ export {
   createLife,
   heirsOf,
   continueAsHeir,
+  strangersFor,
+  continueAsStranger,
+  continueAsNewborn,
+  materializeCircle,
   type NewLife,
   type HeirOption,
+  type StrangerOption,
 } from './sim/newLife.js';
 
 // ─── chronique ──────────────────────────────────────────────────────────────

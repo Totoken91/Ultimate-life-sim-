@@ -1,5 +1,5 @@
 import type { Character, RelationType, Sex } from '../model/types.js';
-import { HIDDEN_IDS, STAT_IDS } from '../model/types.js';
+import { CLASS_LABELS, HIDDEN_IDS, STAT_IDS } from '../model/types.js';
 import type { World } from '../world/world.js';
 import type {
   BirthContext,
@@ -226,6 +226,191 @@ export function heirsOf(world: World, dead: Character): HeirOption[] {
   }
   out.sort((a, b) => b.age - a.age || a.id - b.id);
   return out;
+}
+
+/**
+ * Continuation « n'importe qui » (doc 09).
+ *
+ * La mort ne rend pas la main à la lignée seulement : on peut reprendre le fil
+ * de n'importe qui d'autre dans le monde. C'est le mécanisme qui permet de
+ * changer d'échelle sans triche — mourir gueux dans une ruelle et réapparaître
+ * dans la vie de quelqu'un qui, lui, a une place.
+ */
+export interface StrangerOption {
+  id: Character['id'];
+  name: string;
+  age: number;
+  /** Accroche d'une ligne : ce qui rend cette vie intéressante à reprendre. */
+  hook: string;
+  place: string;
+}
+
+/** Score d'intérêt narratif. On ne propose jamais une vie sans matière. */
+function interest(world: World, c: Character): number {
+  const age = world.year - c.birthYear;
+  if (age < 6 || age > 70) return 0;
+  let score = 4;
+  score += Math.min(12, world.relations.from(c.id).length * 1.5);
+  score += c.titles.length * 8;
+  score += c.houseId ? 5 : 0;
+  score += c.traits.length * 1.2;
+  if (c.wealth > 20000) score += 6;
+  if (c.wealth < 0) score += 4; // la dette est une histoire, elle aussi
+  if (c.socialClass === 'noble' || c.socialClass === 'royal') score += 6;
+  if (c.socialClass === 'esclave' || c.socialClass === 'miserable') score += 4;
+  if (age >= 14 && age <= 40) score += 6;
+  for (const rel of world.relations.toward(c.id)) {
+    if (rel.affection <= -50) score += 3; // quelqu'un le hait : il se passe des choses
+  }
+  return score;
+}
+
+function hookFor(world: World, c: Character, ruleset: Ruleset): string {
+  const job = c.jobId ? ruleset.jobs[c.jobId]?.label.toLowerCase() : null;
+  const enemies = world.relations.toward(c.id).filter((r) => r.affection <= -50).length;
+  const house = world.house(c.houseId);
+  if (enemies > 0) return `${job ?? CLASS_LABELS[c.socialClass]} · ${enemies} personne(s) le haïssent`;
+  if (c.titles.length > 0) return `${c.titles[0]}`;
+  if (house) return `de la Maison ${house.name}`;
+  if (c.wealth < 0) return `${job ?? CLASS_LABELS[c.socialClass]} · criblé de dettes`;
+  if (job) return job;
+  return CLASS_LABELS[c.socialClass];
+}
+
+export function strangersFor(
+  world: World,
+  ruleset: Ruleset,
+  rng: Rng,
+  count = 3,
+): StrangerOption[] {
+  const dead = world.player;
+  const pool = world
+    .living()
+    .filter((c) => c.id !== dead.id && interest(world, c) > 0);
+
+  const picked: Character[] = [];
+  const remaining = [...pool];
+  for (let i = 0; i < count && remaining.length > 0; i++) {
+    const chosen = rng
+      .fork('stranger', world.year, i)
+      .weighted(remaining, (c) => interest(world, c));
+    if (!chosen) break;
+    picked.push(chosen);
+    remaining.splice(remaining.indexOf(chosen), 1);
+  }
+
+  return picked.map((c) => ({
+    id: c.id,
+    name: fullName(c),
+    age: world.year - c.birthYear,
+    hook: hookFor(world, c, ruleset),
+    place: world.settlement(c.settlement)?.name ?? c.settlement,
+  }));
+}
+
+/**
+ * Un PNJ de palier 1 n'a presque aucun lien : le promouvoir tel quel donne une
+ * vie vide, et « Vous ne connaissez personne » est la pire première phrase
+ * possible. On matérialise son cercle au moment où on entre dedans — c'est
+ * exactement le principe de promotion du doc 02 §1.
+ */
+export function materializeCircle(
+  world: World,
+  ruleset: Ruleset,
+  rng: Rng,
+  c: Character,
+): void {
+  const year = world.year;
+  const link = (
+    other: Character | undefined,
+    labelOut: string,
+    labelIn: string,
+    type: RelationType,
+    affection: number,
+  ): void => {
+    if (!other || !other.alive || other.id === c.id) return;
+    world.relations.ensure(c.id, other.id, type, labelOut, year);
+    world.relations.ensure(other.id, c.id, type, labelIn, year);
+    world.relations.modify(c.id, other.id, { affection });
+    world.relations.modify(other.id, c.id, { affection });
+    other.lod = 0;
+  };
+
+  const self = c.sex === 'm' ? 'fils' : 'fille';
+  link(world.get(c.fatherId), 'père', self, 'sang', 40);
+  link(world.get(c.motherId), 'mère', self, 'sang', 40);
+  link(world.get(c.spouseId), 'époux', 'époux', 'mariage', 45);
+  for (const kid of c.childrenIds) {
+    const child = world.get(kid);
+    if (child) link(child, child.sex === 'm' ? 'fils' : 'fille', c.sex === 'm' ? 'père' : 'mère', 'sang', 45);
+  }
+
+  // Il faut au moins trois personnes autour de soi pour que la vie ait prise.
+  const LABELS = ['voisin', 'ami d\'enfance', 'compagnon d\'atelier', 'créancier', 'rival de toujours'];
+  let guard = 0;
+  while (world.relations.from(c.id).length < 3 && guard++ < 6) {
+    const draw = rng.fork('circle', c.id, guard);
+    const locals = world
+      .living()
+      .filter(
+        (o) =>
+          o.id !== c.id &&
+          o.settlement === c.settlement &&
+          !world.relations.get(c.id, o.id) &&
+          Math.abs(o.birthYear - c.birthYear) <= 25,
+      );
+    const other =
+      draw.pickOrNull(locals) ??
+      spawnCharacter(world, ruleset, draw.fork('spawn'), {
+        culture: c.culture,
+        age: Math.max(12, year - c.birthYear + draw.int(-12, 12)),
+        settlement: c.settlement,
+        socialClass: c.socialClass,
+      });
+    const label = draw.pick(LABELS);
+    const warmth = label === 'rival de toujours' ? -35 : label === 'créancier' ? -10 : draw.int(10, 45);
+    link(other, label, label === 'rival de toujours' ? 'rival de toujours' : 'connaissance', label === 'rival de toujours' ? 'rivalite' : 'amitie', warmth);
+  }
+}
+
+/** Reprend le fil de quelqu'un d'autre. Aucun héritage : on arrive dans sa vie. */
+export function continueAsStranger(
+  world: World,
+  ruleset: Ruleset,
+  id: Character['id'],
+  rng: Rng,
+): boolean {
+  const dead = world.player;
+  const next = world.get(id);
+  if (!next || !next.alive || next.id === dead.id) return false;
+
+  dead.isPlayer = false;
+  next.isPlayer = true;
+  next.lod = 0;
+  world.setPlayer(next.id);
+  materializeCircle(world, ruleset, rng, next);
+
+  world.record({
+    year: world.year,
+    kind: 'note',
+    importance: 4,
+    actors: [{ id: next.id, name: fullName(next) }],
+    data: {
+      texte: `Le fil se déplace : on suit désormais ${fullName(next)}, ${
+        world.year - next.birthYear
+      } ans.`,
+    },
+  });
+
+  void ruleset;
+  return true;
+}
+
+/** Repart d'une naissance neuve, dans le même monde, à l'année courante. */
+export function continueAsNewborn(world: World, ruleset: Ruleset, rng: Rng): NewLife {
+  const dead = world.player;
+  dead.isPlayer = false;
+  return createLife(world, ruleset, rng);
 }
 
 export function continueAsHeir(world: World, ruleset: Ruleset, heirId: Character['id']): boolean {

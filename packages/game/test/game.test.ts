@@ -130,6 +130,55 @@ describe('Game', () => {
     throw new Error('aucune graine testée ne laisse d\'héritier');
   });
 
+  it('propose de suivre quelqu\'un d\'autre quand on meurt', () => {
+    const game = Game.create(ruleset, { seed: 410 });
+    game.submit({ t: 'advance' });
+    runUntil(game, ['mort']);
+
+    const strangers = game.strangers(3);
+    expect(strangers.length).toBeGreaterThan(0);
+    for (const st of strangers) {
+      expect(st.hook.length).toBeGreaterThan(0);
+      expect(st.age).toBeGreaterThanOrEqual(6);
+    }
+
+    const deadId = game.player.id;
+    game.submit({ t: 'follow', id: strangers[0]!.id });
+    expect(game.phase).toBe('annee');
+    expect(game.player.id).toBe(strangers[0]!.id);
+    expect(game.player.id).not.toBe(deadId);
+    expect(game.player.isPlayer).toBe(true);
+    expect(game.world.get(deadId)?.isPlayer).toBe(false);
+
+    // On n'atterrit jamais dans une vie vide : le cercle est matérialisé.
+    const circle = relations(game);
+    expect(circle.length).toBeGreaterThanOrEqual(3);
+    for (const r of circle) expect(r.label.length).toBeGreaterThan(0);
+  });
+
+  it('la liste des vies à reprendre est stable tant que l\'année ne bouge pas', () => {
+    const game = Game.create(ruleset, { seed: 411 });
+    game.submit({ t: 'advance' });
+    runUntil(game, ['mort']);
+    expect(game.strangers(3)).toEqual(game.strangers(3));
+  });
+
+  it('permet de repartir d\'un nouveau-né sans remettre le monde à zéro', () => {
+    const game = Game.create(ruleset, { seed: 412 });
+    game.submit({ t: 'advance' });
+    runUntil(game, ['mort']);
+
+    const yearAtDeath = game.world.year;
+    const chronicleBefore = game.world.chronicle.length;
+    game.submit({ t: 'newborn' });
+
+    expect(game.phase).toBe('naissance');
+    expect(game.age).toBe(0);
+    expect(game.world.year).toBe(yearAtDeath);
+    expect(game.world.chronicle.length).toBeGreaterThan(chronicleBefore);
+    expect(game.opening.length).toBeGreaterThan(40);
+  });
+
   it('sauvegarde et recharge sans perdre l\'état', () => {
     const game = Game.create(ruleset, { seed: 300 });
     game.submit({ t: 'advance' });

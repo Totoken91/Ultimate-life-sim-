@@ -128,6 +128,13 @@ export function spawnChild(
   );
   child.health = clamp(Math.round(rng.gaussian(70 + child.hidden.genetique * 0.25, 10)), 10, 100);
 
+  // Un enfant qui porte le prénom de son parent rend la Chronique illisible
+  // (« Perrin Vaur naquit de Perrin Vaur »). On retire ce cas.
+  const taken = new Set([father?.given, mother?.given].filter(Boolean));
+  for (let attempt = 0; attempt < 8 && taken.has(child.given); attempt++) {
+    child.given = ruleset.nameFor(rng.fork('child.rename', attempt), child.culture, child.sex).given;
+  }
+
   child.fatherId = father?.id ?? null;
   child.motherId = mother?.id ?? null;
   child.houseId = father?.houseId ?? mother?.houseId ?? null;
