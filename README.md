@@ -9,7 +9,30 @@ Interface menu-based. Objectif : générer des **histoires uniques** par émerge
 
 ## État du projet
 
-**Phase de conception.** Aucun code écrit. Ce dépôt contient pour l'instant le plan complet.
+**Phase 1 livrée — jouable.** Naître, vivre, choisir, mourir, transmettre.
+
+```bash
+pnpm install
+pnpm play          # jouer une vie
+pnpm test          # 59 tests
+pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
+pnpm typecheck
+```
+
+Contenu actuel : **98 événements**, 22 scénarios de naissance, 56 traits, 22 métiers,
+16 compétences, 16 actions, 3 cultures, 6 implantations.
+
+Ce qui marche déjà : naissance conditionnée avec vérité cachée · 6 attributs + 8 attributs
+cachés · traits innés et acquis · santé, mortalité infantile réelle, vieillissement ·
+relations **dirigées** (A peut aimer B qui le méprise) · mémoire budgétée avec oubli ·
+**graines** (conséquences différées jusqu'à 30 ans) · économie de survie · métiers et
+compétences · mariage, enfants, génétique héritée · maisons · mort, héritage et reprise
+avec un héritier (dettes et rancunes comprises) · Chronique exportable en Markdown ·
+sauvegarde versionnée avec migrations · déterminisme strict vérifié en CI.
+
+Ce qui n'existe pas encore : agentivité PNJ complète, intrigues multi-années, voies de
+pouvoir, titres et vassalité, paliers LOD 2 et 3, temps élastique, transcendance.
+Voir la [roadmap](docs/06-roadmap.md).
 
 ## Lire dans cet ordre
 
@@ -24,6 +47,21 @@ Interface menu-based. Objectif : générer des **histoires uniques** par émerge
 | [06 — Roadmap](docs/06-roadmap.md) | 8 phases, chacune jouable, avec critères de sortie |
 | [07 — Risques](docs/07-risques.md) | Ce qui va casser le projet et comment l'éviter |
 | [08 — Décisions (ADR)](docs/08-decisions.md) | Choix techniques tranchés + alternatives rejetées |
+
+## Code
+
+```
+packages/
+  engine/    coeur pur, déterministe, sans I/O ni affichage
+  content/   tout le contenu de jeu, en données typées (« Le Rivage »)
+  game/      orchestration de session : boucle, commandes, vues
+  cli/       rendu terminal — un client jetable parmi d'autres
+  tools/     autoplay + banc d'émergence
+```
+
+Règle de dépendance : `cli → game → engine ← content`, `tools → game`.
+`engine` ne connaît rien au-dessus de lui, ce qui permettra de brancher une UI web
+plus tard sans toucher une ligne de simulation.
 
 ## Résumé exécutif en 10 lignes
 

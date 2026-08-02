@@ -8,10 +8,12 @@ Les durées sont indicatives (projet perso, rythme irrégulier).
 
 ---
 
-## Phase 0 — Fondations
+## Phase 0 — Fondations ✅ *livrée*
 *Objectif : le squelette tourne, à vide, mais proprement.*
 
-- monorepo pnpm, TypeScript strict, vitest, ESLint (+ règle anti-`Math.random` dans `engine`)
+- monorepo pnpm, TypeScript strict, vitest, règle anti-`Math.random` dans `engine`
+  (portée aujourd'hui par un test exécutable plutôt que par ESLint — même effet, zéro
+  configuration ; on la basculera en règle de lint quand le projet aura un `eslint.config`)
 - PRNG seedé forkable + tests statistiques
 - calendrier, boucle de ticks, pipeline de systèmes avec priorités
 - `World` + `Store` + graphe de relations
@@ -24,7 +26,7 @@ recharge, l'état est identique au bit près.
 
 ---
 
-## Phase 1 — Une vie ⭐ *le MVP jouable*
+## Phase 1 — Une vie ✅ *livrée* ⭐ *le MVP jouable*
 *Objectif : naître, vivre, mourir, et que ce soit déjà intéressant.*
 
 - 20 scénarios de naissance couvrant les 6 paliers, avec vérités cachées
@@ -42,6 +44,11 @@ recharge, l'état est identique au bit près.
 
 **Fin de phase :** on joue 3 vies d'affilée et elles sont clairement différentes. Le test :
 raconter une des trois à quelqu'un sans s'ennuyer.
+
+**Livré en plus, en avance sur la Phase 2** (parce que la boucle est nettement meilleure
+avec) : mariage, enfants avec génétique héritée, fondation de maison, mort → reprise avec
+un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de la Phase 2
+(éducation des enfants, lois de succession, arbre généalogique) reste à faire.
 
 ---
 

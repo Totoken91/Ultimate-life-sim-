@@ -1,0 +1,130 @@
+import type {
+  Character,
+  ChronicleEntry,
+  EntityId,
+  FlagValue,
+  House,
+  Memory,
+  Relation,
+  Seed,
+} from '../model/types.js';
+import { World, type TagHit, type WorldMode } from '../world/world.js';
+import { RelationGraph } from '../world/relations.js';
+import { MemoryStore } from '../world/memory.js';
+
+/**
+ * ADR-008 : instantané complet versionné, pas de rejeu d'event log.
+ * Les paliers T2/T3 ne seront jamais sauvegardés — ils sont regénérés.
+ */
+export const SAVE_VERSION = 2;
+
+export interface WorldSnapshot {
+  version: number;
+  seed: number;
+  mode: WorldMode;
+  year: number;
+  playerId: EntityId;
+  counters: { nextEntity: number; nextSeed: number };
+  characters: Character[];
+  houses: House[];
+  relations: Relation[];
+  memories: { nextId: number; rows: [EntityId, Memory[]][] };
+  seeds: Seed[];
+  chronicle: ChronicleEntry[];
+  flags: Record<string, FlagValue>;
+  cooldowns: Record<string, number>;
+  tagHits: TagHit[];
+}
+
+export function snapshot(world: World): WorldSnapshot {
+  return {
+    version: SAVE_VERSION,
+    seed: world.seed,
+    mode: world.mode,
+    year: world.year,
+    playerId: world.playerId,
+    counters: world.counters(),
+    characters: [...world.characters.values()].sort((a, b) => a.id - b.id),
+    houses: [...world.houses.values()].sort((a, b) => (a.id < b.id ? -1 : 1)),
+    relations: world.relations.toJSON(),
+    memories: world.memories.toJSON(),
+    seeds: world.seeds,
+    chronicle: world.chronicle,
+    flags: world.flags,
+    cooldowns: world.cooldowns,
+    tagHits: world.tagHits,
+  };
+}
+
+export function restore(snap: WorldSnapshot): World {
+  const world = new World({ seed: snap.seed, startYear: snap.year, mode: snap.mode });
+  world.restoreCounters(snap.counters);
+  world.setPlayer(snap.playerId);
+  for (const c of snap.characters) world.characters.set(c.id, c);
+  for (const h of snap.houses) world.houses.set(h.id, h);
+  for (const r of snap.relations) world.relations.set(r);
+  const memories = MemoryStore.fromJSON(snap.memories);
+  Object.assign(world, { memories });
+  world.seeds = snap.seeds;
+  world.chronicle = snap.chronicle;
+  world.flags = snap.flags;
+  world.cooldowns = snap.cooldowns;
+  world.tagHits = snap.tagHits;
+  return world;
+}
+
+export type Migration = (raw: Record<string, unknown>) => Record<string, unknown>;
+
+/**
+ * Chaîne de migrations v(n) → v(n+1). Testée sur des sauvegardes de référence.
+ * On n'en supprime jamais une : une vieille partie doit toujours pouvoir remonter.
+ */
+export const MIGRATIONS: Record<number, Migration> = {
+  // v1 → v2 : `paths` (voies de pouvoir) ajouté sur les personnages.
+  1: (raw) => {
+    const chars = (raw['characters'] as Record<string, unknown>[] | undefined) ?? [];
+    for (const c of chars) {
+      if (!Array.isArray(c['paths'])) c['paths'] = [];
+      if (!Array.isArray(c['titles'])) c['titles'] = [];
+    }
+    raw['version'] = 2;
+    return raw;
+  },
+};
+
+export function migrate(raw: Record<string, unknown>): WorldSnapshot {
+  let current = raw;
+  let version = Number(current['version'] ?? 1);
+  while (version < SAVE_VERSION) {
+    const step = MIGRATIONS[version];
+    if (!step) {
+      throw new Error(
+        `Sauvegarde en version ${version} : aucune migration vers ${version + 1}.`,
+      );
+    }
+    current = step(current);
+    const next = Number(current['version'] ?? version + 1);
+    if (next <= version) throw new Error('Migration sans progression de version');
+    version = next;
+  }
+  if (version > SAVE_VERSION) {
+    throw new Error(
+      `Sauvegarde en version ${version}, plus récente que le jeu (${SAVE_VERSION}).`,
+    );
+  }
+  return current as unknown as WorldSnapshot;
+}
+
+/** Empreinte de l'état du monde — sert au test de non-régression du déterminisme. */
+export function worldHash(world: World): string {
+  const snap = snapshot(world);
+  const json = JSON.stringify(snap);
+  let h1 = 0x811c9dc5;
+  let h2 = 0x01000193;
+  for (let i = 0; i < json.length; i++) {
+    const ch = json.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 + ch, 0x85ebca6b) >>> 0;
+  }
+  return (h1 >>> 0).toString(16).padStart(8, '0') + (h2 >>> 0).toString(16).padStart(8, '0');
+}

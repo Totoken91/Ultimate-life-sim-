@@ -1,0 +1,11 @@
+{
+  "name": "@ed/tools",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@ed/engine": "workspace:*",
+    "@ed/content": "workspace:*",
+    "@ed/game": "workspace:*"
+  }
+}
