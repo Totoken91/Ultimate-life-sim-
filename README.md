@@ -9,12 +9,12 @@ Interface menu-based. Objectif : générer des **histoires uniques** par émerge
 
 ## État du projet
 
-**Phase 1 livrée — jouable.** Naître, vivre, choisir, mourir, transmettre.
+**Phases 0 à 2 livrées — jouable.** Naître, vivre, choisir, mourir, transmettre, compter.
 
 ```bash
 pnpm install
 pnpm play          # jouer une vie
-pnpm test          # 59 tests
+pnpm test          # 86 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm typecheck
 ```
@@ -26,14 +26,24 @@ Ce qui marche déjà : naissance conditionnée avec vérité cachée · 6 attrib
 cachés · traits innés et acquis · santé, mortalité infantile réelle, vieillissement ·
 relations **dirigées** (A peut aimer B qui le méprise) · mémoire budgétée avec oubli ·
 **graines** (conséquences différées jusqu'à 30 ans) · économie de survie · métiers et
-compétences · mariage, enfants, génétique héritée · maisons · mort et **trois façons de
-continuer** — un héritier (avec les biens et les inimitiés), suivre quelqu'un d'autre dans
-le monde, ou repartir d'un nouveau-né sans effacer l'histoire · Chronique exportable ·
-sauvegarde versionnée avec migrations · déterminisme strict vérifié en CI.
+compétences · mariage, enfants, génétique héritée · **éducation des enfants** en quatre
+écoles · maisons avec prestige, rang et **lois de succession modifiables** · mort et
+**trois façons de continuer** — un héritier (avec les biens et les inimitiés), suivre
+quelqu'un d'autre dans le monde, ou repartir d'un nouveau-né sans effacer l'histoire.
 
-Ce qui n'existe pas encore : agentivité PNJ complète, intrigues multi-années, voies de
-pouvoir, titres et vassalité, paliers LOD 2 et 3, temps élastique, transcendance.
-Voir la [roadmap](docs/06-roadmap.md).
+**Un monde peuplé** : ~500 habitants répartis sur six implantations, avec foyers,
+pyramide des âges, métiers et descendance. Les couples de PNJ ont des enfants ; la
+population se stabilise sur trois siècles sans exploser ni s'effondrer. Les morts sans
+importance sont élagués tous les dix ans pour que le monde reste borné sur des millénaires.
+
+**Des chiffres partout** : statistiques du monde (population, causes de mort, richesse et
+sa concentration, conditions sociales, lieux, métiers), classements, **livre des records**
+qui survit à ses détenteurs, écran de dynastie avec ordre successoral, et **arbre
+généalogique** navigable. Voir le [doc 10](docs/10-chiffres.md).
+
+Ce qui n'existe pas encore : économie de production et de prix, gouvernements, agentivité
+PNJ complète, intrigues multi-années, voies de pouvoir, conflits, paliers LOD 2 et 3,
+temps élastique, transcendance. Voir la [roadmap](docs/06-roadmap.md).
 
 ## Lire dans cet ordre
 
@@ -49,6 +59,8 @@ Voir la [roadmap](docs/06-roadmap.md).
 | [07 — Risques](docs/07-risques.md) | Ce qui va casser le projet et comment l'éviter |
 | [08 — Décisions (ADR)](docs/08-decisions.md) | Choix techniques tranchés + alternatives rejetées |
 | [09 — Échelle totale](docs/09-echelle-totale.md) | Métiers compositionnels, conflits de la rixe à la guerre stellaire, ères, patrimoine |
+| [10 — Chiffres & records](docs/10-chiffres.md) | Compteurs, statistiques, livre des records, arbre généalogique, élagage |
+| [11 — Économie & pouvoir](docs/11-economie-pouvoir.md) | Domaines récursifs à toutes les échelles, biens, prix locaux, gouvernements malléables |
 
 ## Code
 

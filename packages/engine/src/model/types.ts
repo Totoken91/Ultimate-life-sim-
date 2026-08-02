@@ -225,6 +225,44 @@ export interface Seed {
   note: string;
 }
 
+/**
+ * Loi de succession (doc 03 §5). C'est une *loi modifiable* : la changer
+ * provoque des crises, et c'est le but.
+ */
+export type SuccessionLaw =
+  | 'primogeniture'
+  | 'ultimogeniture'
+  | 'merite'
+  | 'designation'
+  | 'combat';
+
+export const SUCCESSION_LABELS: Record<SuccessionLaw, string> = {
+  primogeniture: 'à l\'aîné',
+  ultimogeniture: 'au dernier-né',
+  merite: 'au plus capable',
+  designation: 'à celui que le chef désigne',
+  combat: 'à qui saura le prendre',
+};
+
+export type HouseRank = 'maison' | 'notable' | 'noble' | 'grande maison' | 'royale';
+
+export const HOUSE_RANK_ORDER: readonly HouseRank[] = [
+  'maison',
+  'notable',
+  'noble',
+  'grande maison',
+  'royale',
+];
+
+/** Seuils de prestige d'accès à chaque rang. */
+export const HOUSE_RANK_THRESHOLDS: Record<HouseRank, number> = {
+  maison: 0,
+  notable: 60,
+  noble: 180,
+  'grande maison': 450,
+  royale: 1100,
+};
+
 export interface House {
   id: string;
   name: string;
@@ -234,9 +272,40 @@ export interface House {
   prestige: number;
   memberIds: EntityId[];
   traditions: string[];
-  /** Rang dynastique — doc 03 §5. */
-  rank: 'maison' | 'notable' | 'noble' | 'grande maison' | 'royale';
+  rank: HouseRank;
   motto: string;
+  law: SuccessionLaw;
+  /** Chefs successifs, du fondateur au chef actuel. */
+  headHistory: EntityId[];
+  /** Branches détachées : membres qui n'ont pas hérité et ont fait souche. */
+  cadetIds: EntityId[];
+}
+
+/**
+ * Compteurs cumulés du monde. Le joueur aime les chiffres, et un monde qui
+ * ne compte rien n'a pas d'Histoire (doc 10).
+ */
+export interface WorldTally {
+  births: number;
+  deaths: number;
+  marriages: number;
+  /** Morts causées par une décision d'un personnage, pas par le temps. */
+  murders: number;
+  deathsByCause: Record<string, number>;
+  deathsByYear: Record<number, number>;
+  birthsByYear: Record<number, number>;
+}
+
+export function emptyTally(): WorldTally {
+  return {
+    births: 0,
+    deaths: 0,
+    marriages: 0,
+    murders: 0,
+    deathsByCause: {},
+    deathsByYear: {},
+    birthsByYear: {},
+  };
 }
 
 export type ChronicleKind =

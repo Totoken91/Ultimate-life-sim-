@@ -6,8 +6,10 @@ import type {
   House,
   Seed,
   Settlement,
+  WorldTally,
 } from '../model/types.js';
-import { asEntityId } from '../model/types.js';
+import { asEntityId, emptyTally } from '../model/types.js';
+import { emptyRecordBook, type RecordBook } from '../stats/records.js';
 import { RelationGraph } from './relations.js';
 import { MemoryStore } from './memory.js';
 import { Rng } from '../rng/rng.js';
@@ -44,6 +46,10 @@ export class World {
   /** Cooldowns de portée dynastie/monde : eventId -> année de réouverture. */
   cooldowns: Record<string, number> = {};
   tagHits: TagHit[] = [];
+  /** Compteurs cumulés — alimentés aux points d'écriture, jamais recalculés. */
+  tally: WorldTally = emptyTally();
+  /** Le livre des records : ce que le monde a connu de plus extrême. */
+  records: RecordBook = emptyRecordBook();
   /** Journal de l'année en cours, consommé puis vidé par l'UI. */
   log: string[] = [];
 

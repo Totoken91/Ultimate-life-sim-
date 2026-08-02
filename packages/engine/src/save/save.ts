@@ -1,22 +1,25 @@
+import type { RecordBook } from '../stats/records.js';
 import type {
   Character,
   ChronicleEntry,
   EntityId,
   FlagValue,
   House,
+  WorldTally,
   Memory,
   Relation,
   Seed,
 } from '../model/types.js';
 import { World, type TagHit, type WorldMode } from '../world/world.js';
 import { RelationGraph } from '../world/relations.js';
+import { emptyTally } from '../model/types.js';
 import { MemoryStore } from '../world/memory.js';
 
 /**
  * ADR-008 : instantané complet versionné, pas de rejeu d'event log.
  * Les paliers T2/T3 ne seront jamais sauvegardés — ils sont regénérés.
  */
-export const SAVE_VERSION = 2;
+export const SAVE_VERSION = 3;
 
 export interface WorldSnapshot {
   version: number;
@@ -34,6 +37,8 @@ export interface WorldSnapshot {
   flags: Record<string, FlagValue>;
   cooldowns: Record<string, number>;
   tagHits: TagHit[];
+  tally: WorldTally;
+  records: RecordBook;
 }
 
 export function snapshot(world: World): WorldSnapshot {
@@ -53,6 +58,8 @@ export function snapshot(world: World): WorldSnapshot {
     flags: world.flags,
     cooldowns: world.cooldowns,
     tagHits: world.tagHits,
+    tally: world.tally,
+    records: world.records,
   };
 }
 
@@ -70,6 +77,8 @@ export function restore(snap: WorldSnapshot): World {
   world.flags = snap.flags;
   world.cooldowns = snap.cooldowns;
   world.tagHits = snap.tagHits;
+  world.tally = snap.tally;
+  world.records = snap.records;
   return world;
 }
 
@@ -88,6 +97,22 @@ export const MIGRATIONS: Record<number, Migration> = {
       if (!Array.isArray(c['titles'])) c['titles'] = [];
     }
     raw['version'] = 2;
+    return raw;
+  },
+
+  // v2 → v3 : statistiques du monde, records, lois de succession.
+  // Les compteurs cumulés repartent de zéro pour une vieille partie : on ne
+  // peut pas inventer un passé qui n'a pas été mesuré, et mentir serait pire.
+  2: (raw) => {
+    if (!raw['tally']) raw['tally'] = emptyTally();
+    if (!raw['records']) raw['records'] = {};
+    const houses = (raw['houses'] as Record<string, unknown>[] | undefined) ?? [];
+    for (const h of houses) {
+      if (!h['law']) h['law'] = 'primogeniture';
+      if (!Array.isArray(h['headHistory'])) h['headHistory'] = [h['headId']].filter(Boolean);
+      if (!Array.isArray(h['cadetIds'])) h['cadetIds'] = [];
+    }
+    raw['version'] = 3;
     return raw;
   },
 };

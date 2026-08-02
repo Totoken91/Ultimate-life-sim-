@@ -37,6 +37,13 @@ export {
   MEMORY_BUDGET_ACTIVE,
 } from './world/memory.js';
 export { spawnCharacter, spawnChild } from './world/spawn.js';
+export { pruneDead, protectedIds, type PruneOptions } from './world/prune.js';
+export {
+  seedPopulation,
+  carryingCapacity,
+  populationOf,
+  type PopulationOptions,
+} from './world/population.js';
 
 // ─── contenu (schéma) ───────────────────────────────────────────────────────
 export type {
@@ -85,6 +92,7 @@ export {
   type TickPhase,
 } from './systems/types.js';
 export { mortalityRisk, describeHealth, describeMood } from './systems/vitals.js';
+export { HousePrestige, Pruning, Records } from './systems/house.js';
 export { UPKEEP } from './systems/economy.js';
 
 // ─── simulation ─────────────────────────────────────────────────────────────
@@ -108,6 +116,37 @@ export {
   type HeirOption,
   type StrangerOption,
 } from './sim/newLife.js';
+
+// ─── statistiques ───────────────────────────────────────────────────────────
+export {
+  worldStats,
+  dynastyStats,
+  descendantsOf,
+  type WorldStats,
+  type DynastyStats,
+  type Ranked,
+  type CauseCount,
+  type HouseStat,
+  type SettlementStat,
+} from './stats/stats.js';
+export {
+  updateRecords,
+  emptyRecordBook,
+  challenge,
+  bloodOf,
+  RECORD_LABELS,
+  type RecordBook,
+  type RecordEntry,
+  type RecordId,
+} from './stats/records.js';
+export {
+  familyTree,
+  renderTree,
+  countTree,
+  rootAncestor,
+  type TreeNode,
+  type TreeOptions,
+} from './stats/tree.js';
 
 // ─── chronique ──────────────────────────────────────────────────────────────
 export { renderChronicle, renderEntry, renderEpitaph } from './chronicle/render.js';

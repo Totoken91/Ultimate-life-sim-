@@ -1,4 +1,4 @@
-import type { Character, RelationType, Sex } from '../model/types.js';
+import type { Character, RelationType, Sex, SuccessionLaw } from '../model/types.js';
 import { CLASS_LABELS, HIDDEN_IDS, STAT_IDS } from '../model/types.js';
 import type { World } from '../world/world.js';
 import type {
@@ -203,29 +203,126 @@ export interface HeirOption {
   age: number;
   relation: string;
   note: string;
+  /** Rang dans l'ordre successoral tel que la loi de la maison le définit. */
+  claim: number;
 }
 
-export function heirsOf(world: World, dead: Character): HeirOption[] {
-  const out: HeirOption[] = [];
+/** Candidats à la succession, du plus proche au plus lointain. */
+function kinOf(world: World, dead: Character): { c: Character; relation: string; degree: number }[] {
+  const out: { c: Character; relation: string; degree: number }[] = [];
+  const seen = new Set<Character['id']>([dead.id]);
+
+  const push = (c: Character | undefined, relation: string, degree: number): void => {
+    if (!c || !c.alive || seen.has(c.id)) return;
+    const age = world.year - c.birthYear;
+    if (age < 1) return;
+    seen.add(c.id);
+    out.push({ c, relation, degree });
+  };
+
+  // 1. enfants
+  for (const id of dead.childrenIds) push(world.get(id), world.get(id)?.sex === 'f' ? 'fille' : 'fils', 1);
+
+  // 2. petits-enfants
   for (const id of dead.childrenIds) {
     const child = world.get(id);
-    if (!child || !child.alive) continue;
-    const rel = world.relations.get(child.id, dead.id);
-    out.push({
-      id: child.id,
-      name: fullName(child),
-      age: world.year - child.birthYear,
-      relation: child.sex === 'm' ? 'fils' : 'fille',
-      note:
-        rel && rel.affection < -20
-          ? 'vous haïssait'
-          : rel && rel.affection > 50
-            ? 'vous était dévoué'
-            : '',
-    });
+    for (const gid of child?.childrenIds ?? []) {
+      const g = world.get(gid);
+      push(g, g?.sex === 'f' ? 'petite-fille' : 'petit-fils', 2);
+    }
   }
-  out.sort((a, b) => b.age - a.age || a.id - b.id);
+
+  // 3. fratrie, puis neveux — c'est ce qui empêche une maison de s'éteindre
+  //    parce qu'un seul homme est mort sans enfant.
+  const parents = [world.get(dead.fatherId), world.get(dead.motherId)].filter(
+    (p): p is Character => !!p,
+  );
+  const siblings: Character[] = [];
+  for (const parent of parents) {
+    for (const id of parent.childrenIds) {
+      const sib = world.get(id);
+      if (sib && sib.id !== dead.id) siblings.push(sib);
+    }
+  }
+  for (const sib of siblings) push(sib, sib.sex === 'f' ? 'sœur' : 'frère', 3);
+  for (const sib of siblings) {
+    for (const id of sib.childrenIds) {
+      const nephew = world.get(id);
+      push(nephew, nephew?.sex === 'f' ? 'nièce' : 'neveu', 4);
+    }
+  }
+
+  // 4. l'époux, en dernier recours, s'il y a une maison à tenir
+  if (dead.houseId) push(world.get(dead.spouseId), 'époux', 5);
+
   return out;
+}
+
+/** Aptitude perçue — sert aux lois « au plus capable » et « par les armes ». */
+function capability(c: Character, martial: boolean): number {
+  const skills = Object.values(c.skills).reduce((a, b) => a + b, 0);
+  if (martial) {
+    return c.stats.force * 2 + c.stats.endurance + (c.skills['lame'] ?? 0) * 2;
+  }
+  return (
+    c.stats.intelligence * 1.5 +
+    c.stats.charisme * 1.2 +
+    c.stats.volonte +
+    skills * 0.4 +
+    c.hidden.influence
+  );
+}
+
+/**
+ * Ordre successoral. La loi de la maison décide (doc 03 §5) ; sans maison,
+ * c'est la primogéniture, parce que c'est l'usage partout sur le Rivage.
+ */
+export function heirsOf(world: World, dead: Character): HeirOption[] {
+  const house = world.house(dead.houseId);
+  const law: SuccessionLaw = house?.law ?? 'primogeniture';
+  const kin = kinOf(world, dead);
+
+  const designated = kin.find(({ c }) => c.flags['heritier_designe'] === true);
+
+  const ordered = kin.slice().sort((a, b) => {
+    if (a.degree !== b.degree) return a.degree - b.degree;
+    const ageA = world.year - a.c.birthYear;
+    const ageB = world.year - b.c.birthYear;
+    switch (law) {
+      case 'ultimogeniture':
+        return ageA - ageB || a.c.id - b.c.id;
+      case 'merite':
+        return capability(b.c, false) - capability(a.c, false) || a.c.id - b.c.id;
+      case 'combat':
+        return capability(b.c, true) - capability(a.c, true) || a.c.id - b.c.id;
+      case 'designation':
+      case 'primogeniture':
+      default:
+        return ageB - ageA || a.c.id - b.c.id;
+    }
+  });
+
+  if (law === 'designation' && designated) {
+    const index = ordered.findIndex((k) => k.c.id === designated.c.id);
+    if (index > 0) ordered.unshift(...ordered.splice(index, 1));
+  }
+
+  return ordered.map(({ c, relation }, i) => {
+    const rel = world.relations.get(c.id, dead.id);
+    const notes: string[] = [];
+    if (rel && rel.affection < -25) notes.push('vous haïssait');
+    else if (rel && rel.affection > 50) notes.push('vous était dévoué');
+    if (c.flags['heritier_designe'] === true) notes.push('désigné');
+    if (relation !== 'fils' && relation !== 'fille') notes.push(relation);
+    return {
+      id: c.id,
+      name: fullName(c),
+      age: world.year - c.birthYear,
+      relation,
+      note: notes.join(', '),
+      claim: i + 1,
+    };
+  });
 }
 
 /**

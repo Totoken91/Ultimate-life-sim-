@@ -6,9 +6,11 @@ import { Aging, Mortality, Subsistence } from '../systems/vitals.js';
 import { Economy, SkillDecay, SocialMobility } from '../systems/economy.js';
 import { Forgetting, NpcLife, NpcVisible, RelationDrift } from '../systems/social.js';
 import { EventDraw, SeedMaturation } from '../systems/events.js';
+import { HousePrestige, Pruning, Records } from '../systems/house.js';
 import type { PendingEvent } from '../events/types.js';
 import { Rng } from '../rng/rng.js';
 import { ageOf } from '../model/character.js';
+import { seedPopulation } from '../world/population.js';
 
 export interface YearOpening {
   year: number;
@@ -36,7 +38,10 @@ export function defaultRegistry(): SystemRegistry {
     EventDraw,
     Subsistence,
     SocialMobility,
+    HousePrestige,
     Mortality,
+    Pruning,
+    Records,
   );
 }
 
@@ -44,6 +49,8 @@ export interface SimulationOptions {
   seed: number;
   startYear: number;
   mode: WorldMode;
+  /** Habitants par implantation au démarrage. 0 pour un monde vide (tests). */
+  population?: number;
 }
 
 export class Simulation {
@@ -54,10 +61,24 @@ export class Simulation {
 
   constructor(ruleset: Ruleset, opts: SimulationOptions | World) {
     this.ruleset = ruleset;
+    const fresh = !(opts instanceof World);
     this.world = opts instanceof World ? opts : new World(opts);
     this.engine = new EventEngine(ruleset);
     this.registry = defaultRegistry();
     for (const s of ruleset.settlements) this.world.settlements.set(s.id, s);
+
+    // Le monde existait avant le joueur. Une partie rechargée ne repeuple pas.
+    if (fresh) {
+      const size = (opts as SimulationOptions).population ?? 55;
+      if (size > 0) {
+        seedPopulation(
+          this.world,
+          ruleset,
+          new Rng(this.world.seed).fork('population'),
+          { perSettlement: size },
+        );
+      }
+    }
   }
 
   private context(queue: PendingEvent[], phaseSalt: string): TickContext {

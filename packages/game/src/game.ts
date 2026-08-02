@@ -11,6 +11,9 @@ import {
   heirsOf,
   makeEventCtx,
   strangersFor,
+  worldStats,
+  dynastyStats,
+  familyTree,
   applyEffects,
   migrate,
   restore,
@@ -21,8 +24,14 @@ import {
   type EntityId,
   type HeirOption,
   type PendingEvent,
+  type DynastyStats,
+  type RecordBook,
   type Ruleset,
   type StrangerOption,
+  type TreeNode,
+  type TreeOptions,
+  type WorldStats,
+  type SuccessionLaw,
   type WorldMode,
   type WorldSnapshot,
 } from '@ed/engine';
@@ -56,9 +65,30 @@ export type Command =
   | { t: 'continueAs'; heirId: EntityId }
   | { t: 'follow'; id: EntityId }
   | { t: 'newborn' }
+  | { t: 'setLaw'; law: SuccessionLaw }
   | { t: 'end' };
 
-export type InteractionKind = 'parler' | 'offrir' | 'disputer' | 'courtiser' | 'demander';
+export type InteractionKind =
+  | 'parler'
+  | 'offrir'
+  | 'disputer'
+  | 'courtiser'
+  | 'demander'
+  | 'former_corps'
+  | 'former_esprit'
+  | 'former_social'
+  | 'former_ombre'
+  | 'designer';
+
+/** Les quatre écoles d'éducation (doc 03 §3). Un enfant se façonne. */
+export const TRAININGS = {
+  former_corps: { label: 'Le corps', stats: ['force', 'endurance'] as const, skill: 'lutte' },
+  former_esprit: { label: 'L\'esprit', stats: ['intelligence', 'volonte'] as const, skill: 'lettres' },
+  former_social: { label: 'Les gens', stats: ['charisme', 'intelligence'] as const, skill: 'rhetorique' },
+  former_ombre: { label: 'L\'ombre', stats: ['agilite', 'charisme'] as const, skill: 'intrigue' },
+} as const;
+
+export type TrainingKind = keyof typeof TRAININGS;
 
 export interface SaveFile {
   version: number;
@@ -150,6 +180,9 @@ export class Game {
         return;
       case 'newborn':
         this.newborn();
+        return;
+      case 'setLaw':
+        this.setLaw(cmd.law);
         return;
       case 'end':
         this.phase = 'fin';
@@ -290,6 +323,70 @@ export class Game {
         }
         break;
       }
+      case 'designer': {
+        if (!this.canDesignate()) {
+          text = 'Vous n\'avez pas de maison à léguer.';
+          break;
+        }
+        for (const id of this.player.childrenIds) {
+          const kid = this.world.get(id);
+          if (kid) delete kid.flags['heritier_designe'];
+        }
+        other.flags['heritier_designe'] = true;
+        this.world.relations.modify(other.id, this.player.id, { affection: 25, respect: 20 });
+        text = `Vous désignez ${name} comme héritier. Les autres l'apprendront, et ne l'oublieront pas.`;
+        this.world.record({
+          year: this.world.year,
+          kind: 'note',
+          importance: 3,
+          actors: [{ id: other.id, name }],
+          data: { texte: `${name} fut désigné héritier.` },
+        });
+        break;
+      }
+      case 'former_corps':
+      case 'former_esprit':
+      case 'former_social':
+      case 'former_ombre': {
+        const training = TRAININGS[kind];
+        const age = ageOf(other, this.world.year);
+        if (age < 4 || age > 17) {
+          text = 'On ne forme plus quelqu\'un de cet âge.';
+          break;
+        }
+        // Le potentiel caché de l'enfant décide de ce que l'éducation rend.
+        const yield_ = 1 + other.hidden.potentiel / 60;
+        for (const stat of training.stats) {
+          other.stats[stat] = Math.min(100, other.stats[stat] + Math.round(rng.int(1, 2) * yield_));
+        }
+        other.skills[training.skill] = Math.min(
+          100,
+          (other.skills[training.skill] ?? 0) + 3 * yield_,
+        );
+        this.world.relations.modify(other.id, this.player.id, { affection: 6, respect: 8 });
+        this.player.wealth -= 60;
+        const marker = `formation_${kind}`;
+        const done = other.flags[marker];
+        const years = (typeof done === 'number' ? done : 0) + 1;
+        other.flags[marker] = years;
+        // Cinq ans dans la même école laissent une marque durable.
+        if (years === 5) {
+          const trait =
+            kind === 'former_corps'
+              ? 'guerrier'
+              : kind === 'former_esprit'
+                ? 'lettre'
+                : kind === 'former_social'
+                  ? 'meneur'
+                  : 'menteur';
+          if (!other.traits.includes(trait)) other.traits.push(trait);
+          text =
+            `Cinq ans de la même école. ${name} en garde quelque chose que rien n'effacera.`;
+          break;
+        }
+        text = `Vous formez ${name}. ${training.label} — ${years}ᵉ année.`;
+        break;
+      }
       case 'demander': {
         const theirFeeling = this.world.relations.get(other.id, this.player.id);
         const willing = (theirFeeling?.affection ?? 0) > 35 && other.wealth > 200;
@@ -315,6 +412,64 @@ export class Game {
 
   heirs(): HeirOption[] {
     return heirsOf(this.world, this.player);
+  }
+
+  // ─── maison et succession ─────────────────────────────────────────────────
+
+  house() {
+    return this.world.house(this.player.houseId);
+  }
+
+  /** On ne change la loi que si l'on est le chef de sa propre maison. */
+  canSetLaw(): boolean {
+    const house = this.house();
+    return !!house && house.headId === this.player.id;
+  }
+
+  canDesignate(): boolean {
+    return !!this.house();
+  }
+
+  private setLaw(law: SuccessionLaw): void {
+    const house = this.house();
+    if (!house || !this.canSetLaw() || house.law === law) return;
+    const before = house.law;
+    house.law = law;
+    // Changer la loi coûte du prestige : on froisse ceux qu'elle déshérite.
+    house.prestige = Math.max(0, house.prestige - 25);
+    this.world.record({
+      year: this.world.year,
+      kind: 'note',
+      importance: 4,
+      actors: [{ id: this.player.id, name: fullName(this.player) }],
+      data: { texte: `La Maison ${house.name} passe de la succession ${before} à ${law}.` },
+    });
+    this.outcome = {
+      title: 'Loi de succession',
+      text:
+        `La Maison ${house.name} suivra désormais la loi « ${law} ». ` +
+        `Ceux que l'ancienne loi favorisait ne vous le pardonneront pas de sitôt.`,
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  // ─── statistiques ─────────────────────────────────────────────────────────
+
+  stats(limit = 5): WorldStats {
+    return worldStats(this.world, this.ruleset, limit);
+  }
+
+  dynasty(): DynastyStats {
+    return dynastyStats(this.world);
+  }
+
+  records(): RecordBook {
+    return this.world.records;
+  }
+
+  tree(opts: TreeOptions = {}): TreeNode | null {
+    return familyTree(this.world, this.player.id, { ancestors: 2, maxDepth: 4, ...opts });
   }
 
   /**

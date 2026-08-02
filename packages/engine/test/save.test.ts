@@ -62,9 +62,16 @@ describe('sauvegarde', () => {
     const snap = JSON.parse(JSON.stringify(snapshot(sim.world))) as Record<string, unknown>;
     // on rétrograde artificiellement en v1
     snap['version'] = 1;
+    delete snap['tally'];
+    delete snap['records'];
     for (const ch of snap['characters'] as Record<string, unknown>[]) {
       delete ch['paths'];
       delete ch['titles'];
+    }
+    for (const h of snap['houses'] as Record<string, unknown>[]) {
+      delete h['law'];
+      delete h['headHistory'];
+      delete h['cadetIds'];
     }
     const migrated = migrate(snap);
     expect(migrated.version).toBe(SAVE_VERSION);
@@ -72,6 +79,13 @@ describe('sauvegarde', () => {
     for (const ch of restored.characters.values()) {
       expect(Array.isArray(ch.paths)).toBe(true);
       expect(Array.isArray(ch.titles)).toBe(true);
+    }
+    // v2 → v3 : les compteurs et le livre des records existent, vides.
+    expect(restored.tally.deathsByCause).toBeDefined();
+    expect(restored.records).toBeDefined();
+    for (const house of restored.houses.values()) {
+      expect(house.law).toBe('primogeniture');
+      expect(Array.isArray(house.headHistory)).toBe(true);
     }
   });
 

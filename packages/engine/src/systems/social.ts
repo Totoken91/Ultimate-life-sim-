@@ -1,7 +1,10 @@
 import type { System } from './types.js';
 import { clamp } from '../util/math.js';
+import type { Character } from '../model/types.js';
 import { ageOf, shortName } from '../model/character.js';
 import { relevance } from '../world/memory.js';
+import { spawnChild } from '../world/spawn.js';
+import { carryingCapacity } from '../world/population.js';
 
 /**
  * PRE — dérive des relations.
@@ -83,7 +86,24 @@ export const NpcLife: System = {
   priority: 50,
   run(ctx) {
     const { world, ruleset } = ctx;
-    for (const c of world.living()) {
+    const living = world.living();
+
+    // Index construits une fois par tick. Les recalculer par personnage rendait
+    // le système quadratique — invisible à 10 PNJ, ruineux à 500.
+    const byPlace = new Map<string, Character[]>();
+    const headcount = new Map<string, number>();
+    const capacity = new Map<string, number>();
+    for (const c of living) {
+      let bucket = byPlace.get(c.settlement);
+      if (!bucket) byPlace.set(c.settlement, (bucket = []));
+      bucket.push(c);
+      headcount.set(c.settlement, (headcount.get(c.settlement) ?? 0) + 1);
+    }
+    for (const id of byPlace.keys()) capacity.set(id, carryingCapacity(world, id));
+
+    const newborns: string[] = [];
+
+    for (const c of living) {
       if (c.isPlayer) continue;
       const age = ageOf(c, world.year);
       const rng = ctx.rng.fork('social.npcLife', world.year, c.id);
@@ -97,20 +117,36 @@ export const NpcLife: System = {
         if (job) c.jobId = job.id;
       }
 
-      // mariage
+      // naissances : c'est ce qui empêche le monde de s'éteindre en deux siècles
+      const spouse = world.get(c.spouseId);
+      if (
+        spouse &&
+        spouse.alive &&
+        c.sex === 'f' &&
+        age >= 17 &&
+        age <= 44 &&
+        c.childrenIds.length < 8 &&
+        (headcount.get(c.settlement) ?? 0) < (capacity.get(c.settlement) ?? 0)
+      ) {
+        // fécondité en cloche, maximale vers 26 ans, modulée par la santé
+        const peak = 1 - Math.abs(age - 26) / 26;
+        const chance = 0.22 * Math.max(0.1, peak) * (0.5 + c.health / 140);
+        if (rng.chance(chance)) {
+          const father = spouse.sex === 'm' ? spouse : c;
+          const mother = spouse.sex === 'm' ? c : spouse;
+          spawnChild(world, ruleset, rng.fork('naissance', c.childrenIds.length), father, mother);
+          headcount.set(c.settlement, (headcount.get(c.settlement) ?? 0) + 1);
+          newborns.push(c.settlement);
+        }
+      }
+
+      // mariage — on ne cherche que parmi les gens du même lieu
       if (!c.spouseId && age >= 17 && age <= 55 && rng.chance(0.11)) {
-        const candidates = world
-          .living()
-          .filter(
-            (o) =>
-              o.id !== c.id &&
-              !o.spouseId &&
-              !o.isPlayer &&
-              o.sex !== c.sex &&
-              o.settlement === c.settlement &&
-              Math.abs(ageOf(o, world.year) - age) <= 12 &&
-              ageOf(o, world.year) >= 17,
-          );
+        const candidates = (byPlace.get(c.settlement) ?? []).filter((o) => {
+          if (o.id === c.id || o.spouseId || o.isPlayer || o.sex === c.sex) return false;
+          const otherAge = ageOf(o, world.year);
+          return otherAge >= 17 && Math.abs(otherAge - age) <= 12;
+        });
         const match = rng.pickOrNull(candidates);
         if (match) {
           c.spouseId = match.id;
@@ -119,9 +155,11 @@ export const NpcLife: System = {
           world.relations.ensure(match.id, c.id, 'mariage', 'époux', world.year);
           world.relations.modify(c.id, match.id, { affection: 30, trust: 25 });
           world.relations.modify(match.id, c.id, { affection: 30, trust: 25 });
+          world.tally.marriages += 1;
         }
       }
     }
+    void newborns;
   },
 };
 

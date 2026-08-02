@@ -52,16 +52,21 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 
 ---
 
-## Phase 2 — Héritage
+## Phase 2 — Héritage ✅ *livrée*
 *Objectif : la mort n'arrête plus la partie.*
 
-- mariage, fertilité, grossesse, enfants avec génétique héritée
-- éducation des enfants (le joueur façonne ses héritiers)
-- héritage : biens, titres, dettes, **et rancunes**
-- succession : primogéniture + une loi alternative
-- continuation : jouer l'héritier
-- maison : fondation, nom, prestige, blason textuel
-- écran d'arbre généalogique v1
+- mariage, fertilité, enfants avec génétique héritée
+- **éducation des enfants** : quatre écoles (corps, esprit, gens, ombre), cinq ans dans la
+  même laissent un trait définitif
+- héritage : biens, titres, **et inimitiés du défunt**
+- **succession** : cinq lois (primogéniture, ultimogéniture, mérite, désignation, combat),
+  modifiables contre du prestige ; l'ordre remonte aux petits-enfants, à la fratrie et aux
+  neveux avant de déclarer une lignée éteinte
+- continuation : héritier, **n'importe qui d'autre dans le monde**, ou nouveau-né
+- maison : fondation, prestige qui monte par les actes et **s'érode tout seul**, rangs
+- **arbre généalogique** navigable
+- **monde peuplé** + naissances PNJ + élagage des morts ([doc 10](10-chiffres.md))
+- **statistiques, classements et livre des records** ([doc 10](10-chiffres.md))
 
 **Fin de phase :** une partie de 4 générations, où les erreurs de la génération 1 pèsent sur la 4.
 
@@ -70,6 +75,10 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 ## Phase 3 — Monde vivant
 *Objectif : le monde tourne sans vous.*
 
+- **économie par domaines** ([doc 11](11-economie-pouvoir.md)) : foyer → région, biens de
+  base, prix locaux, routes, stocks — une seule structure récursive à toutes les échelles
+- **gouvernements malléables** ([doc 11](11-economie-pouvoir.md) §4) : sept axes dont les
+  combinaisons produisent chefferie, féodalité, république, dictature, théocratie…
 - régions, implantations, démographie
 - cultures et religions (dérive, coutumes)
 - factions avec objectifs

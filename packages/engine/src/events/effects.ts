@@ -152,7 +152,9 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
     }
     case 'kill': {
       const c = resolve(ctx, fx.who);
-      if (c && c.alive) killCharacter(ctx, c, fx.cause);
+      // Le sujet de l'événement est l'auteur : c'est ce qui alimente le
+      // record « plus de sang versé » et le compteur de meurtres du monde.
+      if (c && c.alive) killCharacter(ctx, c, fx.cause, ctx.subject);
       return;
     }
     case 'job': {
@@ -205,6 +207,7 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
       world.relations.modify(self.id, spouse.id, { affection: 25, trust: 20 });
       world.relations.modify(spouse.id, self.id, { affection: 25, trust: 20 });
       spouse.lod = 0;
+      world.tally.marriages += 1;
       world.record({
         year: world.year,
         kind: 'mariage',
@@ -267,6 +270,9 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
         traditions: [],
         rank: 'maison',
         motto: fx.motto ?? '',
+        law: 'primogeniture',
+        headHistory: [self.id],
+        cadetIds: [],
       });
       self.houseId = id;
       self.family = name;
@@ -320,13 +326,27 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
  * Tue un personnage. Écrit la Chronique, dénoue les liens, marque le deuil
  * chez ceux qui l'aimaient — le chagrin est une mécanique, pas une note.
  */
-export function killCharacter(ctx: EventCtx, c: Character, cause: string): void {
+export function killCharacter(
+  ctx: EventCtx,
+  c: Character,
+  cause: string,
+  by?: Character | null,
+): void {
   const { world } = ctx;
   if (!c.alive) return;
   c.alive = false;
   c.deathYear = world.year;
   c.causeOfDeath = cause;
   const age = world.year - c.birthYear;
+
+  world.tally.deaths += 1;
+  world.tally.deathsByCause[cause] = (world.tally.deathsByCause[cause] ?? 0) + 1;
+  world.tally.deathsByYear[world.year] = (world.tally.deathsByYear[world.year] ?? 0) + 1;
+  if (by && by.id !== c.id && by.alive) {
+    world.tally.murders += 1;
+    const blood = by.flags['sang_verse'];
+    by.flags['sang_verse'] = (typeof blood === 'number' ? blood : 0) + 1;
+  }
 
   // Une chronique est *personnelle* : la mort d'un inconnu n'y a pas la même
   // place que celle de quelqu'un qu'on aimait ou qu'on haïssait.

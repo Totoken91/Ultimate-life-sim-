@@ -135,6 +135,9 @@ export function spawnChild(
     child.given = ruleset.nameFor(rng.fork('child.rename', attempt), child.culture, child.sex).given;
   }
 
+  world.tally.births += 1;
+  world.tally.birthsByYear[world.year] = (world.tally.birthsByYear[world.year] ?? 0) + 1;
+
   child.fatherId = father?.id ?? null;
   child.motherId = mother?.id ?? null;
   child.houseId = father?.houseId ?? mother?.houseId ?? null;
