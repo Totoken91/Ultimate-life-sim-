@@ -13,13 +13,14 @@ import type {
 import { World, type TagHit, type WorldMode } from '../world/world.js';
 import { RelationGraph } from '../world/relations.js';
 import { emptyTally } from '../model/types.js';
+import { ORGAN_IDS, newBody } from '../body/body.js';
 import { MemoryStore } from '../world/memory.js';
 
 /**
  * ADR-008 : instantané complet versionné, pas de rejeu d'event log.
  * Les paliers T2/T3 ne seront jamais sauvegardés — ils sont regénérés.
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 
 export interface WorldSnapshot {
   version: number;
@@ -113,6 +114,25 @@ export const MIGRATIONS: Record<number, Migration> = {
       if (!Array.isArray(h['cadetIds'])) h['cadetIds'] = [];
     }
     raw['version'] = 3;
+    return raw;
+  },
+
+  // v3 → v4 : le corps simulé. On le reconstruit depuis la génétique et on
+  // recale les organes sur la santé constatée — c'est une approximation
+  // assumée : on ne peut pas inventer un passé médical qui n'a pas eu lieu.
+  3: (raw) => {
+    const chars = (raw['characters'] as Record<string, unknown>[] | undefined) ?? [];
+    for (const c of chars) {
+      if (c['body']) continue;
+      const hidden = (c['hidden'] as Record<string, number> | undefined) ?? {};
+      const body = newBody(hidden['genetique'] ?? 50);
+      const health = typeof c['health'] === 'number' ? c['health'] : 80;
+      for (const id of ORGAN_IDS) {
+        body.organs[id] = Math.max(1, Math.min(100, health + (body.organs[id] - 88) * 0.5));
+      }
+      c['body'] = body;
+    }
+    raw['version'] = 4;
     return raw;
   },
 };

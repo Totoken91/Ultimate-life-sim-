@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadRuleset } from '@ed/content';
-import { Game, relations, self, status } from '@ed/game';
+import { Game, body as bodyView, relations, self, status } from '@ed/game';
 import { Meter } from './ui.js';
 import { Vie } from './screens/Vie.js';
 import { Gens } from './screens/Gens.js';
@@ -111,6 +111,7 @@ export function App() {
   const s = status(game);
   const people = relations(game);
   const me = self(game);
+  const myBody = bodyView(game);
 
   return (
     <div className="app">
@@ -148,7 +149,7 @@ export function App() {
       <div className="scroll">
         {tab === 'vie' && <Vie game={game} act={act} />}
         {tab === 'gens' && <Gens game={game} people={people} act={act} />}
-        {tab === 'vous' && <Vous game={game} me={me} status={s} />}
+        {tab === 'vous' && <Vous game={game} me={me} status={s} body={myBody} />}
         {tab === 'dynastie' && <Dynastie game={game} act={act} />}
         {tab === 'monde' && <Monde game={game} />}
       </div>

@@ -7,6 +7,7 @@ import { Economy, SkillDecay, SocialMobility } from '../systems/economy.js';
 import { Forgetting, NpcLife, NpcVisible, RelationDrift } from '../systems/social.js';
 import { EventDraw, SeedMaturation } from '../systems/events.js';
 import { HousePrestige, Pruning, Records } from '../systems/house.js';
+import { Physiology } from '../systems/physiology.js';
 import type { PendingEvent } from '../events/types.js';
 import { Rng } from '../rng/rng.js';
 import { ageOf } from '../model/character.js';
@@ -28,6 +29,7 @@ export interface YearClosing {
 export function defaultRegistry(): SystemRegistry {
   return new SystemRegistry().register(
     Aging,
+    Physiology,
     Economy,
     SkillDecay,
     RelationDrift,
@@ -88,6 +90,7 @@ export class Simulation {
       engine: this.engine,
       rng: new Rng(this.world.seed).fork(phaseSalt, this.world.year),
       queue,
+      living: this.world.living(),
     };
   }
 

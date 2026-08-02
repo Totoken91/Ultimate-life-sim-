@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 
 import { resolve } from 'node:path';
 
 import { loadRuleset } from '@ed/content';
-import { Game, relations, self, status, worldView } from '@ed/game';
+import { Game, body as bodyView, relations, self, status, worldView } from '@ed/game';
 import type { RelationView } from '@ed/game';
 import {
   RECORD_LABELS,
@@ -405,8 +405,12 @@ async function selfMenu(): Promise<void> {
     say();
   }
   say(rule());
-  say(c('  [entrée] retour', 'grey'));
-  await ask();
+  menu([
+    { key: '1', label: 'Le corps', note: 'organes, constantes, maux' },
+    { key: '0', label: 'Retour' },
+  ]);
+  say();
+  if ((await ask()) === '1') await bodyScreen();
 }
 
 async function placeScreen(): Promise<void> {
@@ -574,6 +578,56 @@ async function recordsScreen(): Promise<void> {
     say();
   }
   if (!any) say(c('  Rien de notable n\'a encore eu lieu.', 'grey'));
+  say(rule());
+  say(c('  [entrée] retour', 'grey'));
+  await ask();
+}
+
+async function bodyScreen(): Promise<void> {
+  const b = bodyView(game);
+  clear();
+  say(heading('le corps'));
+  say();
+  say(`  ${keyval('État général', `${gauge(b.health)}  ${b.healthLabel}`, 16)}`);
+  say();
+
+  const felt = b.vitals.filter((v) => v.feeling);
+  if (b.pain || felt.length > 0 || b.infection > 20) {
+    say(c('  CE QUE VOUS RESSENTEZ', 'grey'));
+    if (b.pain) for (const w of wrap(b.pain, 70)) say(`   ${c(w, 'red')}`);
+    for (const v of felt) for (const w of wrap(v.feeling ?? '', 70)) say(`   ${c(w, 'yellow')}`);
+    if (b.infection > 20) say(`   ${c('quelque chose vous ronge', 'red')}`);
+    say();
+  } else {
+    say(c('  Rien de particulier. Le corps se tait.', 'grey', 'italic'));
+    say();
+  }
+
+  if (b.conditions.length > 0) {
+    say(c('  CE QUE VOUS PORTEZ', 'grey'));
+    for (const cond of b.conditions) {
+      const since = cond.years === 0 ? 'cette année' : `depuis ${cond.years} ans`;
+      say(
+        `   ${c(pad(cond.label, 28), cond.severity >= 60 ? 'red' : 'yellow')} ` +
+          `${gauge(cond.severity, 100, 10)} ${c(since, 'grey')}`,
+      );
+      if (cond.sign) for (const w of wrap(cond.sign, 66)) say(`     ${c(w, 'grey', 'italic')}`);
+    }
+    say();
+  }
+
+  say(c('  CONSTANTES', 'grey'));
+  for (const v of b.vitals) {
+    const state = v.value < 36 ? 'basse' : v.value > 64 ? 'haute' : 'normale';
+    say(`   ${pad(v.label, 18)} ${c(state, state === 'normale' ? 'grey' : 'red')}`);
+  }
+  say();
+
+  say(c('  LE DÉTAIL', 'grey'));
+  for (const o of b.organs) {
+    say(`   ${pad(o.label, 18)} ${gauge(o.value, 100, 10)} ${c(o.state, 'grey')}`);
+  }
+  say();
   say(rule());
   say(c('  [entrée] retour', 'grey'));
   await ask();

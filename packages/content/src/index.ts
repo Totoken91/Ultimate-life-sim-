@@ -8,6 +8,7 @@ import { TRAITS } from './traits.js';
 import { JOBS } from './jobs.js';
 import { BIRTHS } from './births.js';
 import { ACTIONS } from './actions.js';
+import { CONDITIONS } from './conditions.js';
 
 import { CHILDHOOD_EVENTS } from './events/childhood.js';
 import { YOUTH_EVENTS } from './events/youth.js';
@@ -41,6 +42,7 @@ export const RIVAGE: Ruleset = {
   births: BIRTHS,
   events: EVENTS,
   actions: ACTIONS,
+  conditions: CONDITIONS,
 
   nameFor(rng: Rng, culture: string, sex) {
     const def = CULTURES[culture] ?? CULTURES['vardhen'];
@@ -58,7 +60,7 @@ export const RIVAGE: Ruleset = {
   },
 };
 
-export { CULTURES, SETTLEMENTS, SKILLS, TRAITS, JOBS, BIRTHS, ACTIONS };
+export { CULTURES, SETTLEMENTS, SKILLS, TRAITS, JOBS, BIRTHS, ACTIONS, CONDITIONS };
 
 /**
  * Validation au chargement (doc 01 §6) : un pack invalide fait échouer le

@@ -93,6 +93,40 @@ export {
 } from './systems/types.js';
 export { mortalityRisk, describeHealth, describeMood } from './systems/vitals.js';
 export { HousePrestige, Pruning, Records } from './systems/house.js';
+export { Physiology, applyHealthDelta } from './systems/physiology.js';
+
+// ─── corps ──────────────────────────────────────────────────────────────────
+export {
+  newBody,
+  summarizeHealth,
+  describeVital,
+  organState,
+  painState,
+  ORGAN_IDS,
+  ORGAN_LABELS,
+  VITAL_IDS,
+  VITAL_LABELS,
+  VITAL_WEIGHT,
+  type Body,
+  type OrganId,
+  type VitalId,
+  type ActiveCondition,
+} from './body/body.js';
+export {
+  buildRegistry,
+  tickConditions,
+  addCondition,
+  removeCondition,
+  hasCondition,
+  visibleSigns,
+  causeOf,
+  CONDITION_KIND_LABELS,
+  type ConditionDef,
+  type ConditionKind,
+  type ConditionRegistry,
+  type ConditionCtx,
+  type Course,
+} from './body/conditions.js';
 export { UPKEEP } from './systems/economy.js';
 
 // ─── simulation ─────────────────────────────────────────────────────────────

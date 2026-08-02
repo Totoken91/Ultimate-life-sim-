@@ -200,11 +200,15 @@ des clous :
 
 | Métrique | Cible | Plafond dur |
 |---|---|---|
-| Tick en mode Vie | < 8 ms | 16 ms |
+| Tick en mode Vie (~600 vivants, corps simulé) | < 8 ms | 16 ms |
 | Tick en mode Ère (100 ans agrégés) | < 150 ms | 400 ms |
 | Personnages palier 0+1 en mémoire | ~5 000 | 20 000 |
 | Empreinte mémoire | < 400 Mo | 1 Go |
 | Chargement d'une sauvegarde de 5 000 ans | < 2 s | 5 s |
+
+**Relevé au 2 août 2026** : 6,9 ms par tick pour ~600 personnes entièrement simulées,
+corps compris. Le chemin pour y arriver est raconté dans le [doc 12](12-corps-et-esprit.md)
+§3 — et il commence par un profilage, pas par une intuition.
 
 ## 9. Tests
 

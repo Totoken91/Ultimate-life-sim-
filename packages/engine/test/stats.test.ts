@@ -382,3 +382,114 @@ describe('monde peuplé', () => {
     expect(sim.world.characters.size).toBe(0);
   });
 });
+
+describe('le corps', () => {
+  it('la santé est le résumé du corps, pas une valeur libre', async () => {
+    const { summarizeHealth, newBody } = await import('@ed/engine');
+    const body = newBody(60);
+    const full = summarizeHealth(body);
+    expect(full).toBeGreaterThan(80);
+
+    // Le maillon le plus faible pèse la moitié : un cœur ruiné tue, même
+    // quand tout le reste est intact.
+    body.organs.coeur = 10;
+    expect(summarizeHealth(body)).toBeLessThan(full - 25);
+  });
+
+  it('un choc de santé se paie en organes, en douleur et en fièvre', async () => {
+    const { newBody, applyHealthDelta, Rng } = await import('@ed/engine');
+    const body = newBody(50);
+    const before = Object.values(body.organs).reduce((a, b) => a + b, 0);
+    applyHealthDelta(body, -30, new Rng(1));
+    expect(Object.values(body.organs).reduce((a, b) => a + b, 0)).toBeLessThan(before);
+    expect(body.douleur).toBeGreaterThan(0);
+    expect(body.infection).toBeGreaterThan(0);
+  });
+
+  it('les maux apparaissent, évoluent et peuvent disparaître', async () => {
+    const { newBody, buildRegistry, tickConditions, Rng, addCondition } = await import(
+      '@ed/engine'
+    );
+    const sim = new Simulation(ruleset, {
+      seed: 3,
+      startYear: 400,
+      mode: 'legende',
+      population: 0,
+    });
+    createLife(sim.world, ruleset, new Rng(3).fork('n'));
+    const reg = buildRegistry(ruleset.conditions);
+    const body = newBody(50);
+    const def = ruleset.conditions.find((d) => d.id === 'flux_ventre')!;
+
+    addCondition(body, def, 400, 30);
+    expect(body.conditions).toHaveLength(1);
+
+    let resolved = false;
+    for (let i = 0; i < 40 && !resolved; i++) {
+      sim.world.year = 400 + i;
+      const out = tickConditions(
+        {
+          world: sim.world,
+          subject: sim.world.player,
+          body,
+          age: 30,
+          rng: new Rng(100 + i),
+          onsetScale: 0,
+        },
+        reg,
+      );
+      if (out.resolved.length > 0) resolved = true;
+    }
+    // un mal aigu finit par se régler dans un sens ou dans l'autre
+    expect(resolved || body.conditions[0]!.severity >= 60).toBe(true);
+  });
+
+  it('un mal ne peut nommer la mort que s\'il peut tuer', () => {
+    for (const def of ruleset.conditions) {
+      if (!def.lethal) continue;
+      expect(def.lethal.above).toBeGreaterThanOrEqual(0);
+      expect(def.lethal.above).toBeLessThanOrEqual(100);
+      expect(def.lethal.chance).toBeGreaterThan(0);
+    }
+    // La cataracte et la surdité ne tuent personne.
+    for (const id of ['vue_qui_part', 'oreille_fermee', 'goutte']) {
+      expect(ruleset.conditions.find((d) => d.id === id)?.lethal).toBeUndefined();
+    }
+  });
+
+  it('contracte correctement l\'article de la cause de mort', async () => {
+    const { causeOf } = await import('@ed/engine');
+    expect(causeOf('le mal du sucre')).toBe('du mal du sucre');
+    expect(causeOf('la toux noire')).toBe('de la toux noire');
+    expect(causeOf('l\'hydropisie')).toBe('de l\'hydropisie');
+    expect(causeOf('les jambes torses')).toBe('des jambes torses');
+    expect(causeOf('une plaie qui a tourné')).toBe('d\'une plaie qui a tourné');
+  });
+
+  it('le monde reste peuplé malgré les maladies', () => {
+    const sim = new Simulation(ruleset, { seed: 970, startYear: 400, mode: 'legende' });
+    createLife(sim.world, ruleset, new Rng(970).fork('n'));
+    const start = sim.world.living().length;
+    for (let i = 0; i < 200; i++) {
+      sim.openYear();
+      sim.closeYear();
+    }
+    const end = sim.world.living().length;
+    expect(end).toBeGreaterThan(start * 0.5);
+    expect(end).toBeLessThan(start * 3);
+  });
+
+  it('une part notable des adultes porte un mal, sans que tous soient malades', () => {
+    const sim = new Simulation(ruleset, { seed: 971, startYear: 400, mode: 'legende' });
+    createLife(sim.world, ruleset, new Rng(971).fork('n'));
+    for (let i = 0; i < 150; i++) {
+      sim.openYear();
+      sim.closeYear();
+    }
+    const adults = sim.world.living().filter((c) => sim.world.year - c.birthYear > 25);
+    const ill = adults.filter((c) => c.body.conditions.length > 0);
+    const share = ill.length / Math.max(1, adults.length);
+    expect(share).toBeGreaterThan(0.05);
+    expect(share).toBeLessThan(0.6);
+  });
+});

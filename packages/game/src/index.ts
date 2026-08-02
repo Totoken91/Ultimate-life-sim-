@@ -14,9 +14,11 @@ export {
   status,
   relations,
   self,
+  body,
   worldView,
   type StatusView,
   type RelationView,
   type SelfView,
+  type BodyView,
   type WorldView,
 } from './views.js';

@@ -15,7 +15,7 @@ Interface menu-based. Objectif : générer des **histoires uniques** par émerge
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 88 tests
+pnpm test          # 95 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm typecheck
@@ -41,8 +41,8 @@ Vercel lit `vercel.json` automatiquement : en principe, il suffit d'importer le 
 de déployer la branche. Une fois en ligne, « Ajouter à l'écran d'accueil » depuis le
 navigateur du téléphone donne une icône et un affichage plein écran.
 
-Contenu actuel : **104 événements**, 25 scénarios de naissance, 59 traits, 22 métiers,
-16 compétences, 16 actions, 3 cultures, 6 implantations.
+Contenu actuel : **104 événements**, 25 scénarios de naissance, 59 traits, **46 maux du
+corps et de l'esprit**, 22 métiers, 16 compétences, 16 actions, 3 cultures, 6 implantations.
 
 Ce qui marche déjà : naissance conditionnée avec vérité cachée · 6 attributs + 8 attributs
 cachés · traits innés et acquis · santé, mortalité infantile réelle, vieillissement ·
@@ -62,6 +62,12 @@ importance sont élagués tous les dix ans pour que le monde reste borné sur de
 sa concentration, conditions sociales, lieux, métiers), classements, **livre des records**
 qui survit à ses détenteurs, écran de dynastie avec ordre successoral, et **arbre
 généalogique** navigable. Voir le [doc 10](docs/10-chiffres.md).
+
+**Un corps simulé** : quinze organes, six constantes vitales, 46 maux qui sont des
+*processus* et non des noms — ils apparaissent selon le lieu, le métier et l'âge,
+s'aggravent, rémettent, laissent des traces et finissent parfois par donner leur nom à la
+mort. `health` n'est plus une valeur qu'on pousse : c'est le résumé calculé de tout ça.
+Voir le [doc 12](docs/12-corps-et-esprit.md).
 
 Ce qui n'existe pas encore : économie de production et de prix, gouvernements, agentivité
 PNJ complète, intrigues multi-années, voies de pouvoir, conflits, paliers LOD 2 et 3,
@@ -87,6 +93,7 @@ conception, c'est cette page qui a raison.
 | [09 — Échelle totale](docs/09-echelle-totale.md) | Métiers compositionnels, conflits de la rixe à la guerre stellaire, ères, patrimoine |
 | [10 — Chiffres & records](docs/10-chiffres.md) | Compteurs, statistiques, livre des records, arbre généalogique, élagage |
 | [11 — Économie & pouvoir](docs/11-economie-pouvoir.md) | Domaines récursifs à toutes les échelles, biens, prix locaux, gouvernements malléables |
+| [12 — Corps & esprit](docs/12-corps-et-esprit.md) | Organes, constantes vitales, 46 maux qui sont des processus, maux de l'esprit |
 
 ## Code
 

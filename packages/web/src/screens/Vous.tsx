@@ -1,16 +1,32 @@
-import type { Game, SelfView, StatusView } from '@ed/game';
-import { Bar, Card, Row, Section } from '../ui.js';
+import { useState } from 'react';
+import type { BodyView, Game, SelfView, StatusView } from '@ed/game';
+import { Bar, Card, Chips, Row, Section } from '../ui.js';
+import { Corps } from './Corps.js';
 
 export function Vous({
   game,
   me,
   status,
+  body,
 }: {
   game: Game;
   me: SelfView;
   status: StatusView;
+  body: BodyView;
 }) {
+  const [tab, setTab] = useState<'esprit' | 'corps'>('esprit');
   return (
+    <>
+      <Chips
+        options={[
+          { id: 'esprit' as const, label: 'Vous' },
+          { id: 'corps' as const, label: 'Le corps' },
+        ]}
+        value={tab}
+        onChange={setTab}
+      />
+      {tab === 'corps' && <Corps body={body} />}
+      {tab === 'esprit' && (
     <>
       <Section>Attributs</Section>
       <Card>
@@ -54,7 +70,7 @@ export function Vous({
 
       {me.injuries.length > 0 && (
         <>
-          <Section>Le corps</Section>
+          <Section>Ce que le corps garde</Section>
           <Card>
             {me.injuries.map((i) => (
               <div className="log danger" key={i}>
@@ -112,6 +128,8 @@ export function Vous({
           tone="violet"
         />
       </Card>
+    </>
+      )}
     </>
   );
 }

@@ -3,6 +3,8 @@
 export type EntityId = number & { readonly __brand: 'EntityId' };
 export const asEntityId = (n: number): EntityId => n as EntityId;
 
+import type { Body } from '../body/body.js';
+
 export type Sex = 'm' | 'f';
 
 /** Valeur d'un drapeau narratif. Les flags sont clairsemés et inventés par le contenu. */
@@ -145,6 +147,8 @@ export interface Character {
 
   injuries: Injury[];
   flags: Record<string, FlagValue>;
+  /** Le corps simulé (doc 12). `health` en est le résumé calculé. */
+  body: Body;
 
   fatherId: EntityId | null;
   motherId: EntityId | null;

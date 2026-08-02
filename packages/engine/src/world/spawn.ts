@@ -4,6 +4,7 @@ import type { Rng } from '../rng/rng.js';
 import type { Ruleset, SpawnOptions } from '../content/ruleset.js';
 import type { World } from './world.js';
 import { clamp } from '../util/math.js';
+import { newBody } from '../body/body.js';
 
 const CLASS_WEALTH: Record<SocialClass, number> = {
   esclave: 0,
@@ -69,6 +70,7 @@ export function spawnCharacter(
     paths: [],
     injuries: [],
     flags: {},
+    body: newBody(hidden.genetique),
     fatherId: null,
     motherId: null,
     spouseId: null,
@@ -127,6 +129,7 @@ export function spawnChild(
     100,
   );
   child.health = clamp(Math.round(rng.gaussian(70 + child.hidden.genetique * 0.25, 10)), 10, 100);
+  child.body = newBody(child.hidden.genetique);
 
   // Un enfant qui porte le prénom de son parent rend la Chronique illisible
   // (« Perrin Vaur naquit de Perrin Vaur »). On retire ce cas.

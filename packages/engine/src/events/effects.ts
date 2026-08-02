@@ -4,6 +4,8 @@ import { clamp } from '../util/math.js';
 import { fullName, shortName } from '../model/character.js';
 import { spawnChild } from '../world/spawn.js';
 import { MEMORY_BUDGET_ACTIVE, MEMORY_BUDGET_FOCUS } from '../world/memory.js';
+import { summarizeHealth } from '../body/body.js';
+import { applyHealthDelta } from '../systems/physiology.js';
 
 /** Résout une référence d'effet vers un personnage. */
 function resolve(ctx: EventCtx, ref: Ref | undefined): Character | undefined {
@@ -60,7 +62,15 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
     }
     case 'health': {
       const c = resolve(ctx, fx.who);
-      if (c) c.health = clamp(c.health + fx.d, 0, 100);
+      if (!c) return;
+      // Le contenu écrit toujours « -12 de santé » ; c'est le corps qui décide
+      // de ce que ça veut dire — quel organe, quelle douleur, quelle fièvre.
+      if (c.body) {
+        applyHealthDelta(c.body, fx.d, ctx.rng.fork('health', c.id, world.year));
+        c.health = summarizeHealth(c.body);
+      } else {
+        c.health = clamp(c.health + fx.d, 0, 100);
+      }
       return;
     }
     case 'mood': {

@@ -26,7 +26,7 @@ export const Economy: System = {
   priority: 40,
   run(ctx) {
     const { world, ruleset } = ctx;
-    for (const c of world.living()) {
+    for (const c of ctx.living) {
       const age = ageOf(c, world.year);
       if (age < 6) continue;
       const rng = ctx.rng.fork('economy', world.year, c.id);
@@ -69,7 +69,7 @@ export const SocialMobility: System = {
   phase: 'POST',
   priority: 40,
   run(ctx) {
-    for (const c of ctx.world.living()) {
+    for (const c of ctx.living) {
       // La noblesse et la royauté sont des statuts, pas des soldes bancaires :
       // on n'y entre ni n'en sort par l'argent seul.
       if (c.socialClass === 'noble' || c.socialClass === 'royal') continue;
@@ -93,7 +93,7 @@ export const SkillDecay: System = {
   phase: 'PRE',
   priority: 45,
   run(ctx) {
-    for (const c of ctx.world.living()) {
+    for (const c of ctx.living) {
       const job = c.jobId ? ctx.ruleset.jobs[c.jobId] : undefined;
       for (const [id, value] of Object.entries(c.skills)) {
         if (job && id in job.trains) continue;

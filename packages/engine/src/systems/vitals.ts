@@ -2,9 +2,11 @@ import type { System, TickContext } from './types.js';
 import type { Character } from '../model/types.js';
 import { ageOf } from '../model/character.js';
 import { clamp, drift } from '../util/math.js';
+import { applyHealthDelta } from './physiology.js';
 import { fullName, shortName } from '../model/character.js';
 import { makeEventCtx } from '../events/engine.js';
 import { killCharacter } from '../events/effects.js';
+import { causeOf } from '../body/conditions.js';
 
 /** Modificateur de longévité apporté par les traits (défini par le contenu). */
 function traitLongevity(ctx: TickContext, c: Character): number {
@@ -85,17 +87,16 @@ export const Aging: System = {
   priority: 10,
   run(ctx) {
     const { world } = ctx;
-    for (const c of world.living()) {
+    for (const c of ctx.living) {
       const age = ageOf(c, world.year);
       const rng = ctx.rng.fork('vitals.aging', world.year, c.id);
 
-      // santé : croissance jusqu'à 25, plateau, puis déclin qui s'accélère
-      let target: number;
-      if (age < 20) target = 72 + c.hidden.genetique * 0.28;
-      else if (age < 45) target = 68 + c.hidden.genetique * 0.3;
-      else target = clamp(95 - (age - 45) * 1.35 + c.hidden.genetique * 0.2, 5, 92);
-      target += traitHealth(ctx, c);
-      c.health = clamp(drift(c.health, target, 0.22) + rng.gaussian(0, 2.5), 0, 100);
+      // La santé est calculée par la physiologie (doc 12) ; ici on ne fait
+      // qu'appliquer ce que les traits apportent ou retirent au corps.
+      const traitDelta = traitHealth(ctx, c);
+      if (traitDelta !== 0 && c.body) {
+        applyHealthDelta(c.body, traitDelta * 0.35, rng.fork('traits'));
+      }
 
       // humeur : revient lentement vers un point d'équilibre personnel
       const moodTarget = clamp(
@@ -117,7 +118,7 @@ export const Mortality: System = {
   priority: 90,
   run(ctx) {
     const { world } = ctx;
-    for (const c of world.living()) {
+    for (const c of ctx.living) {
       const age = ageOf(c, world.year);
       const rng = ctx.rng.fork('vitals.mortality', world.year, c.id);
       const risk = mortalityRisk(ctx, c);
@@ -141,8 +142,25 @@ export const Mortality: System = {
         continue;
       }
 
+      // Si le corps porte un mal avancé, c'est lui qu'on nomme. Mourir « de
+      // fièvre » quand on traîne la toux noire depuis quinze ans efface
+      // justement l'histoire que la simulation vient d'écrire.
+      // Seuls les maux qui peuvent tuer sont nommés : on ne meurt pas d'une
+      // cataracte, même très avancée.
+      const lethalDefs = new Map(
+        (ctx.ruleset.conditions ?? []).filter((d) => d.lethal).map((d) => [d.id, d]),
+      );
+      const worst = (c.body?.conditions ?? [])
+        .filter((cond) => !cond.hidden && cond.severity >= 40 && lethalDefs.has(cond.defId))
+        .sort((a2, b2) => b2.severity - a2.severity)[0];
+      const named = worst ? lethalDefs.get(worst.defId)?.label : undefined;
+
       const causes = age <= 12 ? CAUSES_YOUNG : age >= 60 ? CAUSES_OLD : CAUSES_ADULT;
-      const cause = c.health <= 5 ? 'de maladie et d\'épuisement' : rng.pick(causes);
+      const cause = named
+        ? causeOf(named)
+        : c.health <= 5
+          ? 'de maladie et d\'épuisement'
+          : rng.pick(causes);
       const eventCtx = makeEventCtx(world, ctx.ruleset, rng, c, {});
       killCharacter(eventCtx, c, cause);
     }
@@ -156,7 +174,7 @@ export const Subsistence: System = {
   priority: 20,
   run(ctx) {
     const { world } = ctx;
-    for (const c of world.living()) {
+    for (const c of ctx.living) {
       if (c.wealth >= 0) continue;
       const severity = clamp(-c.wealth / 120, 0.5, 12);
       c.health = clamp(c.health - severity, 0, 100);

@@ -8,7 +8,15 @@ import {
   describeHealth,
   describeMood,
   describeWealth,
+  describeVital,
   effectiveStat,
+  organState,
+  painState,
+  CONDITION_KIND_LABELS,
+  ORGAN_IDS,
+  ORGAN_LABELS,
+  VITAL_IDS,
+  VITAL_LABELS,
   fullName,
   lifeStage,
   relevance,
@@ -150,6 +158,70 @@ export function self(game: Game): SelfView {
     memories,
     paths: [...p.paths],
     children,
+  };
+}
+
+export interface BodyView {
+  health: number;
+  healthLabel: string;
+  organs: { id: string; label: string; value: number; state: string }[];
+  vitals: { id: string; label: string; value: number; feeling: string | null }[];
+  pain: string | null;
+  infection: number;
+  conditions: {
+    id: string;
+    label: string;
+    kind: string;
+    since: number;
+    years: number;
+    severity: number;
+    sign: string | null;
+  }[];
+}
+
+/** Ce que le personnage sait de son propre corps — jamais de vocabulaire clinique. */
+export function body(game: Game): BodyView {
+  const p = game.player;
+  const b = p.body;
+  const defs = new Map(game.ruleset.conditions.map((d) => [d.id, d]));
+
+  return {
+    health: p.health,
+    healthLabel: describeHealth(p),
+    organs: ORGAN_IDS.map((id) => ({
+      id,
+      label: ORGAN_LABELS[id],
+      value: Math.round(b.organs[id]),
+      state: organState(b.organs[id]),
+    })),
+    vitals: VITAL_IDS.map((id) => ({
+      id,
+      label: VITAL_LABELS[id],
+      value: Math.round(b.vitals[id]),
+      feeling: describeVital(id, b.vitals[id]),
+    })),
+    pain: painState(b.douleur),
+    infection: Math.round(b.infection),
+    conditions: b.conditions
+      .filter((c) => !c.hidden)
+      .map((c) => {
+        const def = defs.get(c.defId);
+        const signs = def?.signs ?? [];
+        const index = Math.min(
+          Math.max(0, signs.length - 1),
+          Math.floor((c.severity / 100) * signs.length),
+        );
+        return {
+          id: c.defId,
+          label: def?.label ?? c.defId,
+          kind: def ? CONDITION_KIND_LABELS[def.kind] : '',
+          since: c.since,
+          years: game.world.year - c.since,
+          severity: Math.round(c.severity),
+          sign: signs[index] ?? null,
+        };
+      })
+      .sort((a, b2) => b2.severity - a.severity),
   };
 }
 

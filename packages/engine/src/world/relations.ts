@@ -96,6 +96,11 @@ export class RelationGraph {
     return out;
   }
 
+  /** Parcourt les arêtes sans trier. À n'utiliser que si l'ordre n'influe pas. */
+  forEach(fn: (rel: Relation) => void): void {
+    for (const rel of this.edges.values()) fn(rel);
+  }
+
   all(): Relation[] {
     return [...this.edges.values()].sort((a, b) => a.from - b.from || a.to - b.to);
   }

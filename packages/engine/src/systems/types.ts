@@ -3,6 +3,7 @@ import type { Ruleset } from '../content/ruleset.js';
 import type { Rng } from '../rng/rng.js';
 import type { EventEngine } from '../events/engine.js';
 import type { PendingEvent } from '../events/types.js';
+import type { Character } from '../model/types.js';
 
 /**
  * Phases fixes d'un tick (doc 01 §5). Aucun système n'appelle un autre système :
@@ -20,6 +21,12 @@ export interface TickContext {
   readonly rng: Rng;
   /** Événements à présenter au joueur ce tour-ci. */
   readonly queue: PendingEvent[];
+  /**
+   * Les vivants, triés, calculés **une fois** par phase. Douze systèmes qui
+   * appelaient chacun `world.living()` faisaient douze tris de six cents
+   * entrées par année.
+   */
+  readonly living: readonly Character[];
 }
 
 export interface System {

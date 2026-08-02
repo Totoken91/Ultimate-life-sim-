@@ -19,10 +19,12 @@ export const RelationDrift: System = {
   priority: 60,
   run(ctx) {
     const { world } = ctx;
-    for (const rel of world.relations.all()) {
+    // Chaque arête évolue indépendamment des autres : l'ordre n'a aucune
+    // influence sur le résultat, on peut donc se passer du tri.
+    world.relations.forEach((rel) => {
       const a = world.get(rel.from);
       const b = world.get(rel.to);
-      if (!a || !b || !a.alive || !b.alive) continue;
+      if (!a || !b || !a.alive || !b.alive) return;
 
       const together = a.settlement === b.settlement;
       const bond = rel.type === 'sang' || rel.type === 'mariage';
@@ -36,7 +38,7 @@ export const RelationDrift: System = {
 
       // proximité familiale : les liens du sang se réchauffent d'eux-mêmes
       if (bond && together && rel.affection < 45) rel.affection = clamp(rel.affection + 2, -100, 100);
-    }
+    });
   },
 };
 
@@ -52,7 +54,7 @@ export const Forgetting: System = {
   priority: 65,
   run(ctx) {
     const { world } = ctx;
-    for (const c of world.living()) {
+    for (const c of ctx.living) {
       if (c.lod !== 0) continue;
       const mems = world.memories.of(c.id);
       if (mems.length === 0) continue;
@@ -86,7 +88,7 @@ export const NpcLife: System = {
   priority: 50,
   run(ctx) {
     const { world, ruleset } = ctx;
-    const living = world.living();
+    const living = ctx.living;
 
     // Index construits une fois par tick. Les recalculer par personnage rendait
     // le système quadratique — invisible à 10 PNJ, ruineux à 500.

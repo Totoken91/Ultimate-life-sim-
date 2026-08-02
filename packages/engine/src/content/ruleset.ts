@@ -11,6 +11,7 @@ import type {
   StatId,
 } from '../model/types.js';
 import type { EventDef, EventCtx, Effect, SelectCtx } from '../events/types.js';
+import type { ConditionDef } from '../body/conditions.js';
 import type { World } from '../world/world.js';
 
 /**
@@ -193,6 +194,8 @@ export interface Ruleset {
   births: BirthScenario[];
   events: EventDef[];
   actions: ActionDef[];
+  /** Maux du corps et de l'esprit (doc 12). */
+  conditions: ConditionDef[];
   /** Tire un nom cohérent avec la culture. */
   nameFor(rng: Rng, culture: string, sex: Sex): { given: string; family: string };
   /** Nom de maison proposé à la fondation. */
@@ -276,6 +279,21 @@ export function validateRuleset(rs: Ruleset): ValidationIssue[] {
       if (!rs.traits[x]) err(`trait:${t.id}`, `exclusion vers un trait inconnu « ${x} »`);
     }
   }
+  const conditionIds = new Set<string>();
+  for (const c of rs.conditions ?? []) {
+    if (conditionIds.has(c.id)) err(`condition:${c.id}`, 'identifiant dupliqué');
+    conditionIds.add(c.id);
+    for (const m of c.marks ?? []) {
+      if (!rs.traits[m]) err(`condition:${c.id}`, `trait inconnu « ${m} »`);
+    }
+    if (c.lethal && (c.lethal.above < 0 || c.lethal.above > 100)) {
+      err(`condition:${c.id}`, `seuil létal hors bornes (${c.lethal.above})`);
+    }
+    if (!c.signs || c.signs.length === 0) {
+      warn(`condition:${c.id}`, 'aucun signe visible — le monde ne peut pas la voir');
+    }
+  }
+
   if (rs.births.length === 0) err('births', 'aucun scénario de naissance');
   if (settlementIds.size === 0) err('settlements', 'aucune implantation');
 
