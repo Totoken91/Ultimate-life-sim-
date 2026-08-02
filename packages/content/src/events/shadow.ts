@@ -35,7 +35,7 @@ export const SHADOW_EVENTS = [
           { k: 'trait', add: 'recherche' },
           { k: 'trait', add: 'hante' },
           { k: 'hidden', id: 'karma', d: -22 },
-          { k: 'chronicle', kind: 'violence', importance: 4, data: { quoi: 'un cambriolage qui finit mal' } },
+          { k: 'chronicle', kind: 'violence', importance: 4, data: { quoi: 'prit part à un cambriolage qui finit mal' } },
           { k: 'seed', eventId: 'seed.justice.rattrape', min: 2, max: 10, actors: [], note: 'le mort du cambriolage' },
         ]),
         out(1.2, () => 'La garde attendait. Vous vous en sortez de justesse, sans rien, avec un visage connu.', [

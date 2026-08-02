@@ -328,10 +328,21 @@ export function killCharacter(ctx: EventCtx, c: Character, cause: string): void 
   c.causeOfDeath = cause;
   const age = world.year - c.birthYear;
 
+  // Une chronique est *personnelle* : la mort d'un inconnu n'y a pas la même
+  // place que celle de quelqu'un qu'on aimait ou qu'on haïssait.
+  const known = world.relations.get(world.playerId, c.id);
+  const importance: 1 | 2 | 3 | 4 | 5 = c.isPlayer
+    ? 5
+    : !known
+      ? 1
+      : Math.abs(known.affection) >= 30 || known.type === 'sang' || known.type === 'mariage'
+        ? 3
+        : 2;
+
   world.record({
     year: world.year,
     kind: 'mort',
-    importance: c.isPlayer ? 5 : 3,
+    importance,
     actors: [{ id: c.id, name: fullName(c) }],
     data: { age, cause },
   });

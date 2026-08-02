@@ -64,7 +64,6 @@ export const FAMILY_EVENTS = [
           { k: 'wealth', d: 4000 },
           { k: 'hidden', id: 'influence', d: 12 },
           { k: 'rel', to: 'arrangeur', from: 'arrangeur', affection: 20, respect: 15 },
-          { k: 'chronicle', kind: 'mariage', importance: 3, actors: ['subject', 'promis'], data: { arrange: true } },
         ],
       )),
       opt('refuser', 'Refuser', sure(
@@ -114,7 +113,7 @@ export const FAMILY_EVENTS = [
           { k: 'mood', d: -30 },
           { k: 'trait', add: 'endeuille' },
           { k: 'memory', text: 'L\'enfant qui n\'a pas respiré. On ne lui a pas donné de nom.', salience: 94, tags: ['deuil'] },
-          { k: 'chronicle', kind: 'mort', importance: 3, data: { age: 0, cause: 'né sans souffle' } },
+          { k: 'chronicle', kind: 'note', importance: 3, data: { texte: 'Un enfant naquit sans souffle. On l\'enterra sans nom.' } },
         ]),
         out(0.6, () => 'L\'enfant vit. Votre époux, non. On vous le dit dans le couloir.', [
           { k: 'child' },
