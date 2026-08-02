@@ -1,5 +1,7 @@
 export {
   Game,
+  TRAININGS,
+  type TrainingKind,
   type Command,
   type InteractionKind,
   type NewGameOptions,

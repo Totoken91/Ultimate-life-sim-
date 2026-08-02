@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
     "target": "ES2023",
-    "lib": ["ES2023"],
+    "lib": [
+      "ES2023"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "types": ["node"],
-
+    "types": [
+      "node"
+    ],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
@@ -13,21 +16,37 @@
     "exactOptionalPropertyTypes": false,
     "useUnknownInCatchVariables": true,
     "verbatimModuleSyntax": true,
-
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
-
     "baseUrl": ".",
     "paths": {
-      "@ed/engine": ["packages/engine/src/index.ts"],
-      "@ed/engine/*": ["packages/engine/src/*"],
-      "@ed/content": ["packages/content/src/index.ts"],
-      "@ed/content/*": ["packages/content/src/*"],
-      "@ed/game": ["packages/game/src/index.ts"],
-      "@ed/game/*": ["packages/game/src/*"]
+      "@ed/engine": [
+        "packages/engine/src/index.ts"
+      ],
+      "@ed/engine/*": [
+        "packages/engine/src/*"
+      ],
+      "@ed/content": [
+        "packages/content/src/index.ts"
+      ],
+      "@ed/content/*": [
+        "packages/content/src/*"
+      ],
+      "@ed/game": [
+        "packages/game/src/index.ts"
+      ],
+      "@ed/game/*": [
+        "packages/game/src/*"
+      ]
     }
   },
-  "include": ["packages/*/src/**/*.ts", "packages/*/test/**/*.ts"]
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts"
+  ],
+  "exclude": [
+    "packages/web"
+  ]
 }

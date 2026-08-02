@@ -3,16 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=22" },
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "play": "tsx packages/cli/src/main.ts",
     "sim": "tsx packages/tools/src/emergence.ts",
-    "typecheck": "tsc -b",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p packages/web/tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "web": "pnpm --filter @ed/web dev",
+    "build:web": "pnpm --filter @ed/web build",
+    "smoke:web": "pnpm build:web && tsx packages/tools/src/websmoke.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "playwright": "^1.62.1",
     "tsx": "^4.19.0",
     "typescript": "^5.9.2",
     "vitest": "^2.1.0"

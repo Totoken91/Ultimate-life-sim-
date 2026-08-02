@@ -13,11 +13,33 @@ Interface menu-based. Objectif : générer des **histoires uniques** par émerge
 
 ```bash
 pnpm install
-pnpm play          # jouer une vie
+pnpm play          # jouer dans le terminal
+pnpm web           # jouer dans le navigateur (http://localhost:5173)
 pnpm test          # 88 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
+pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm typecheck
 ```
+
+## Jouer sur téléphone
+
+Le moteur n'a aucune I/O, donc l'application web est **entièrement statique** : pas de
+serveur, pas de base, pas de compte. Elle tourne dans l'onglet et sauvegarde dans le
+navigateur à chaque choix.
+
+Déploiement Vercel — `vercel.json` est à la racine, rien d'autre à configurer :
+
+| Réglage | Valeur |
+|---|---|
+| Framework Preset | *Other* |
+| Build Command | `pnpm --filter @ed/web build` |
+| Output Directory | `packages/web/dist` |
+| Install Command | `pnpm install --frozen-lockfile` |
+| Root Directory | *(laisser la racine du dépôt)* |
+
+Vercel lit `vercel.json` automatiquement : en principe, il suffit d'importer le dépôt et
+de déployer la branche. Une fois en ligne, « Ajouter à l'écran d'accueil » depuis le
+navigateur du téléphone donne une icône et un affichage plein écran.
 
 Contenu actuel : **104 événements**, 25 scénarios de naissance, 59 traits, 22 métiers,
 16 compétences, 16 actions, 3 cultures, 6 implantations.
@@ -73,13 +95,14 @@ packages/
   engine/    coeur pur, déterministe, sans I/O ni affichage
   content/   tout le contenu de jeu, en données typées (« Le Rivage »)
   game/      orchestration de session : boucle, commandes, vues
-  cli/       rendu terminal — un client jetable parmi d'autres
-  tools/     autoplay + banc d'émergence
+  cli/       rendu terminal
+  web/       application React statique, pensée pour le téléphone
+  tools/     autoplay, banc d'émergence, fumigation navigateur
 ```
 
-Règle de dépendance : `cli → game → engine ← content`, `tools → game`.
-`engine` ne connaît rien au-dessus de lui, ce qui permettra de brancher une UI web
-plus tard sans toucher une ligne de simulation.
+Règle de dépendance : `cli → game → engine ← content`, `web → game`, `tools → game`.
+`engine` ne connaît rien au-dessus de lui — c'est exactement ce qui a permis d'ajouter
+l'interface web sans toucher une seule ligne de simulation.
 
 ## Résumé exécutif en 10 lignes
 

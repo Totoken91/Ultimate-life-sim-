@@ -32,3 +32,10 @@ jobs:
       # des vies absurdes, ça se voit ici avant que ça se voie en jouant.
       - name: Banc d'émergence
         run: pnpm sim 200 2
+
+      # Compiler n'est pas tourner : on ouvre un vrai navigateur, on joue
+      # quarante ans, et la moindre erreur de console fait échouer le build.
+      - name: Application web — build et fumigation
+        run: |
+          pnpm exec playwright install --with-deps chromium
+          pnpm smoke:web

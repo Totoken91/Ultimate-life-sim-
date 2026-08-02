@@ -1,0 +1,373 @@
+/*
+ * Le jeu est un texte. Tout ici sert la lecture : une colonne étroite, une
+ * serif pour la prose, une sans pour les chiffres, et des cibles tactiles
+ * assez grandes pour être touchées d'une main dans le métro.
+ */
+
+:root {
+  --bg: #100e0c;
+  --bg-soft: #191612;
+  --surface: #201c17;
+  --line: #2f2a23;
+  --text: #ece5d9;
+  --muted: #948a7c;
+  --faint: #6a6156;
+  --gold: #d8a657;
+  --danger: #cc5f52;
+  --good: #7fa87a;
+  --cool: #6f9bb5;
+  --violet: #a98ac0;
+
+  --prose: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --ui: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --pad: 16px;
+  --radius: 12px;
+  --tap: 46px;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 16px;
+  line-height: 1.5;
+  overscroll-behavior-y: none;
+}
+
+/* ─── coquille ────────────────────────────────────────────────────────────── */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  background: var(--bg);
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--pad);
+  padding-bottom: 32px;
+}
+
+/* ─── en-tête ─────────────────────────────────────────────────────────────── */
+
+.hdr {
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) var(--pad) 12px;
+  background: linear-gradient(180deg, var(--bg-soft), var(--bg));
+  border-bottom: 1px solid var(--line);
+}
+
+.hdr h1 {
+  margin: 0;
+  font-family: var(--prose);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.hdr .sub {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.hdr .titles {
+  color: var(--violet);
+  font-size: 12px;
+  margin-top: 3px;
+}
+
+.vitals {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.vital {
+  flex: 1 1 90px;
+  min-width: 90px;
+}
+
+.vital .lbl {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--faint);
+}
+
+.vital .val {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.meter {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.35s ease;
+}
+
+/* ─── barre d'onglets ─────────────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  border-top: 1px solid var(--line);
+  background: var(--bg-soft);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.tabs button {
+  flex: 1;
+  min-height: var(--tap);
+  border: 0;
+  background: none;
+  color: var(--faint);
+  font-family: var(--ui);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  padding: 6px 2px;
+  cursor: pointer;
+}
+
+.tabs button.on {
+  color: var(--gold);
+  box-shadow: inset 0 2px 0 var(--gold);
+}
+
+/* ─── blocs ───────────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.sec {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--faint);
+  margin: 20px 0 8px;
+}
+
+.sec:first-child {
+  margin-top: 0;
+}
+
+.prose {
+  font-family: var(--prose);
+  font-size: 17px;
+  line-height: 1.62;
+}
+
+.prose p {
+  margin: 0 0 12px;
+}
+
+.muted {
+  color: var(--muted);
+}
+.faint {
+  color: var(--faint);
+}
+.gold {
+  color: var(--gold);
+}
+.danger {
+  color: var(--danger);
+}
+.good {
+  color: var(--good);
+}
+.cool {
+  color: var(--cool);
+}
+.violet {
+  color: var(--violet);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row .k {
+  color: var(--muted);
+}
+
+.row .v {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── boutons ─────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: block;
+  width: 100%;
+  min-height: var(--tap);
+  text-align: left;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  font-family: var(--ui);
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn:active {
+  background: #262019;
+}
+
+.btn.primary {
+  border-color: var(--gold);
+  color: var(--gold);
+  font-weight: 600;
+}
+
+.btn.locked {
+  color: var(--faint);
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.btn .hint {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+}
+
+.btn .hint.warn {
+  color: var(--violet);
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.chip {
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 13px;
+  min-height: 36px;
+  cursor: pointer;
+  font-family: var(--ui);
+}
+
+.chip.on {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+/* ─── divers ──────────────────────────────────────────────────────────────── */
+
+.log {
+  font-size: 13px;
+  color: var(--muted);
+  border-left: 2px solid var(--line);
+  padding: 3px 0 3px 10px;
+  margin-bottom: 5px;
+}
+
+.bar {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--cool);
+}
+
+.tree {
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--muted);
+}
+
+.tree .me {
+  color: var(--gold);
+}
+
+.notice {
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+.title-screen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100%;
+  padding: 24px;
+}
+
+.title-screen h1 {
+  font-family: var(--prose);
+  font-size: 30px;
+  margin: 0 0 4px;
+  letter-spacing: 0.01em;
+}
+
+hr.rule {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 18px 0;
+}
