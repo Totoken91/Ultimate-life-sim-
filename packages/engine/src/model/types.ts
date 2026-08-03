@@ -298,6 +298,8 @@ export interface WorldTally {
   deathsByCause: Record<string, number>;
   deathsByYear: Record<number, number>;
   birthsByYear: Record<number, number>;
+  /** Combien de fois chaque conduite de PNJ a été jouée (doc 13 §6). */
+  npcActions: Record<string, number>;
 }
 
 export function emptyTally(): WorldTally {
@@ -309,6 +311,7 @@ export function emptyTally(): WorldTally {
     deathsByCause: {},
     deathsByYear: {},
     birthsByYear: {},
+    npcActions: {},
   };
 }
 

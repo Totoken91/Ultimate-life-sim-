@@ -8,6 +8,7 @@ import { Forgetting, NpcLife, NpcVisible, RelationDrift } from '../systems/socia
 import { EventDraw, SeedMaturation } from '../systems/events.js';
 import { HousePrestige, Pruning, Records } from '../systems/house.js';
 import { Physiology } from '../systems/physiology.js';
+import { Agency } from '../systems/agency.js';
 import type { PendingEvent } from '../events/types.js';
 import { Rng } from '../rng/rng.js';
 import { ageOf } from '../model/character.js';
@@ -36,6 +37,7 @@ export function defaultRegistry(): SystemRegistry {
     Forgetting,
     SeedMaturation,
     NpcLife,
+    Agency,
     NpcVisible,
     EventDraw,
     Subsistence,

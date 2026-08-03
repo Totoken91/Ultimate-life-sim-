@@ -28,7 +28,13 @@ export {
 } from './model/character.js';
 
 // ─── monde ──────────────────────────────────────────────────────────────────
-export { World, type WorldMode, type WorldOptions, type TagHit } from './world/world.js';
+export {
+  World,
+  type WorldMode,
+  type WorldOptions,
+  type TagHit,
+  type NewsItem,
+} from './world/world.js';
 export { RelationGraph, describeFeeling } from './world/relations.js';
 export {
   MemoryStore,
@@ -128,6 +134,31 @@ export {
   type Course,
 } from './body/conditions.js';
 export { UPKEEP } from './systems/economy.js';
+
+// ─── agentivité des PNJ ─────────────────────────────────────────────────────
+export {
+  DRIVE_IDS,
+  DRIVE_LABELS,
+  computeDrives,
+  topDrives,
+  emptyCast,
+  readRelations,
+  upkeepOf,
+  type DriveId,
+  type Drives,
+  type Cast,
+  type Situation,
+} from './ai/drives.js';
+export {
+  ActionIndex,
+  chooseAction,
+  type NpcActionDef,
+  type NpcActionCtx,
+  type CastRole,
+  type NewsReach,
+  type Decision,
+} from './ai/actions.js';
+export { Agency } from './systems/agency.js';
 
 // ─── simulation ─────────────────────────────────────────────────────────────
 export {

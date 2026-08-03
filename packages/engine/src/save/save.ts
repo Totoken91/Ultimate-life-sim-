@@ -10,7 +10,7 @@ import type {
   Relation,
   Seed,
 } from '../model/types.js';
-import { World, type TagHit, type WorldMode } from '../world/world.js';
+import { World, type NewsItem, type TagHit, type WorldMode } from '../world/world.js';
 import { RelationGraph } from '../world/relations.js';
 import { emptyTally } from '../model/types.js';
 import { ORGAN_IDS, newBody } from '../body/body.js';
@@ -20,7 +20,7 @@ import { MemoryStore } from '../world/memory.js';
  * ADR-008 : instantané complet versionné, pas de rejeu d'event log.
  * Les paliers T2/T3 ne seront jamais sauvegardés — ils sont regénérés.
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 
 export interface WorldSnapshot {
   version: number;
@@ -40,6 +40,7 @@ export interface WorldSnapshot {
   tagHits: TagHit[];
   tally: WorldTally;
   records: RecordBook;
+  news: NewsItem[];
 }
 
 export function snapshot(world: World): WorldSnapshot {
@@ -61,6 +62,7 @@ export function snapshot(world: World): WorldSnapshot {
     tagHits: world.tagHits,
     tally: world.tally,
     records: world.records,
+    news: world.news,
   };
 }
 
@@ -80,6 +82,7 @@ export function restore(snap: WorldSnapshot): World {
   world.tagHits = snap.tagHits;
   world.tally = snap.tally;
   world.records = snap.records;
+  world.news = snap.news ?? [];
   return world;
 }
 
@@ -133,6 +136,16 @@ export const MIGRATIONS: Record<number, Migration> = {
       c['body'] = body;
     }
     raw['version'] = 4;
+    return raw;
+  },
+
+  // v4 → v5 : le fil de nouvelles. Une vieille partie repart sans passé
+  // rapporté : les PNJ n'agissaient pas, il n'y a rien à raconter.
+  4: (raw) => {
+    if (!Array.isArray(raw['news'])) raw['news'] = [];
+    const tally = raw['tally'] as Record<string, unknown> | undefined;
+    if (tally && !tally['npcActions']) tally['npcActions'] = {};
+    raw['version'] = 5;
     return raw;
   },
 };

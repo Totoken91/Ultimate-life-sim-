@@ -39,6 +39,8 @@ export interface System {
 
 export class SystemRegistry {
   private systems: System[] = [];
+  private clock: (() => number) | null = null;
+  private timings: Map<string, number> | null = null;
 
   register(...systems: System[]): this {
     this.systems.push(...systems);
@@ -51,9 +53,30 @@ export class SystemRegistry {
     return this;
   }
 
+  /**
+   * Chronomètre chaque système. L'horloge est **injectée** : `engine` n'a pas
+   * le droit d'appeler `performance.now` (ADR-003), et un budget qu'on ne
+   * mesure pas est un budget qu'on dépasse (doc 01 §8).
+   */
+  instrument(clock: () => number): Map<string, number> {
+    this.clock = clock;
+    this.timings = new Map();
+    return this.timings;
+  }
+
   runPhase(phase: TickPhase, ctx: TickContext): void {
+    const clock = this.clock;
+    if (!clock || !this.timings) {
+      for (const sys of this.systems) {
+        if (sys.phase === phase) sys.run(ctx);
+      }
+      return;
+    }
     for (const sys of this.systems) {
-      if (sys.phase === phase) sys.run(ctx);
+      if (sys.phase !== phase) continue;
+      const t0 = clock();
+      sys.run(ctx);
+      this.timings.set(sys.id, (this.timings.get(sys.id) ?? 0) + clock() - t0);
     }
   }
 

@@ -4,6 +4,7 @@ import type { Rng } from '../rng/rng.js';
 import type { Ruleset, SpawnOptions } from '../content/ruleset.js';
 import type { World } from './world.js';
 import { clamp } from '../util/math.js';
+import { classRank } from '../model/character.js';
 import { newBody } from '../body/body.js';
 
 const CLASS_WEALTH: Record<SocialClass, number> = {
@@ -42,6 +43,14 @@ export function spawnCharacter(
   hidden.destinee = rng.stat(20, 15);
   hidden.ambition = rng.stat(40, 22);
   hidden.karma = 50;
+  // Ces trois-là restaient à zéro pour tout PNJ : personne dans le monde
+  // n'était donc assez corrompu pour rançonner, assez fêlé pour basculer, ni
+  // assez en vue pour fonder quoi que ce soit. Les conduites correspondantes
+  // ne sortaient jamais (doc 13 §6).
+  hidden.corruption = clamp(rng.stat(14, 15), 0, 100);
+  hidden.folie = clamp(rng.stat(7, 11), 0, 100);
+  // On naît avec le crédit de son rang. Le reste se gagne.
+  hidden.influence = clamp(rng.stat(4 + classRank(socialClass) * 6, 9), 0, 100);
 
   const c: Character = {
     id: world.allocId(),

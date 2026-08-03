@@ -231,6 +231,8 @@ export interface WorldView {
   mode: string;
   activeSeeds: number;
   knownPeople: number;
+  /** Ce que les autres ont fait pendant que vous viviez votre vie (doc 13 §4). */
+  news: { year: number; text: string; ici: boolean }[];
 }
 
 export function worldView(game: Game): WorldView {
@@ -248,5 +250,10 @@ export function worldView(game: Game): WorldView {
     mode: world.mode,
     activeSeeds: world.seeds.length,
     knownPeople: world.relations.from(game.player.id).length,
+    news: world.recentNews(15, 30).map((n) => ({
+      year: n.year,
+      text: n.text,
+      ici: n.place === game.player.settlement,
+    })),
   };
 }

@@ -124,7 +124,10 @@ Une demande n'est « livrée » que lorsqu'elle est **jouable**, pas lorsqu'elle
 | Handicap lourd, mutilation | ✅ livré | traits innés, blessures permanentes |
 | Neuroatypie, maladie mentale | ✅ livré | [09](09-echelle-totale.md) §8, traits + 2 naissances |
 | Esclavage | ✅ livré | naissance `esclave` + affranchissement |
-| PNJ qui vivent sans le joueur | 🟡 partiel | naissent, se marient, meurent ; pas encore d'ambitions |
+| PNJ qui vivent sans le joueur | ✅ livré | [13](13-agentivite.md) — 10 pulsions, 32 conduites, fil de rumeurs |
+| PNJ qui trahissent et deviennent puissants | 🟡 partiel | ils s'allient, rançonnent, dénoncent, fondent des maisons, tuent ; pas encore de factions |
+| PNJ qui déclenchent des guerres | 📐 conçu | [09](09-echelle-totale.md) §2 — après les factions, Phase 3 |
+| PNJ qui créent des religions | 📐 conçu | cultures et religions — Phase 3 |
 | Mort → descendant **ou un gars random** | ✅ livré | héritier · suivre quelqu'un · nouveau-né |
 | Statistiques partout | ✅ livré | [10](10-chiffres.md) |
 | Arbre généalogique | ✅ livré | écran Dynastie |

@@ -12,6 +12,8 @@ import type {
 } from '../model/types.js';
 import type { EventDef, EventCtx, Effect, SelectCtx } from '../events/types.js';
 import type { ConditionDef } from '../body/conditions.js';
+import type { NpcActionDef } from '../ai/actions.js';
+import { DRIVE_IDS, type DriveId } from '../ai/drives.js';
 import type { World } from '../world/world.js';
 
 /**
@@ -33,6 +35,12 @@ export interface TraitDef {
   longevity?: number;
   /** Traits incompatibles : poser l'un retire les autres. */
   excludes?: string[];
+  /**
+   * Ce que le caractère fait pencher dans les pulsions (doc 13 §1). C'est ici,
+   * dans la donnée, que « ambitieux » veut dire quelque chose — le moteur ne
+   * connaît pas un seul identifiant de trait.
+   */
+  drives?: Partial<Record<DriveId, number>>;
 }
 
 export interface SkillDef {
@@ -196,6 +204,8 @@ export interface Ruleset {
   actions: ActionDef[];
   /** Maux du corps et de l'esprit (doc 12). */
   conditions: ConditionDef[];
+  /** Ce que les PNJ savent faire de leur propre chef (doc 13). */
+  npcActions: NpcActionDef[];
   /** Tire un nom cohérent avec la culture. */
   nameFor(rng: Rng, culture: string, sex: Sex): { given: string; family: string };
   /** Nom de maison proposé à la fondation. */
@@ -292,6 +302,25 @@ export function validateRuleset(rs: Ruleset): ValidationIssue[] {
     if (!c.signs || c.signs.length === 0) {
       warn(`condition:${c.id}`, 'aucun signe visible — le monde ne peut pas la voir');
     }
+  }
+
+  const actionIds = new Set<string>();
+  for (const a of rs.npcActions ?? []) {
+    if (actionIds.has(a.id)) err(`npcAction:${a.id}`, 'identifiant dupliqué');
+    actionIds.add(a.id);
+    const served = Object.values(a.serves).filter((v) => (v ?? 0) > 0).length;
+    if (served === 0) {
+      err(`npcAction:${a.id}`, 'n\'assouvit aucune pulsion — jamais choisie');
+    }
+    if (a.minAge !== undefined && a.maxAge !== undefined && a.minAge > a.maxAge) {
+      err(`npcAction:${a.id}`, `minAge (${a.minAge}) > maxAge (${a.maxAge})`);
+    }
+    if (!a.news) warn(`npcAction:${a.id}`, 'muette — le monde ne la verra jamais');
+  }
+  // Une pulsion sans action est un manque que personne ne peut apaiser.
+  for (const drive of DRIVE_IDS) {
+    const covered = (rs.npcActions ?? []).some((a) => (a.serves[drive] ?? 0) > 0);
+    if (!covered) warn(`drive:${drive}`, 'aucune action ne l\'apaise');
   }
 
   if (rs.births.length === 0) err('births', 'aucun scénario de naissance');

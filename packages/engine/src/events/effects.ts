@@ -293,14 +293,18 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
           child.family = name;
         }
       }
+      // Une maison fondée par un inconnu à l'autre bout du monde n'a pas la
+      // même place dans *votre* chronique que la vôtre (doc 13 §4).
+      const proche =
+        self.isPlayer || !!world.relations.get(world.playerId, self.id);
       world.record({
         year: world.year,
         kind: 'fondation',
-        importance: 4,
+        importance: self.isPlayer ? 4 : proche ? 3 : 1,
         actors: [{ id: self.id, name: fullName(self) }],
         data: { maison: name },
       });
-      world.say(`La Maison ${name} est fondée.`);
+      if (proche) world.say(`La Maison ${name} est fondée.`);
       return;
     }
     case 'title': {

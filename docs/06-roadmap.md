@@ -72,9 +72,14 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 
 ---
 
-## Phase 3 — Monde vivant
+## Phase 3 — Monde vivant *(en cours)*
 *Objectif : le monde tourne sans vous.*
 
+- ✅ **IA utilitaire des PNJ** ([doc 13](13-agentivite.md)) : dix pulsions, 32 conduites,
+  choix utilitaire, fil de nouvelles. 663 000 décisions de PNJ au banc, zéro conduite morte
+- ✅ **inimitiés émergentes** : l'inégalité fabrique des rivaux, les querelles ne guérissent
+  plus toutes seules, et le monde connaît ses premiers meurtres sans le joueur
+- ✅ **profileur de tick** (`pnpm profile`) : où passent les millisecondes, système par système
 - **économie par domaines** ([doc 11](11-economie-pouvoir.md)) : foyer → région, biens de
   base, prix locaux, routes, stocks — une seule structure récursive à toutes les échelles
 - **gouvernements malléables** ([doc 11](11-economie-pouvoir.md) §4) : sept axes dont les
@@ -82,8 +87,7 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 - régions, implantations, démographie
 - cultures et religions (dérive, coutumes)
 - factions avec objectifs
-- **IA utilitaire des PNJ** (pulsions + 25 actions)
-- propagation de l'information et rumeurs
+- propagation de l'information et rumeurs *(le fil existe ; la déformation, non)*
 - secrets et chantage
 - réputation contextuelle par groupe
 - guerres et conflits entre PNJ

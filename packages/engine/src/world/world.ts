@@ -22,6 +22,22 @@ export interface TagHit {
   year: number;
 }
 
+/**
+ * Ce que le monde a fait sans vous cette année (doc 13 §4). Ce n'est pas la
+ * Chronique : la Chronique est votre histoire, les nouvelles sont celles des autres.
+ */
+export interface NewsItem {
+  year: number;
+  text: string;
+  /** Portée : ce qui est intime ne remonte que si vous connaissez l'acteur. */
+  reach: 'intime' | 'local' | 'monde';
+  place: string;
+  actors: EntityId[];
+}
+
+/** Le fil de nouvelles ne garde que les dernières années. */
+const NEWS_BUDGET = 240;
+
 export interface WorldOptions {
   seed: number;
   startYear: number;
@@ -52,6 +68,8 @@ export class World {
   records: RecordBook = emptyRecordBook();
   /** Journal de l'année en cours, consommé puis vidé par l'UI. */
   log: string[] = [];
+  /** Ce que les autres ont fait, le plus récent en dernier. */
+  news: NewsItem[] = [];
 
   private nextEntity = 1;
   private nextSeed = 1;
@@ -142,6 +160,25 @@ export class World {
 
   say(line: string): void {
     this.log.push(line);
+  }
+
+  /** Ajoute une nouvelle au fil du monde, en gardant le fil borné. */
+  report(item: NewsItem): void {
+    this.news.push(item);
+    if (this.news.length > NEWS_BUDGET) {
+      this.news.splice(0, this.news.length - NEWS_BUDGET);
+    }
+  }
+
+  /** Les nouvelles des `window` dernières années, les plus récentes d'abord. */
+  recentNews(window: number, limit = 40): NewsItem[] {
+    const cutoff = this.year - window;
+    const out: NewsItem[] = [];
+    for (let i = this.news.length - 1; i >= 0 && out.length < limit; i--) {
+      const item = this.news[i];
+      if (item && item.year >= cutoff) out.push(item);
+    }
+    return out;
   }
 
   drainLog(): string[] {

@@ -30,9 +30,17 @@ export const RelationDrift: System = {
       const bond = rel.type === 'sang' || rel.type === 'mariage';
       const rate = bond ? 0.02 : together ? 0.05 : 0.13;
 
+      // Une inimitié *déclarée* ne guérit pas toute seule. Sans cette
+      // exception, chaque haine remontait vers zéro plus vite qu'elle ne se
+      // creusait : la haine la plus profonde que le monde savait produire
+      // plafonnait à -59, et personne n'allait jamais jusqu'au meurtre.
+      const feud = rel.type === 'haine' || rel.type === 'rivalite';
+
       if (rel.affection > 0) rel.affection = clamp(rel.affection * (1 - rate), 0, 100);
       // la rancune est tenace : elle décroît deux fois plus lentement
-      else if (rel.affection < 0) rel.affection = clamp(rel.affection * (1 - rate / 2), -100, 0);
+      else if (rel.affection < 0 && !feud) {
+        rel.affection = clamp(rel.affection * (1 - rate / 2), -100, 0);
+      }
 
       rel.fear = clamp(rel.fear * (1 - rate), 0, 100);
 
@@ -142,14 +150,37 @@ export const NpcLife: System = {
         }
       }
 
-      // mariage — on ne cherche que parmi les gens du même lieu
-      if (!c.spouseId && age >= 17 && age <= 55 && rng.chance(0.11)) {
-        const candidates = (byPlace.get(c.settlement) ?? []).filter((o) => {
-          if (o.id === c.id || o.spouseId || o.isPlayer || o.sex === c.sex) return false;
+      // Mariage. On regarde d'abord si quelqu'un a été courtisé (doc 13 §5) :
+      // une union qui sort d'une cour est une histoire, un appariement au
+      // hasard n'est qu'une ligne de démographie.
+      if (!c.spouseId && age >= 17 && age <= 55) {
+        let match: Character | null = null;
+        let best = 0;
+        for (const rel of world.relations.from(c.id)) {
+          if (rel.affection < 25) continue;
+          const o = world.get(rel.to);
+          if (!o || !o.alive || o.spouseId || o.isPlayer || o.sex === c.sex) continue;
           const otherAge = ageOf(o, world.year);
-          return otherAge >= 17 && Math.abs(otherAge - age) <= 12;
-        });
-        const match = rng.pickOrNull(candidates);
+          if (otherAge < 17 || Math.abs(otherAge - age) > 16) continue;
+          // il faut que ce soit réciproque : la cour se refuse
+          const back = world.relations.get(o.id, c.id);
+          const score = rel.affection + (back?.affection ?? 0);
+          if (score > best) {
+            best = score;
+            match = o;
+          }
+        }
+        // Sans attache, le monde marie encore — mais bien moins souvent.
+        if (!match && rng.chance(0.05)) {
+          const candidates = (byPlace.get(c.settlement) ?? []).filter((o) => {
+            if (o.id === c.id || o.spouseId || o.isPlayer || o.sex === c.sex) return false;
+            const otherAge = ageOf(o, world.year);
+            return otherAge >= 17 && Math.abs(otherAge - age) <= 12;
+          });
+          match = rng.pickOrNull(candidates);
+        } else if (match && !rng.chance(0.28 + best / 400)) {
+          match = null;
+        }
         if (match) {
           c.spouseId = match.id;
           match.spouseId = c.id;

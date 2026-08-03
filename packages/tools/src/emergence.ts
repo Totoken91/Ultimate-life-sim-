@@ -1,4 +1,4 @@
-import { loadRuleset, EVENTS } from '@ed/content';
+import { loadRuleset, EVENTS, NPC_ACTIONS } from '@ed/content';
 import { autoplay, type LifeRecord } from './autoplay.js';
 
 /**
@@ -21,6 +21,7 @@ const started = Date.now();
 
 const lives: LifeRecord[] = [];
 const eventCounts = new Map<string, number>();
+const npcCounts = new Map<string, number>();
 let totalYears = 0;
 let totalSeeds = 0;
 
@@ -33,6 +34,9 @@ for (let i = 0; i < runs; i++) {
     for (const id of life.eventsSeen) {
       eventCounts.set(id, (eventCounts.get(id) ?? 0) + 1);
     }
+  }
+  for (const [id, n] of Object.entries(result.npcActions ?? {})) {
+    npcCounts.set(id, (npcCounts.get(id) ?? 0) + n);
   }
 }
 
@@ -112,6 +116,28 @@ if (never.length > 0) {
 }
 console.log('');
 
+// ─── ce que les PNJ ont fait tout seuls ─────────────────────────────────────
+
+const npcTotal = [...npcCounts.values()].reduce((a, b) => a + b, 0);
+const npcRanked = [...npcCounts.entries()].sort((a, b) => b[1] - a[1]);
+const npcNever = NPC_ACTIONS.filter((a) => !npcCounts.has(a.id)).map((a) => a.id);
+
+console.log('  LE MONDE SANS VOUS');
+console.log(`    conduites définies ...... ${NPC_ACTIONS.length}`);
+console.log(`    décisions de PNJ ........ ${npcTotal.toLocaleString('fr-FR')}`);
+console.log(`    jamais jouées ........... ${npcNever.length}`);
+console.log('');
+for (const [id, n] of npcRanked.slice(0, 10)) {
+  const share = n / Math.max(1, npcTotal);
+  console.log(`      ${id.padEnd(24, '.')} ${String(n).padStart(8)}  ${(share * 100).toFixed(1)} %`);
+}
+if (npcNever.length > 0) {
+  console.log('');
+  console.log('    jamais jouées (conduites mortes) :');
+  for (const id of npcNever) console.log(`      ${id}`);
+}
+console.log('');
+
 // ─── verdict ────────────────────────────────────────────────────────────────
 
 const warnings: string[] = [];
@@ -128,6 +154,11 @@ if (never.length > EVENTS.length * 0.25) {
 }
 const topShare = (ranked[0]?.[1] ?? 0) / Math.max(1, [...eventCounts.values()].reduce((a, b) => a + b, 0));
 if (topShare > 0.15) warnings.push('un événement occupe plus de 15 % des tirages — saturation');
+if (npcNever.length > NPC_ACTIONS.length * 0.15) {
+  warnings.push(`${npcNever.length} conduites de PNJ jamais jouées — contenu mort`);
+}
+const npcTopShare = (npcRanked[0]?.[1] ?? 0) / Math.max(1, npcTotal);
+if (npcTopShare > 0.45) warnings.push('une seule conduite de PNJ domine le monde');
 
 if (warnings.length === 0) {
   console.log('  ✓ Aucun signal d\'alarme.');

@@ -9,6 +9,7 @@
   "scripts": {
     "play": "tsx packages/cli/src/main.ts",
     "sim": "tsx packages/tools/src/emergence.ts",
+    "profile": "tsx packages/tools/src/profile.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p packages/web/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",

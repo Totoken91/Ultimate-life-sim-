@@ -4,10 +4,11 @@ import { worldView } from '@ed/game';
 import { RECORD_LABELS, formatSous, renderEntry, type RecordId } from '@ed/engine';
 import { Bar, Btn, Card, Chips, Row, Section, pct } from '../ui.js';
 
-type Onglet = 'lieu' | 'chiffres' | 'classements' | 'records' | 'chronique';
+type Onglet = 'lieu' | 'rumeurs' | 'chiffres' | 'classements' | 'records' | 'chronique';
 
 const ONGLETS: { id: Onglet; label: string }[] = [
   { id: 'lieu', label: 'Lieu' },
+  { id: 'rumeurs', label: 'Rumeurs' },
   { id: 'chiffres', label: 'Chiffres' },
   { id: 'classements', label: 'Classements' },
   { id: 'records', label: 'Records' },
@@ -23,6 +24,8 @@ export function Monde({ game }: { game: Game }) {
       <Chips options={ONGLETS} value={tab} onChange={setTab} />
 
       {tab === 'lieu' && <Lieu game={game} />}
+
+      {tab === 'rumeurs' && <Rumeurs game={game} />}
 
       {tab === 'chiffres' && (
         <>
@@ -216,6 +219,45 @@ function Chronique({ game }: { game: Game }) {
           <div className="log" key={i}>
             <span className="faint">{e.year} — </span>
             {renderEntry(e)}
+          </div>
+        ))}
+      </Card>
+    </>
+  );
+}
+
+/**
+ * Ce que le monde a fait sans vous. Ce n'est pas la Chronique : la Chronique
+ * est votre histoire, les rumeurs sont celles des autres (doc 13 §4).
+ */
+function Rumeurs({ game }: { game: Game }) {
+  const w = worldView(game);
+  if (w.news.length === 0) {
+    return (
+      <Card>
+        <div className="prose" style={{ fontSize: 15, opacity: 0.65 }}>
+          Rien ne vous est revenu aux oreilles ces dernières années.
+        </div>
+      </Card>
+    );
+  }
+  return (
+    <>
+      <Section>Ce qu'on raconte</Section>
+      <Card>
+        {w.news.map((n, i) => (
+          <div
+            key={`${n.year}-${i}`}
+            className="prose"
+            style={{
+              fontSize: 15,
+              padding: '7px 0',
+              opacity: n.ici ? 1 : 0.62,
+              borderTop: i === 0 ? undefined : `1px solid var(--line)`,
+            }}
+          >
+            <span style={{ opacity: 0.5, marginRight: 8 }}>{n.year}</span>
+            {n.text}
           </div>
         ))}
       </Card>

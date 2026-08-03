@@ -101,6 +101,22 @@ export class RelationGraph {
     for (const rel of this.edges.values()) fn(rel);
   }
 
+  /**
+   * Parcourt les sortantes **sans trier ni allouer**. L'ordre suit celui des
+   * insertions : n'utiliser que si le résultat ne dépend pas de l'ordre, ou
+   * si l'appelant départage lui-même les ex æquo (sur `to`, par exemple).
+   * `from()` alloue un tableau et le trie — à six cents habitants qui décident
+   * chaque année, c'est le tri qui coûte, pas la décision.
+   */
+  forEachFrom(id: EntityId, fn: (rel: Relation) => void): void {
+    const targets = this.out.get(id);
+    if (!targets) return;
+    for (const t of targets) {
+      const rel = this.edges.get(key(id, t));
+      if (rel) fn(rel);
+    }
+  }
+
   all(): Relation[] {
     return [...this.edges.values()].sort((a, b) => a.from - b.from || a.to - b.to);
   }

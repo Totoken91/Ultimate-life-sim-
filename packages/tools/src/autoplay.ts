@@ -24,6 +24,8 @@ export interface LifeRecord {
 }
 
 export interface AutoplayResult {
+  /** Conduites de PNJ jouées pendant la partie (doc 13 §6). */
+  npcActions?: Record<string, number>;
   seed: number;
   lives: LifeRecord[];
   years: number;
@@ -122,6 +124,7 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
             years: game.world.year - startYear,
             chronicleEntries: game.world.chronicle.length,
             seedsPlanted,
+            npcActions: game.world.tally.npcActions,
           };
         }
         const heir = rng.pick(heirs);
@@ -137,6 +140,7 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
           years: game.world.year - startYear,
           chronicleEntries: game.world.chronicle.length,
           seedsPlanted,
+          npcActions: game.world.tally.npcActions,
         };
     }
   }

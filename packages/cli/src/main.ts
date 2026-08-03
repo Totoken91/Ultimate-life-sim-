@@ -427,6 +427,16 @@ async function placeScreen(): Promise<void> {
   say(`  ${keyval('Connaissances', String(w.knownPeople))}`);
   say(`  ${keyval('En suspens', c(`${w.activeSeeds} chose(s) qui n'ont pas fini`, 'magenta'))}`);
   say();
+  if (w.news.length > 0) {
+    say(rule());
+    say(`  ${c('Ce qu\'on raconte', 'bold')}`);
+    say();
+    for (const item of w.news.slice(0, 12)) {
+      const an = c(String(item.year), 'grey');
+      say(`  ${an}  ${item.ici ? item.text : c(item.text, 'grey')}`);
+    }
+    say();
+  }
   say(rule());
   say(c('  [entrée] retour', 'grey'));
   await ask();
