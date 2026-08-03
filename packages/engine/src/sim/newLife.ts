@@ -524,6 +524,12 @@ export function continueAsHeir(world: World, ruleset: Ruleset, heirId: Character
   const inherited = Math.max(0, dead.wealth);
   heir.wealth += inherited;
   dead.wealth = 0;
+  // Les murs passent, les gens non : une maison s'hérite, un intendant se
+  // réembauche. C'est aussi ce qui fait qu'une succession coûte cher.
+  for (const h of world.holdings) {
+    if (h.ownerId === dead.id) h.ownerId = heir.id;
+  }
+  world.retainers.delete(dead.id);
   for (const t of dead.titles) if (!heir.titles.includes(t)) heir.titles.push(t);
   if (dead.houseId && !heir.houseId) heir.houseId = dead.houseId;
   const house = world.house(heir.houseId);

@@ -222,6 +222,7 @@ export {
   type UpheavalKind,
 } from './economy/government.js';
 export { DomainEconomy, Governance, Subsistence2 } from './systems/domains.js';
+export { Household } from './systems/household.js';
 
 // ─── l'année du joueur ──────────────────────────────────────────────────────
 export { timeBudget, TEMPS_BASE, type TimeBudget, type TimeCost } from './player/time.js';
@@ -237,6 +238,22 @@ export {
   type PursuitCtx,
   type PursuitBeat,
 } from './player/pursuits.js';
+export {
+  comfortOf,
+  prestigeOf,
+  annualCost,
+  topTier,
+  freeSlots,
+  timeFromStaff,
+  describeCondition,
+  HOLDING_KIND_LABELS,
+  ANNEES_IMPAYEES,
+  type Holding,
+  type HoldingDef,
+  type HoldingKind,
+  type Retainer,
+  type RetainerDef,
+} from './player/holdings.js';
 export {
   drawOccasions,
   occasionCtx,

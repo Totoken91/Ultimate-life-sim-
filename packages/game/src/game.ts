@@ -48,6 +48,22 @@ import {
   type PursuitCtx,
   type PursuitDef,
   type TimeBudget,
+  timeFromStaff,
+  freeSlots,
+  topTier,
+  annualCost,
+  describeCondition,
+  reform,
+  regimeName,
+  pick,
+  GOV_AXES,
+  AXIS_LABELS,
+  type GovAxis,
+  type Government,
+  type Holding,
+  type HoldingDef,
+  type Retainer,
+  type RetainerDef,
 } from '@ed/engine';
 
 export type Phase =
@@ -84,6 +100,13 @@ export type Command =
   | { t: 'seize'; occasionId: number }
   /** Ne rien faire de son année, et s'en porter mieux. */
   | { t: 'rest' }
+  /** Le patrimoine (doc 17) : ce que l'argent achète, à commencer par du temps. */
+  | { t: 'acquire'; holdingId: string }
+  | { t: 'sell'; holdingId: number }
+  | { t: 'hire'; retainerId: string }
+  | { t: 'dismiss'; personId: EntityId }
+  /** Réformer le gouvernement qu'on dirige (doc 11 §4). */
+  | { t: 'reform'; axis: GovAxis; value: string | number }
   | { t: 'interact'; targetId: EntityId; kind: InteractionKind }
   | { t: 'continueAs'; heirId: EntityId }
   | { t: 'follow'; id: EntityId }
@@ -123,7 +146,7 @@ export interface SaveFile {
   spent: number;
   pursuits: Pursuit[];
   occasions: Occasion[];
-  counters: { pursuit: number; occasion: number };
+  counters: { pursuit: number; occasion: number; holding: number };
   world: WorldSnapshot;
 }
 
@@ -170,6 +193,7 @@ export class Game {
   pursuits: Pursuit[] = [];
   occasions: Occasion[] = [];
   private nextPursuitId = 1;
+  private nextHoldingId = 1;
   private nextOccasionId = 1;
   /** Entreprises nourries cette année. Le reste prend une année de poussière. */
   private fedThisYear = new Set<number>();
@@ -241,6 +265,21 @@ export class Game {
         return;
       case 'rest':
         this.rest();
+        return;
+      case 'acquire':
+        this.acquire(cmd.holdingId);
+        return;
+      case 'sell':
+        this.sell(cmd.holdingId);
+        return;
+      case 'hire':
+        this.hire(cmd.retainerId);
+        return;
+      case 'dismiss':
+        this.dismissStaff(cmd.personId);
+        return;
+      case 'reform':
+        this.reformGovernment(cmd.axis, cmd.value);
         return;
       case 'interact':
         this.interact(cmd.targetId, cmd.kind);
@@ -333,7 +372,9 @@ export class Game {
   // ─── l'année du joueur (doc 16) ───────────────────────────────────────────
 
   get budget(): TimeBudget {
-    return timeBudget(this.world, this.player);
+    // La domesticité rend du temps : c'est ce que l'argent achète en premier.
+    const staff = timeFromStaff(this.world, this.player, this.ruleset.retainers);
+    return timeBudget(this.world, this.player, staff.lines);
   }
 
   get timeLeft(): number {
@@ -535,6 +576,245 @@ export class Game {
     for (const label of perdues) {
       this.yearLog.push(`Vous avez laissé tomber : ${label.toLowerCase()}.`);
     }
+  }
+
+  // ─── le patrimoine (doc 17) ───────────────────────────────────────────────
+
+  /** Ce qu'on pourrait acheter aujourd'hui. */
+  buyableHoldings(): HoldingDef[] {
+    const deja = new Set(this.world.holdingsOf(this.player.id).map((h) => h.defId));
+    const age = this.age;
+    return this.ruleset.holdings.filter((d) => {
+      if (deja.has(d.id)) return false;
+      if (!d.requires) return true;
+      const rng = new Rng(this.world.seed).fork('holding.check', d.id, this.world.year);
+      return d.requires({ world: this.world, ruleset: this.ruleset, subject: this.player, age, rng });
+    });
+  }
+
+  /** Ceux qu'on pourrait prendre à son service. */
+  hirableRetainers(): RetainerDef[] {
+    if (freeSlots(this.world, this.player, this.ruleset.holdings) < 1) return [];
+    const tier = topTier(this.world, this.player, this.ruleset.holdings);
+    const deja = new Set(this.world.retainersOf(this.player.id).map((r) => r.defId));
+    return this.ruleset.retainers.filter((d) => !deja.has(d.id) && d.minTier <= tier);
+  }
+
+  private acquire(defId: string): void {
+    if (this.phase !== 'annee' || this.timeLeft < 1) return;
+    const def = this.buyableHoldings().find((d) => d.id === defId);
+    if (!def || this.player.wealth < def.price) return;
+
+    this.player.wealth -= def.price;
+    this.spent += 1;
+    this.world.holdings.push({
+      id: this.nextHoldingId++,
+      defId: def.id,
+      label: def.label,
+      ownerId: this.player.id,
+      settlement: this.player.settlement,
+      acquiredYear: this.world.year,
+      condition: 80,
+      staffIds: [],
+    });
+    this.world.record({
+      year: this.world.year,
+      kind: 'fortune',
+      importance: def.tier >= 7 ? 3 : 2,
+      actors: [{ id: this.player.id, name: fullName(this.player) }],
+      data: { quoi: def.label.toLowerCase() },
+    });
+    this.outcome = {
+      title: def.label,
+      text:
+        `${def.desc} Il faudra ${def.upkeep} sous par an pour la garder — ` +
+        `et c'est ça, le vrai prix.`,
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  private sell(holdingId: number): void {
+    const h = this.world.holdings.find((x) => x.id === holdingId && x.ownerId === this.player.id);
+    const def = h ? this.ruleset.holdings.find((d) => d.id === h.defId) : undefined;
+    if (!h || !def) return;
+    // On revend mal ce qu'on a laissé se dégrader.
+    const prix = Math.round(def.price * 0.55 * (0.4 + (h.condition / 100) * 0.6));
+    this.player.wealth += prix;
+    this.world.holdings = this.world.holdings.filter((x) => x.id !== h.id);
+    this.outcome = {
+      title: h.label,
+      text: `Vendu, ${prix} sous. On ne revient jamais sur ce qu'on a vendu.`,
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  private hire(defId: string): void {
+    if (this.phase !== 'annee' || this.timeLeft < 1) return;
+    const def = this.hirableRetainers().find((d) => d.id === defId);
+    if (!def || this.player.wealth < def.wage) return;
+
+    // On embauche quelqu'un du lieu : une vraie personne, qui a une vie.
+    const rng = new Rng(this.world.seed).fork('hire', defId, this.world.year);
+    const ctx = makeEventCtx(this.world, this.ruleset, rng, this.player, {});
+    const person = pick.local({ minAge: 15, maxAge: 60 })(ctx);
+    if (!person) return;
+
+    const list = this.world.retainers.get(this.player.id) ?? [];
+    list.push({
+      personId: person.id,
+      defId: def.id,
+      label: def.label,
+      since: this.world.year,
+      unpaid: 0,
+    });
+    this.world.retainers.set(this.player.id, list);
+    person.lod = 0;
+    this.world.relations.ensure(person.id, this.player.id, 'serment', 'mon maître', this.world.year);
+    this.world.relations.modify(person.id, this.player.id, { respect: 12, trust: 8 });
+    this.world.relations.ensure(this.player.id, person.id, 'serment', def.label.toLowerCase(), this.world.year);
+    this.spent += 1;
+    this.outcome = {
+      title: def.label,
+      text:
+        `${fullName(person)} entre à votre service. ${def.desc} ` +
+        `${def.wage} sous par an, et il faudra les trouver chaque année.`,
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  private dismissStaff(personId: EntityId): void {
+    const list = this.world.retainers.get(this.player.id) ?? [];
+    const parti = list.find((r) => r.personId === personId);
+    if (!parti) return;
+    this.world.retainers.set(
+      this.player.id,
+      list.filter((r) => r.personId !== personId),
+    );
+    const person = this.world.get(personId);
+    if (person) {
+      this.world.relations.modify(person.id, this.player.id, { affection: -20, trust: -15 });
+    }
+    this.outcome = {
+      title: parti.label,
+      text: person
+        ? `Vous renvoyez ${fullName(person)}. On ne discute pas, et on n'oublie pas.`
+        : 'Renvoyé.',
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  // ─── gouverner (doc 11 §4) ────────────────────────────────────────────────
+
+  /** Le domaine que le joueur dirige, s'il en dirige un. */
+  ruledDomain() {
+    return this.world.domainList().find((d) => d.rulerId === this.player.id);
+  }
+
+  /** Ce qu'on peut changer, et ce que ça coûterait. */
+  reformOptions(): { axis: GovAxis; label: string; current: string; choices: (string | number)[] }[] {
+    const dom = this.ruledDomain();
+    if (!dom) return [];
+    const g = dom.government;
+    const table: Record<GovAxis, (string | number)[]> = {
+      power: ['un', 'quelques-uns', 'beaucoup', 'tous'],
+      access: ['sang', 'election', 'conquete', 'fortune', 'merite', 'tirage', 'foi', 'anciennete', 'designation'],
+      tenure: ['a vie', 'mandat', 'revocable', 'hereditaire'],
+      reach: [Math.max(0, g.reach - 20), Math.min(100, g.reach + 20)],
+      property: ['privee', 'commune', 'seigneuriale', 'd\'Etat', 'corporative'],
+      mandate: ['tradition', 'divin', 'populaire', 'force', 'competence', 'contrat'],
+      taxation: ['corvee', 'dime', 'cens', 'proportionnelle', 'progressive', 'aucune'],
+    };
+    return GOV_AXES.map((axis) => ({
+      axis,
+      label: AXIS_LABELS[axis],
+      current: String(g[axis]),
+      choices: table[axis].filter((v) => String(v) !== String(g[axis])),
+    }));
+  }
+
+  private reformGovernment(axis: GovAxis, value: string | number): void {
+    if (this.phase !== 'annee' || this.timeLeft < 1) return;
+    const dom = this.ruledDomain();
+    if (!dom) return;
+    const avant = regimeName(dom.government);
+    const legAvant = dom.legitimacy;
+    if (!reform(dom, axis, value as Government[GovAxis])) return;
+    this.spent += 1;
+    const apres = regimeName(dom.government);
+    const cout = Math.round(legAvant - dom.legitimacy);
+    this.world.record({
+      year: this.world.year,
+      kind: 'revelation',
+      importance: avant === apres ? 3 : 4,
+      actors: [{ id: this.player.id, name: fullName(this.player) }],
+      data: { quoi: `changea ${AXIS_LABELS[axis]} à ${dom.name}` },
+    });
+    this.outcome = {
+      title: `Réforme à ${dom.name}`,
+      text:
+        (avant === apres
+          ? `Vous changez ${AXIS_LABELS[axis]}. Le régime garde son nom, pas ses habitudes.`
+          : `${dom.name} n'est plus une ${avant} : c'est une ${apres}.`) +
+        ` Ça vous coûte ${cout} de légitimité, et quelques amitiés.`,
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  /** Ce qu'on possède, tel que le joueur le lit. */
+  household(): {
+    holdings: { id: number; label: string; condition: string; upkeep: number; comfort: number }[];
+    staff: { personId: EntityId; label: string; name: string; wage: number; unpaid: number }[];
+    slots: number;
+    yearly: number;
+    buyable: { id: string; label: string; desc: string; price: number; upkeep: number; tier: number }[];
+    hirable: { id: string; label: string; desc: string; wage: number; temps: number }[];
+  } {
+    const holdingDefs = this.ruleset.holdings;
+    return {
+      holdings: this.world.holdingsOf(this.player.id).map((h) => {
+        const def = holdingDefs.find((d) => d.id === h.defId);
+        return {
+          id: h.id,
+          label: h.label,
+          condition: describeCondition(h.condition),
+          upkeep: def?.upkeep ?? 0,
+          comfort: def?.comfort ?? 0,
+        };
+      }),
+      staff: this.world.retainersOf(this.player.id).map((r) => {
+        const def = this.ruleset.retainers.find((d) => d.id === r.defId);
+        const person = this.world.get(r.personId);
+        return {
+          personId: r.personId,
+          label: r.label,
+          name: person ? fullName(person) : 'quelqu\'un',
+          wage: def?.wage ?? 0,
+          unpaid: r.unpaid,
+        };
+      }),
+      slots: freeSlots(this.world, this.player, holdingDefs),
+      yearly: annualCost(this.world, this.player, holdingDefs, this.ruleset.retainers),
+      buyable: this.buyableHoldings().map((d) => ({
+        id: d.id,
+        label: d.label,
+        desc: d.desc,
+        price: d.price,
+        upkeep: d.upkeep,
+        tier: d.tier,
+      })),
+      hirable: this.hirableRetainers().map((d) => ({
+        id: d.id,
+        label: d.label,
+        desc: d.desc,
+        wage: d.wage,
+        temps: d.gives.temps ?? 0,
+      })),
+    };
   }
 
   /** L'année telle que le joueur la voit. */
@@ -874,7 +1154,7 @@ export class Game {
       spent: this.spent,
       pursuits: this.pursuits,
       occasions: this.occasions,
-      counters: { pursuit: this.nextPursuitId, occasion: this.nextOccasionId },
+      counters: { pursuit: this.nextPursuitId, occasion: this.nextOccasionId, holding: this.nextHoldingId },
       world: snapshot(this.world),
     };
     return JSON.stringify(file);
@@ -891,9 +1171,12 @@ export class Game {
     game.spent = Number(raw['spent'] ?? 0);
     game.pursuits = (raw['pursuits'] as Pursuit[]) ?? [];
     game.occasions = (raw['occasions'] as Occasion[]) ?? [];
-    const compteurs = raw['counters'] as { pursuit?: number; occasion?: number } | undefined;
+    const compteurs = raw['counters'] as
+      | { pursuit?: number; occasion?: number; holding?: number }
+      | undefined;
     game.nextPursuitId = compteurs?.pursuit ?? game.pursuits.length + 1;
     game.nextOccasionId = compteurs?.occasion ?? game.occasions.length + 1;
+    game.nextHoldingId = compteurs?.holding ?? game.world.holdings.length + 1;
     game.yearLog = (raw['yearLog'] as string[]) ?? [];
     game.opening = (raw['opening'] as string) ?? '';
     return game;

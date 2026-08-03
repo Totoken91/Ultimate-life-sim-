@@ -134,6 +134,18 @@ async function main(): Promise<void> {
     }
   }
 
+  // Chez soi : patrimoine, domesticité, réformes (doc 17).
+  const vous = page.getByRole('button', { name: 'Vous', exact: true });
+  if (await vous.isVisible().catch(() => false)) {
+    await vous.click();
+    const chez = page.getByRole('button', { name: 'Chez vous', exact: true });
+    if (await chez.isVisible().catch(() => false)) {
+      await step('vous → Chez vous', async () => {
+        await chez.click();
+      });
+    }
+  }
+
   // Et chaque onglet de statistiques.
   for (const chip of ['Lieu', 'Rumeurs', 'Groupes', 'Pays', 'Chiffres', 'Classements', 'Records', 'Chronique']) {
     const c = page.getByRole('button', { name: chip, exact: true });

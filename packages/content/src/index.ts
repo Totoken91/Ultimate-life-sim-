@@ -12,6 +12,7 @@ import { CONDITIONS } from './conditions.js';
 import { NPC_ACTIONS } from './npc.js';
 import { PURSUITS } from './pursuits.js';
 import { OCCASIONS } from './occasions.js';
+import { HOLDINGS, RETAINERS } from './holdings.js';
 
 import { CHILDHOOD_EVENTS } from './events/childhood.js';
 import { YOUTH_EVENTS } from './events/youth.js';
@@ -49,6 +50,8 @@ export const RIVAGE: Ruleset = {
   npcActions: NPC_ACTIONS,
   pursuits: PURSUITS,
   occasions: OCCASIONS,
+  holdings: HOLDINGS,
+  retainers: RETAINERS,
 
   nameFor(rng: Rng, culture: string, sex) {
     const def = CULTURES[culture] ?? CULTURES['vardhen'];
@@ -66,7 +69,7 @@ export const RIVAGE: Ruleset = {
   },
 };
 
-export { CULTURES, SETTLEMENTS, SKILLS, TRAITS, JOBS, BIRTHS, ACTIONS, CONDITIONS, NPC_ACTIONS, PURSUITS, OCCASIONS };
+export { CULTURES, SETTLEMENTS, SKILLS, TRAITS, JOBS, BIRTHS, ACTIONS, CONDITIONS, NPC_ACTIONS, PURSUITS, OCCASIONS, HOLDINGS, RETAINERS };
 
 /**
  * Validation au chargement (doc 01 §6) : un pack invalide fait échouer le

@@ -16,6 +16,7 @@ import type { GoodId } from '../model/domain.js';
 import type { NpcActionDef } from '../ai/actions.js';
 import type { PursuitDef } from '../player/pursuits.js';
 import type { OccasionDef } from '../player/occasions.js';
+import type { HoldingDef, RetainerDef } from '../player/holdings.js';
 import { DRIVE_IDS, type DriveId } from '../ai/drives.js';
 import type { World } from '../world/world.js';
 
@@ -218,6 +219,10 @@ export interface Ruleset {
   pursuits: PursuitDef[];
   /** Ce que le monde peut offrir à qui sait le voir (doc 16 §3). */
   occasions: OccasionDef[];
+  /** Ce qu'on peut posséder, de la paillasse au reste (doc 09 §4). */
+  holdings: HoldingDef[];
+  /** Ceux qu'on peut prendre à son service. */
+  retainers: RetainerDef[];
   /** Tire un nom cohérent avec la culture. */
   nameFor(rng: Rng, culture: string, sex: Sex): { given: string; family: string };
   /** Nom de maison proposé à la fondation. */
@@ -346,6 +351,23 @@ export function validateRuleset(rs: Ruleset): ValidationIssue[] {
     if (occasionIds.has(o.id)) err(`occasion:${o.id}`, 'identifiant dupliqué');
     occasionIds.add(o.id);
     if (o.cost < 1) err(`occasion:${o.id}`, 'une occasion gratuite n\'est pas un choix');
+  }
+
+  const holdingIds = new Set<string>();
+  for (const h of rs.holdings ?? []) {
+    if (holdingIds.has(h.id)) err(`holding:${h.id}`, 'identifiant dupliqué');
+    holdingIds.add(h.id);
+    // L'entretien est la mécanique centrale : un bien gratuit à garder n'a
+    // aucune tension, et le doc 09 §4 en fait tout son sujet.
+    if (h.tier > 0 && h.upkeep <= 0) {
+      err(`holding:${h.id}`, 'un patrimoine sans entretien ne coûte rien à garder');
+    }
+  }
+  const retainerIds = new Set<string>();
+  for (const r of rs.retainers ?? []) {
+    if (retainerIds.has(r.id)) err(`retainer:${r.id}`, 'identifiant dupliqué');
+    retainerIds.add(r.id);
+    if (r.wage <= 0) err(`retainer:${r.id}`, 'personne ne sert pour rien');
   }
 
   if (rs.births.length === 0) err('births', 'aucun scénario de naissance');

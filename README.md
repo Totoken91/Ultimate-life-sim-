@@ -16,7 +16,7 @@ transmettre, compter — et, désormais, regarder le monde vivre sans vous.
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 157 tests
+pnpm test          # 167 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm profile       # où passent les millisecondes, système par système
@@ -44,7 +44,7 @@ de déployer la branche. Une fois en ligne, « Ajouter à l'écran d'accueil » 
 navigateur du téléphone donne une icône et un affichage plein écran.
 
 Contenu actuel : **104 événements**, **32 conduites de PNJ**, **11 entreprises**,
-**15 occasions**, 25 scénarios de naissance,
+**15 occasions**, **6 patrimoines**, **6 domestiques**, 25 scénarios de naissance,
 59 traits, **46 maux du corps et de l'esprit**, 22 métiers, 16 compétences, 16 actions,
 3 cultures, 6 implantations.
 
@@ -85,6 +85,16 @@ le grain est tombé à 3,9 sous, une bande recrute, plus personne ne gouverne la
 cité, le mécontentement est à 60. Elles ne durent pas. Voir le
 [doc 16](docs/16-annee-du-joueur.md).
 
+**L'argent achète du temps** : une chambre à soi, une maison, un atelier, une
+ferme, une demeure, un manoir muré — chacun avec sa facture annuelle qui ne
+s'arrête jamais. Et de la place pour des gens : une nourrice, un intendant, un
+homme d'armes. Ceux qui vous rendent des journées sont le vrai luxe. Ce ne sont
+pas des lignes de dépense mais **des habitants du lieu**, qui s'enrichissent de
+vos gages, partent si vous ne payez plus, et ne suivent pas votre héritier —
+les murs passent, les gens non. Le jour où vous ne pouvez plus suivre, rien ne
+disparaît d'un coup : **ça s'éteint par étages**. Voir le
+[doc 17](docs/17-patrimoine-et-domesticite.md).
+
 **Un pays qui a des prix et un régime** : une seule structure récursive porte
 le monde, ses régions et ses villes — et portera un jour les planètes. Chaque
 lieu produit ce que ses gens produisent, consomme ce qu'ils consomment, et
@@ -114,7 +124,7 @@ s'aggravent, rémettent, laissent des traces et finissent parfois par donner leu
 mort. `health` n'est plus une valeur qu'on pousse : c'est le résumé calculé de tout ça.
 Voir le [doc 12](docs/12-corps-et-esprit.md).
 
-Ce qui n'existe pas encore : foyers et entreprises, le joueur qui gouverne, cultures et
+Ce qui n'existe pas encore : entreprises économiques qui produisent, transports, cultures et
 religions, diplomatie entre factions, le joueur *dans* la bataille, rumeurs qui se
 déforment, secrets et chantage, intrigues multi-années, voies de pouvoir, paliers LOD 2 et
 3, temps élastique, transcendance. Voir la [roadmap](docs/06-roadmap.md).
@@ -144,6 +154,7 @@ conception, c'est cette page qui a raison.
 | [14 — Factions & conflits](docs/14-factions-et-conflits.md) | Groupes nés des serments, buts, et un seul résolveur de bataille |
 | [15 — Domaines & pouvoir](docs/15-domaines-et-pouvoir.md) | Économie récursive, prix locaux, routes, gouvernements à sept axes |
 | [16 — L'année du joueur](docs/16-annee-du-joueur.md) | Budget de temps, entreprises longues, occasions tirées du monde |
+| [17 — Patrimoine & domesticité](docs/17-patrimoine-et-domesticite.md) | Ce que l'argent achète, à commencer par du temps — et ce que ça coûte de le garder |
 
 ## Code
 

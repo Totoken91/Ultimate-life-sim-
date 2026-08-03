@@ -92,8 +92,11 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 - ✅ **régions et implantations** — l'arbre des domaines, avec agrégation de bas en haut
 - ✅ **l'année du joueur refondue** ([doc 16](16-annee-du-joueur.md)) : budget de temps,
   entreprises longues, occasions lues dans l'état du monde — « une action par an » a disparu
-- foyers et entreprises économiques ([doc 11](11-economie-pouvoir.md) §3)
-- le joueur qui gouverne : réformer un axe, et le payer
+- ✅ **patrimoine et domesticité** ([doc 17](17-patrimoine-et-domesticite.md)) : ce que
+  l'argent achète, à commencer par du temps — et l'entretien qui l'éteint par étages
+- ✅ **le joueur qui gouverne** : réformer un des sept axes, contre du temps et de la légitimité
+- entreprises économiques qui produisent et emploient ([doc 11](11-economie-pouvoir.md) §3)
+- transports, du mulet à la flotte personnelle ([doc 09](09-echelle-totale.md) §4bis)
 - cultures et religions (dérive, coutumes)
 - diplomatie entre factions (alliances, trahisons, traités)
 - le joueur *dans* la bataille — couche B du [doc 09](09-echelle-totale.md) §2

@@ -135,7 +135,7 @@ Une demande n'est « livrée » que lorsqu'elle est **jouable**, pas lorsqu'elle
 | Métiers émergents et infinis | 📐 conçu | [09](09-echelle-totale.md) §1 — Phase 4 |
 | Armements de toutes les ères | 📐 conçu | [09](09-echelle-totale.md) §3 — Phase 5 |
 | Magie | 📐 conçu | mode de monde *Mythe* — Phase 6 |
-| Patrimoine jusqu'au vaisseau-planète | 📐 conçu | [09](09-echelle-totale.md) §4 — Phase 5 |
+| Patrimoine jusqu'au vaisseau-planète | 🟡 partiel | [17](17-patrimoine-et-domesticite.md) — six paliers du logis au manoir, avec domesticité et entretien ; l'échelle monte jusqu'à 20 et n'attend que du contenu |
 | Économie simulée à toutes les échelles | 🟡 partiel | [15](15-domaines-et-pouvoir.md) — domaines récursifs, prix locaux, routes ; les paliers planétaires attendent des mondes |
 | Gouvernements malléables | ✅ livré | [15](15-domaines-et-pouvoir.md) §4 — sept axes, sept régimes émergés, renversements |
 | Immortalité, clonage, transfert, divinité | 📐 conçu | [03](03-systemes.md) §3 — Phase 6 |

@@ -12,6 +12,7 @@ import type {
 import { asEntityId, emptyTally } from '../model/types.js';
 import { emptyRecordBook, type RecordBook } from '../stats/records.js';
 import type { Domain, Route } from '../model/domain.js';
+import type { Holding, Retainer } from '../player/holdings.js';
 import { RelationGraph } from './relations.js';
 import { MemoryStore } from './memory.js';
 import { Rng } from '../rng/rng.js';
@@ -58,6 +59,9 @@ export class World {
   /** L'économie et le pouvoir, à toutes les échelles (doc 11). */
   readonly domains = new Map<string, Domain>();
   routes: Route[] = [];
+  /** Ce que les gens possèdent, et ceux qui les servent (doc 09 §4). */
+  holdings: Holding[] = [];
+  retainers: Map<EntityId, Retainer[]> = new Map();
   readonly settlements = new Map<string, Settlement>();
   readonly relations = new RelationGraph();
   readonly memories = new MemoryStore();
@@ -139,6 +143,17 @@ export class World {
     const out = [...this.domains.values()];
     out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     return out;
+  }
+
+  /** Ce que quelqu'un possède, trié. */
+  holdingsOf(owner: EntityId): Holding[] {
+    return this.holdings.filter((h) => h.ownerId === owner).sort((a, b) => a.id - b.id);
+  }
+
+  /** Ceux qui servent quelqu'un, triés. */
+  retainersOf(owner: EntityId): Retainer[] {
+    const list = this.retainers.get(owner) ?? [];
+    return [...list].sort((a, b) => a.personId - b.personId);
   }
 
   /** Le domaine qui couvre une implantation. */

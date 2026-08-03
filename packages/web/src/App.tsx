@@ -149,7 +149,7 @@ export function App() {
       <div className="scroll">
         {tab === 'vie' && <Vie game={game} act={act} />}
         {tab === 'gens' && <Gens game={game} people={people} act={act} />}
-        {tab === 'vous' && <Vous game={game} me={me} status={s} body={myBody} />}
+        {tab === 'vous' && <Vous game={game} me={me} status={s} body={myBody} act={act} />}
         {tab === 'dynastie' && <Dynastie game={game} act={act} />}
         {tab === 'monde' && <Monde game={game} />}
       </div>

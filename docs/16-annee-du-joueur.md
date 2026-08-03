@@ -167,8 +167,9 @@ meurt avec celui qui l'avait commencé.
   l'une ni l'autre n'ouvre seule.
 - **Le monde ne voit pas ce qu'on mène.** Les PNJ ignorent que vous apprenez à
   lire ou que vous rassemblez des gens ; ils devraient réagir.
-- **Le temps ne s'achète pas.** Un intendant, une nourrice, un homme de main
-  devraient rendre du temps. C'est le vrai luxe, et c'est ce que l'argent
-  devrait acheter en premier.
+- ~~Le temps ne s'achète pas.~~ **Livré** — voir le
+  [doc 17](17-patrimoine-et-domesticite.md) : une nourrice ou un intendant
+  rendent un temps chacun, deux au maximum, et il faut les loger et les payer
+  chaque année.
 - **Pas d'entreprise à l'échelle d'une dynastie.** Certaines choses devraient
   demander plus d'une vie, et se transmettre à l'héritier.

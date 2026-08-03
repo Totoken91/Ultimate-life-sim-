@@ -500,10 +500,13 @@ async function selfMenu(): Promise<void> {
   say(rule());
   menu([
     { key: '1', label: 'Le corps', note: 'organes, constantes, maux' },
+    { key: '2', label: 'Chez vous', note: 'ce qu\'on possède, ceux qui servent' },
     { key: '0', label: 'Retour' },
   ]);
   say();
-  if ((await ask()) === '1') await bodyScreen();
+  const rep = await ask();
+  if (rep === '1') await bodyScreen();
+  else if (rep === '2') await chezVousScreen();
 }
 
 async function placeScreen(): Promise<void> {
@@ -597,6 +600,110 @@ async function paysScreen(): Promise<void> {
   say(rule());
   say(c('  [entrée] retour', 'grey'));
   await ask();
+}
+
+/**
+ * Chez soi (doc 17) : ce qu'on possède, ceux qui le tiennent, ce que ça coûte
+ * chaque année — et, si l'on gouverne, ce qu'on peut changer.
+ */
+async function chezVousScreen(): Promise<void> {
+  for (;;) {
+    const h = game.household();
+    const gouv = game.ruledDomain();
+    const budget = game.budget;
+    clear();
+    say(heading('chez vous'));
+    say();
+    say(`  ${keyval('Entretien et gages', c(`${h.yearly} sous par an`, h.yearly > 0 ? 'red' : 'grey'))}`);
+    say(`  ${keyval('Bourse', `${game.player.wealth} sous`)}`);
+    if (budget.credits.length > 0) {
+      const rendu = budget.credits.reduce((n, x) => n + x.cost, 0);
+      say(`  ${keyval('Temps rendu', c(`+${rendu} (${budget.credits.map((x) => x.label.toLowerCase()).join(', ')})`, 'green'))}`);
+    }
+    say();
+
+    const entrees: { key: string; run: () => void }[] = [];
+    let n = 1;
+
+    if (h.holdings.length > 0) {
+      say(c('  CE QUE VOUS POSSEDEZ', 'bold'));
+      for (const x of h.holdings) {
+        const key = String(n++);
+        say(`${c(` ${pad(key, 2)} `, 'yellow')} ${pad(x.label, 30)} ${c(x.condition, 'grey')} ${c(`${x.upkeep}/an`, 'grey')}`);
+        entrees.push({ key, run: () => game.submit({ t: 'sell', holdingId: x.id }) });
+      }
+      say(c('       (choisir pour vendre)', 'grey', 'italic'));
+      say();
+    }
+
+    if (h.staff.length > 0) {
+      say(c('  CEUX QUI VOUS SERVENT', 'bold'));
+      for (const s2 of h.staff) {
+        const key = String(n++);
+        const gages = s2.unpaid > 0 ? c(`${s2.wage}/an · impayé depuis ${s2.unpaid} an(s)`, 'red') : c(`${s2.wage}/an`, 'grey');
+        say(`${c(` ${pad(key, 2)} `, 'yellow')} ${pad(s2.name, 26)} ${pad(c(s2.label, 'cyan'), 30)} ${gages}`);
+        entrees.push({ key, run: () => game.submit({ t: 'dismiss', personId: s2.personId }) });
+      }
+      say(c('       (choisir pour renvoyer)', 'grey', 'italic'));
+      say();
+    }
+
+    if (h.buyable.length > 0) {
+      say(c('  ACHETER', 'bold'));
+      for (const d of h.buyable) {
+        const key = String(n++);
+        const abordable = game.player.wealth >= d.price && game.timeLeft >= 1;
+        const ligne = `${pad(d.label, 30)} ${d.price} sous, puis ${d.upkeep}/an`;
+        say(`${c(` ${pad(key, 2)} `, abordable ? 'green' : 'grey')} ${abordable ? ligne : c(ligne, 'grey')}`);
+        if (abordable) entrees.push({ key, run: () => game.submit({ t: 'acquire', holdingId: d.id }) });
+      }
+      say();
+    }
+
+    if (h.hirable.length > 0) {
+      say(c('  PRENDRE A SON SERVICE', 'bold') + c(`  — ${h.slots} place(s) libre(s)`, 'grey'));
+      for (const d of h.hirable) {
+        const key = String(n++);
+        const abordable = game.player.wealth >= d.wage && game.timeLeft >= 1;
+        const rendu = d.temps > 0 ? c(` · rend ${d.temps} temps`, 'green') : '';
+        const ligne = `${pad(d.label, 30)} ${d.wage} sous/an`;
+        say(`${c(` ${pad(key, 2)} `, abordable ? 'green' : 'grey')} ${abordable ? ligne : c(ligne, 'grey')}${rendu}`);
+        if (abordable) entrees.push({ key, run: () => game.submit({ t: 'hire', retainerId: d.id }) });
+      }
+      say();
+    }
+
+    if (gouv) {
+      say(c(`  VOUS GOUVERNEZ ${gouv.name.toUpperCase()}`, 'bold'));
+      say(c('       Changer une règle coûte de la légitimité, et froisse des gens.', 'grey', 'italic'));
+      for (const o of game.reformOptions()) {
+        for (const v of o.choices) {
+          const key = String(n++);
+          say(`${c(` ${pad(key, 2)} `, 'magenta')} ${pad(o.label, 26)} ${c(String(o.current), 'grey')} → ${String(v)}`);
+          entrees.push({ key, run: () => game.submit({ t: 'reform', axis: o.axis, value: v }) });
+        }
+      }
+      say();
+    }
+
+    if (h.holdings.length === 0 && h.buyable.length === 0) {
+      say(c('  Vous ne possédez rien, et rien n\'est à votre portée.', 'grey'));
+      say();
+    }
+
+    say(rule());
+    say(c('  [0] retour', 'grey'));
+    say();
+    const answer = (await ask()).trim();
+    if (answer === '0' || answer === '') return;
+    const entree = entrees.find((e) => e.key === answer);
+    if (!entree) {
+      notice = 'Ce n\'est pas une des lignes.';
+      continue;
+    }
+    entree.run();
+    if (game.phase !== 'annee') return;
+  }
 }
 
 function bar(share: number, width = 16): string {

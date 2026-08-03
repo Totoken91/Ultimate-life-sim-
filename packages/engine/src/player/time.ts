@@ -23,15 +23,22 @@ export interface TimeBudget {
   total: number;
   /** Ce qui vous a été pris, et par quoi. Le joueur doit pouvoir le lire. */
   charges: TimeCost[];
+  /** Ce que la domesticité vous rend. Le vrai luxe (doc 09 §4). */
+  credits: TimeCost[];
 }
 
 /**
  * Combien de temps cette année vous laisse. Rien ici n'est un malus abstrait :
  * chaque ligne est une chose qu'on peut voir dans sa vie et, parfois, changer.
  */
-export function timeBudget(world: World, c: Character): TimeBudget {
+export function timeBudget(
+  world: World,
+  c: Character,
+  staff: readonly { label: string; gain: number }[] = [],
+): TimeBudget {
   const age = ageOf(c, world.year);
   const charges: TimeCost[] = [];
+  const credits: TimeCost[] = [];
   let total = TEMPS_BASE;
 
   if (age < 7) {
@@ -83,7 +90,14 @@ export function timeBudget(world: World, c: Character): TimeBudget {
     }
   }
 
+  // Et ce que l'argent rachète. Un intendant, une nourrice, un homme de main :
+  // c'est la seule chose que la fortune devrait acheter en premier.
+  for (const s of staff) {
+    total += s.gain;
+    credits.push({ label: s.label, cost: s.gain });
+  }
+
   // On garde toujours de quoi faire une chose. Une vie sans aucune marge n'est
   // plus une vie jouable, c'est un couloir.
-  return { total: Math.max(1, total), charges };
+  return { total: Math.max(1, total), charges, credits };
 }
