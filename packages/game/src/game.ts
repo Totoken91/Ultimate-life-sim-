@@ -34,6 +34,20 @@ import {
   type SuccessionLaw,
   type WorldMode,
   type WorldSnapshot,
+  timeBudget,
+  drawOccasions,
+  occasionCtx,
+  newPursuit,
+  estimateCost,
+  progressOf,
+  describeProgress,
+  ABANDON_APRES,
+  ENTREPRISES_MAX,
+  type Occasion,
+  type Pursuit,
+  type PursuitCtx,
+  type PursuitDef,
+  type TimeBudget,
 } from '@ed/engine';
 
 export type Phase =
@@ -61,6 +75,15 @@ export type Command =
   | { t: 'advance' }
   | { t: 'choose'; optionId: string }
   | { t: 'action'; actionId: string }
+  /** Ouvrir une entreprise longue (doc 16 §2). */
+  | { t: 'start'; pursuitId: string }
+  /** Y verser du temps. */
+  | { t: 'invest'; pursuitId: number; temps: number }
+  | { t: 'abandon'; pursuitId: number }
+  /** Saisir une occasion que le monde a ouverte (doc 16 §3). */
+  | { t: 'seize'; occasionId: number }
+  /** Ne rien faire de son année, et s'en porter mieux. */
+  | { t: 'rest' }
   | { t: 'interact'; targetId: EntityId; kind: InteractionKind }
   | { t: 'continueAs'; heirId: EntityId }
   | { t: 'follow'; id: EntityId }
@@ -94,10 +117,34 @@ export interface SaveFile {
   version: number;
   phase: Phase;
   pending: PendingEvent[];
-  actionUsed: boolean;
   yearLog: string[];
   opening: string;
+  /** L'année du joueur (doc 16). */
+  spent: number;
+  pursuits: Pursuit[];
+  occasions: Occasion[];
+  counters: { pursuit: number; occasion: number };
   world: WorldSnapshot;
+}
+
+/** Ce qu'une année propose, vu du joueur. */
+export interface YearView {
+  budget: TimeBudget;
+  spent: number;
+  left: number;
+  pursuits: {
+    id: number;
+    label: string;
+    where: string;
+    progress: number;
+    idle: number;
+    target: string | null;
+  }[];
+  /** Entreprises qu'on pourrait ouvrir. */
+  openable: { id: string; label: string; kind: string; cost: number }[];
+  occasions: { id: number; label: string; detail: string; cost: number; closing: boolean }[];
+  /** Les coups d'une année : rapides, sans lendemain. */
+  coups: { id: string; label: string; desc: string; category: string }[];
 }
 
 /**
@@ -112,9 +159,20 @@ export class Game {
   phase: Phase = 'naissance';
   pending: PendingEvent[] = [];
   outcome: Outcome | null = null;
-  actionUsed = false;
   yearLog: string[] = [];
   opening = '';
+
+  /**
+   * L'année du joueur (doc 16). « Une action par an » a disparu : une année
+   * donne du temps, et le temps se répartit.
+   */
+  spent = 0;
+  pursuits: Pursuit[] = [];
+  occasions: Occasion[] = [];
+  private nextPursuitId = 1;
+  private nextOccasionId = 1;
+  /** Entreprises nourries cette année. Le reste prend une année de poussière. */
+  private fedThisYear = new Set<number>();
 
   private constructor(sim: Simulation, ruleset: Ruleset) {
     this.sim = sim;
@@ -169,6 +227,21 @@ export class Game {
       case 'action':
         this.act(cmd.actionId);
         return;
+      case 'start':
+        this.startPursuit(cmd.pursuitId);
+        return;
+      case 'invest':
+        this.invest(cmd.pursuitId, cmd.temps);
+        return;
+      case 'abandon':
+        this.abandonPursuit(cmd.pursuitId);
+        return;
+      case 'seize':
+        this.seize(cmd.occasionId);
+        return;
+      case 'rest':
+        this.rest();
+        return;
       case 'interact':
         this.interact(cmd.targetId, cmd.kind);
         return;
@@ -204,10 +277,12 @@ export class Game {
     if (this.phase !== 'annee') return;
 
     // Une nouvelle année commence : le monde bouge, puis les événements arrivent.
+    this.agePursuits();
     const opening = this.sim.openYear();
-    this.actionUsed = false;
+    this.spent = 0;
     this.yearLog = opening.log;
     this.pending = opening.events;
+    this.refreshOccasions();
     if (this.pending.length > 0) {
       this.phase = 'evenement';
     } else {
@@ -219,6 +294,12 @@ export class Game {
   private finishYear(): void {
     const closing = this.sim.closeYear();
     this.yearLog = [...this.yearLog, ...closing.log];
+    // Quelqu'un a pu mourir pendant l'année qu'on vient de fermer. Une porte
+    // qui mène à un mort n'est plus une porte : « Bran Fenhal veut parler à
+    // quelqu'un » devenait « vous écoutez quelqu'un pendant des heures ».
+    this.occasions = this.occasions.filter(
+      (o) => o.roleId === null || (this.world.get(o.roleId)?.alive ?? false),
+    );
     this.phase = closing.playerDied ? 'mort' : 'annee';
   }
 
@@ -234,8 +315,9 @@ export class Game {
     this.phase = 'resultat';
   }
 
+  /** Un coup : rapide, sans lendemain, un temps. */
   private act(actionId: string): void {
-    if (this.phase !== 'annee' || this.actionUsed) return;
+    if (this.phase !== 'annee' || this.timeLeft < 1) return;
     const def = this.ruleset.actions.find((a) => a.id === actionId);
     if (!def || !this.isActionAvailable(def)) return;
 
@@ -243,9 +325,256 @@ export class Game {
     const ctx = makeEventCtx(this.world, this.ruleset, rng, this.player, {});
     const { text, effects } = def.run(ctx);
     applyEffects(ctx, effects);
-    this.actionUsed = true;
+    this.spent += 1;
     this.outcome = { title: def.label, text, log: this.world.drainLog() };
     this.phase = 'resultat';
+  }
+
+  // ─── l'année du joueur (doc 16) ───────────────────────────────────────────
+
+  get budget(): TimeBudget {
+    return timeBudget(this.world, this.player);
+  }
+
+  get timeLeft(): number {
+    return Math.max(0, this.budget.total - this.spent);
+  }
+
+  private pursuitDef(p: Pursuit): PursuitDef | undefined {
+    return this.ruleset.pursuits.find((d) => d.id === p.defId);
+  }
+
+  private pursuitCtx(p: Pursuit, spent: number, salt: string): PursuitCtx {
+    const target = p.targetId !== null ? this.world.get(p.targetId) : undefined;
+    const rng = new Rng(this.world.seed).fork('pursuit', salt, p.id, this.world.year);
+    const base = makeEventCtx(
+      this.world,
+      this.ruleset,
+      rng,
+      this.player,
+      target && target.alive ? { cible: target } : {},
+    );
+    return { ...base, role: base.role.bind(base), maybe: base.maybe.bind(base), rel: base.rel.bind(base), pursuit: p, spent };
+  }
+
+  /** Les entreprises qu'on pourrait ouvrir aujourd'hui. */
+  openablePursuits(): PursuitDef[] {
+    if (this.pursuits.length >= ENTREPRISES_MAX) return [];
+    const age = this.age;
+    const encours = new Set(this.pursuits.map((p) => p.defId));
+    return this.ruleset.pursuits.filter((d) => {
+      if (encours.has(d.id)) return false;
+      if (d.minAge !== undefined && age < d.minAge) return false;
+      if (d.maxAge !== undefined && age > d.maxAge) return false;
+      if (!d.requires) return true;
+      const rng = new Rng(this.world.seed).fork('pursuit.check', d.id, this.world.year);
+      return d.requires({ world: this.world, ruleset: this.ruleset, subject: this.player, age, rng });
+    });
+  }
+
+  private startPursuit(defId: string): void {
+    if (this.phase !== 'annee' || this.timeLeft < 1) return;
+    if (!this.openablePursuits().some((d) => d.id === defId)) return;
+    const def = this.ruleset.pursuits.find((d) => d.id === defId);
+    if (!def) return;
+
+    let targetId: EntityId | null = null;
+    if (def.role) {
+      const rng = new Rng(this.world.seed).fork('pursuit.role', defId, this.world.year);
+      const ctx = makeEventCtx(this.world, this.ruleset, rng, this.player, {});
+      const target = def.role(ctx);
+      if (!target) return;
+      targetId = target.id;
+    }
+    const p = newPursuit(this.nextPursuitId++, def, this.player, targetId, this.world.year);
+    this.pursuits.push(p);
+    this.spent += 1;
+    const ctx = this.pursuitCtx(p, 1, 'intro');
+    this.outcome = { title: def.label, text: def.intro(ctx), log: this.world.drainLog() };
+    this.phase = 'resultat';
+  }
+
+  /**
+   * Verser du temps dans une entreprise. C'est ici que se joue la continuité
+   * qui manque à une action par année : la même chose, reprise, qui avance.
+   */
+  private invest(pursuitId: number, temps: number): void {
+    if (this.phase !== 'annee') return;
+    const p = this.pursuits.find((x) => x.id === pursuitId);
+    const def = p ? this.pursuitDef(p) : undefined;
+    if (!p || !def) return;
+    const mise = Math.max(1, Math.min(temps, this.timeLeft, Math.max(1, p.needed - p.invested)));
+    if (mise < 1) return;
+
+    this.spent += mise;
+    p.invested += mise;
+    p.idle = 0;
+    this.fedThisYear.add(p.id);
+    const ctx = this.pursuitCtx(p, mise, 'beat');
+
+    // Ce qui peut mal tourner d'abord : un revers raconte mieux qu'un progrès.
+    if (def.hazard) {
+      const risque = def.hazard.chance(ctx);
+      if (ctx.rng.fork('hasard').chance(risque)) {
+        const beat = def.hazard.beat(ctx);
+        if (beat.effects) applyEffects(ctx, beat.effects);
+        if (beat.addNeeded) p.needed += beat.addNeeded;
+        this.outcome = { title: p.label, text: beat.text, log: this.world.drainLog() };
+        this.phase = 'resultat';
+        return;
+      }
+    }
+
+    if (p.invested >= p.needed) {
+      const fin = def.done(ctx);
+      applyEffects(ctx, fin.effects);
+      this.pursuits = this.pursuits.filter((x) => x.id !== p.id);
+      this.outcome = { title: `${p.label} — c'est fait`, text: fin.text, log: this.world.drainLog() };
+      this.phase = 'resultat';
+      return;
+    }
+
+    const beat = def.beat(ctx);
+    if (beat.effects) applyEffects(ctx, beat.effects);
+    if (beat.addNeeded) p.needed += beat.addNeeded;
+    this.outcome = { title: p.label, text: beat.text, log: this.world.drainLog() };
+    this.phase = 'resultat';
+  }
+
+  private abandonPursuit(pursuitId: number): void {
+    const p = this.pursuits.find((x) => x.id === pursuitId);
+    const def = p ? this.pursuitDef(p) : undefined;
+    if (!p || !def) return;
+    this.pursuits = this.pursuits.filter((x) => x.id !== p.id);
+    if (def.quit) {
+      const ctx = this.pursuitCtx(p, 0, 'quit');
+      const out = def.quit(ctx);
+      if (out.effects) applyEffects(ctx, out.effects);
+      this.outcome = { title: p.label, text: out.text, log: this.world.drainLog() };
+      this.phase = 'resultat';
+    }
+  }
+
+  private refreshOccasions(): void {
+    const rng = new Rng(this.world.seed).fork('occasions', this.world.year, this.player.id);
+    this.occasions = drawOccasions(
+      this.world,
+      this.ruleset,
+      this.player,
+      rng,
+      this.occasions,
+      () => this.nextOccasionId++,
+    );
+  }
+
+  private seize(occasionId: number): void {
+    if (this.phase !== 'annee') return;
+    const occ = this.occasions.find((o) => o.id === occasionId);
+    if (!occ || occ.cost > this.timeLeft) return;
+    const def = this.ruleset.occasions.find((d) => d.id === occ.defId);
+    if (!def) return;
+
+    const target = occ.roleId !== null ? this.world.get(occ.roleId) : undefined;
+    const rng = new Rng(this.world.seed).fork('occasion.take', occ.defId, this.world.year);
+    const ctx = occasionCtx(
+      this.world,
+      this.ruleset,
+      rng,
+      this.player,
+      target && target.alive ? { cible: target } : {},
+    );
+    const { text, effects } = def.take(ctx);
+    applyEffects(ctx, effects);
+    this.spent += occ.cost;
+    // On marque la prise : elle ne reviendra pas avant des années.
+    this.player.flags[`occ:${occ.defId}`] = this.world.year;
+    this.occasions = this.occasions.filter((o) => o.id !== occ.id);
+    this.outcome = { title: occ.label, text, log: this.world.drainLog() };
+    this.phase = 'resultat';
+  }
+
+  /** Ne rien faire est un choix, et il soigne. */
+  private rest(): void {
+    if (this.phase !== 'annee') return;
+    const reste = this.timeLeft;
+    if (reste < 1) return;
+    this.spent += reste;
+    const rng = new Rng(this.world.seed).fork('repos', this.world.year, this.player.id);
+    const ctx = makeEventCtx(this.world, this.ruleset, rng, this.player, {});
+    applyEffects(ctx, [
+      { k: 'health', d: 2 + reste * 2 },
+      { k: 'mood', d: 4 + reste * 3 },
+    ]);
+    this.outcome = {
+      title: 'Souffler',
+      text:
+        reste >= 3
+          ? 'Vous n\'avez rien fait de cette année. Personne ne s\'en souviendra, et vous en aviez besoin.'
+          : 'Vous vous êtes ménagé sur la fin. Ça se sent.',
+      log: this.world.drainLog(),
+    };
+    this.phase = 'resultat';
+  }
+
+  /**
+   * Fin d'année : ce qu'on n'a pas nourri prend une année de poussière, et
+   * finit par s'éteindre tout seul. Une entreprise abandonnée en silence est
+   * une histoire aussi — c'est même la plus courante.
+   */
+  private agePursuits(): void {
+    const perdues: string[] = [];
+    for (const p of this.pursuits) {
+      if (!this.fedThisYear.has(p.id)) p.idle += 1;
+    }
+    this.pursuits = this.pursuits.filter((p) => {
+      if (p.idle < ABANDON_APRES) return true;
+      perdues.push(p.label);
+      return false;
+    });
+    this.fedThisYear.clear();
+    for (const label of perdues) {
+      this.yearLog.push(`Vous avez laissé tomber : ${label.toLowerCase()}.`);
+    }
+  }
+
+  /** L'année telle que le joueur la voit. */
+  year(): YearView {
+    const budget = this.budget;
+    return {
+      budget,
+      spent: this.spent,
+      left: this.timeLeft,
+      pursuits: this.pursuits.map((p) => {
+        const target = p.targetId !== null ? this.world.get(p.targetId) : undefined;
+        return {
+          id: p.id,
+          label: p.label,
+          where: describeProgress(p),
+          progress: progressOf(p),
+          idle: p.idle,
+          target: target ? fullName(target) : null,
+        };
+      }),
+      openable: this.openablePursuits().map((d) => ({
+        id: d.id,
+        label: d.label,
+        kind: d.kind,
+        cost: estimateCost(d, this.player),
+      })),
+      occasions: this.occasions.map((o) => ({
+        id: o.id,
+        label: o.label,
+        detail: o.detail,
+        cost: o.cost,
+        closing: o.until <= this.world.year,
+      })),
+      coups: this.availableActions().map((a) => ({
+        id: a.id,
+        label: a.label,
+        desc: a.desc,
+        category: a.category,
+      })),
+    };
   }
 
   isActionAvailable(def: ActionDef): boolean {
@@ -503,7 +832,7 @@ export class Game {
     this.birth = life.result;
     this.pending = [];
     this.outcome = null;
-    this.actionUsed = false;
+    this.resetYear();
     this.yearLog = this.world.drainLog();
     this.phase = 'naissance';
   }
@@ -511,9 +840,21 @@ export class Game {
   private resumeAfterDeath(): void {
     this.pending = [];
     this.outcome = null;
-    this.actionUsed = false;
+    this.resetYear();
     this.yearLog = this.world.drainLog();
     this.phase = 'annee';
+  }
+
+  /**
+   * Une nouvelle vie n'hérite ni des entreprises ni des occasions de l'ancienne.
+   * Ce qu'on n'a pas fini meurt avec celui qui l'avait commencé.
+   */
+  private resetYear(): void {
+    this.spent = 0;
+    this.pursuits = [];
+    this.occasions = [];
+    this.fedThisYear.clear();
+    this.refreshOccasions();
   }
 
   private continueAs(heirId: EntityId): void {
@@ -528,9 +869,12 @@ export class Game {
       version: SAVE_VERSION,
       phase: this.phase,
       pending: this.pending,
-      actionUsed: this.actionUsed,
       yearLog: this.yearLog,
       opening: this.opening,
+      spent: this.spent,
+      pursuits: this.pursuits,
+      occasions: this.occasions,
+      counters: { pursuit: this.nextPursuitId, occasion: this.nextOccasionId },
       world: snapshot(this.world),
     };
     return JSON.stringify(file);
@@ -544,7 +888,12 @@ export class Game {
     const game = new Game(sim, ruleset);
     game.phase = (raw['phase'] as Phase) ?? 'annee';
     game.pending = (raw['pending'] as PendingEvent[]) ?? [];
-    game.actionUsed = Boolean(raw['actionUsed']);
+    game.spent = Number(raw['spent'] ?? 0);
+    game.pursuits = (raw['pursuits'] as Pursuit[]) ?? [];
+    game.occasions = (raw['occasions'] as Occasion[]) ?? [];
+    const compteurs = raw['counters'] as { pursuit?: number; occasion?: number } | undefined;
+    game.nextPursuitId = compteurs?.pursuit ?? game.pursuits.length + 1;
+    game.nextOccasionId = compteurs?.occasion ?? game.occasions.length + 1;
     game.yearLog = (raw['yearLog'] as string[]) ?? [];
     game.opening = (raw['opening'] as string) ?? '';
     return game;

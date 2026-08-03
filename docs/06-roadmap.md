@@ -90,7 +90,9 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 - ✅ **gouvernements malléables** ([doc 15](15-domaines-et-pouvoir.md) §4) : sept axes dont
   les combinaisons ont produit sept régimes distincts sans qu'aucun soit écrit
 - ✅ **régions et implantations** — l'arbre des domaines, avec agrégation de bas en haut
-- foyers et entreprises ([doc 11](11-economie-pouvoir.md) §3)
+- ✅ **l'année du joueur refondue** ([doc 16](16-annee-du-joueur.md)) : budget de temps,
+  entreprises longues, occasions lues dans l'état du monde — « une action par an » a disparu
+- foyers et entreprises économiques ([doc 11](11-economie-pouvoir.md) §3)
 - le joueur qui gouverne : réformer un axe, et le payer
 - cultures et religions (dérive, coutumes)
 - diplomatie entre factions (alliances, trahisons, traités)

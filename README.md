@@ -16,7 +16,7 @@ transmettre, compter — et, désormais, regarder le monde vivre sans vous.
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 144 tests
+pnpm test          # 157 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm profile       # où passent les millisecondes, système par système
@@ -43,7 +43,8 @@ Vercel lit `vercel.json` automatiquement : en principe, il suffit d'importer le 
 de déployer la branche. Une fois en ligne, « Ajouter à l'écran d'accueil » depuis le
 navigateur du téléphone donne une icône et un affichage plein écran.
 
-Contenu actuel : **104 événements**, **32 conduites de PNJ**, 25 scénarios de naissance,
+Contenu actuel : **104 événements**, **32 conduites de PNJ**, **11 entreprises**,
+**15 occasions**, 25 scénarios de naissance,
 59 traits, **46 maux du corps et de l'esprit**, 22 métiers, 16 compétences, 16 actions,
 3 cultures, 6 implantations.
 
@@ -73,6 +74,16 @@ grand, rançonne, dénonce, fonde une maison, et parfois tue. Rien de tout cela 
 passe par vous : l'onglet **Rumeurs** ne montre que ce qui vous serait revenu aux
 oreilles. 663 000 décisions de PNJ au banc d'émergence, aucune conduite morte.
 Voir le [doc 13](docs/13-agentivite.md).
+
+**Votre année n'est pas un menu** : « une action par an » a disparu. Une année
+donne un **budget de temps** — quatre quand rien ne pèse, moins si vous êtes un
+enfant, si vous avez un métier, trois gosses, une cité à gouverner. Ce temps se
+répartit entre des **entreprises** qui durent des années (apprendre à lire,
+faire la cour, préparer sa revanche, monter une affaire) et qui s'enlisent si
+on les délaisse, et des **occasions** que la simulation elle-même fabrique :
+le grain est tombé à 3,9 sous, une bande recrute, plus personne ne gouverne la
+cité, le mécontentement est à 60. Elles ne durent pas. Voir le
+[doc 16](docs/16-annee-du-joueur.md).
 
 **Un pays qui a des prix et un régime** : une seule structure récursive porte
 le monde, ses régions et ses villes — et portera un jour les planètes. Chaque
@@ -132,6 +143,7 @@ conception, c'est cette page qui a raison.
 | [13 — Agentivité des PNJ](docs/13-agentivite.md) | Dix pulsions, 32 conduites, choix utilitaire, fil de rumeurs |
 | [14 — Factions & conflits](docs/14-factions-et-conflits.md) | Groupes nés des serments, buts, et un seul résolveur de bataille |
 | [15 — Domaines & pouvoir](docs/15-domaines-et-pouvoir.md) | Économie récursive, prix locaux, routes, gouvernements à sept axes |
+| [16 — L'année du joueur](docs/16-annee-du-joueur.md) | Budget de temps, entreprises longues, occasions tirées du monde |
 
 ## Code
 

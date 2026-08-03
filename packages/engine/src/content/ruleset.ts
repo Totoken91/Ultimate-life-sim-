@@ -14,6 +14,8 @@ import type { EventDef, EventCtx, Effect, SelectCtx } from '../events/types.js';
 import type { ConditionDef } from '../body/conditions.js';
 import type { GoodId } from '../model/domain.js';
 import type { NpcActionDef } from '../ai/actions.js';
+import type { PursuitDef } from '../player/pursuits.js';
+import type { OccasionDef } from '../player/occasions.js';
 import { DRIVE_IDS, type DriveId } from '../ai/drives.js';
 import type { World } from '../world/world.js';
 
@@ -212,6 +214,10 @@ export interface Ruleset {
   conditions: ConditionDef[];
   /** Ce que les PNJ savent faire de leur propre chef (doc 13). */
   npcActions: NpcActionDef[];
+  /** Les entreprises longues que le joueur peut mener (doc 16 §2). */
+  pursuits: PursuitDef[];
+  /** Ce que le monde peut offrir à qui sait le voir (doc 16 §3). */
+  occasions: OccasionDef[];
   /** Tire un nom cohérent avec la culture. */
   nameFor(rng: Rng, culture: string, sex: Sex): { given: string; family: string };
   /** Nom de maison proposé à la fondation. */
@@ -327,6 +333,19 @@ export function validateRuleset(rs: Ruleset): ValidationIssue[] {
   for (const drive of DRIVE_IDS) {
     const covered = (rs.npcActions ?? []).some((a) => (a.serves[drive] ?? 0) > 0);
     if (!covered) warn(`drive:${drive}`, 'aucune action ne l\'apaise');
+  }
+
+  const pursuitIds = new Set<string>();
+  for (const p of rs.pursuits ?? []) {
+    if (pursuitIds.has(p.id)) err(`pursuit:${p.id}`, 'identifiant dupliqué');
+    pursuitIds.add(p.id);
+    if (p.cost < 2) err(`pursuit:${p.id}`, 'une entreprise de moins de deux temps est un coup');
+  }
+  const occasionIds = new Set<string>();
+  for (const o of rs.occasions ?? []) {
+    if (occasionIds.has(o.id)) err(`occasion:${o.id}`, 'identifiant dupliqué');
+    occasionIds.add(o.id);
+    if (o.cost < 1) err(`occasion:${o.id}`, 'une occasion gratuite n\'est pas un choix');
   }
 
   if (rs.births.length === 0) err('births', 'aucun scénario de naissance');

@@ -150,3 +150,12 @@ interface GameFacade {
 
 Le CLI n'est qu'un rendu de `ViewModel`. Une UI web est donc un projet de front, pas une réécriture.
 On ne construit **pas** cette UI web avant la Phase 7 — mais on ne se ferme jamais la porte.
+
+---
+
+## Note — l'année du joueur a changé
+
+Ce document décrivait « une action volontaire par année ». Ce n'est plus vrai :
+une année donne un **budget de temps** que l'on répartit entre des entreprises
+longues, des occasions ouvertes par le monde et des coups ponctuels. Voir le
+[doc 16](16-annee-du-joueur.md), qui fait autorité sur ce point.

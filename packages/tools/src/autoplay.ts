@@ -103,14 +103,34 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
         break;
 
       case 'annee': {
-        // une action sur deux, prise au hasard parmi celles qui sont ouvertes
-        if (!game.actionUsed && rng.chance(0.5)) {
-          const actions = game.availableActions();
-          const chosen = rng.pickOrNull(actions);
-          if (chosen) {
-            game.submit({ t: 'action', actionId: chosen.id });
-            break;
-          }
+        // Un joueur automatique dépense son temps comme n'importe qui : il
+        // saisit ce qui passe, nourrit ce qu'il a commencé, et parfois ouvre
+        // quelque chose. C'est aussi ce qui fait tourner le doc 16 au banc.
+        const year = game.year();
+        if (year.left < 1) {
+          game.submit({ t: 'advance' });
+          break;
+        }
+        const abordables = year.occasions.filter((o) => o.cost <= year.left);
+        if (abordables.length > 0 && rng.chance(0.55)) {
+          const occ = rng.pick(abordables);
+          game.submit({ t: 'seize', occasionId: occ.id });
+          break;
+        }
+        if (year.pursuits.length > 0 && rng.chance(0.6)) {
+          const p = rng.pick(year.pursuits);
+          game.submit({ t: 'invest', pursuitId: p.id, temps: rng.int(1, year.left) });
+          break;
+        }
+        if (year.openable.length > 0 && rng.chance(0.3)) {
+          const d = rng.pick(year.openable);
+          game.submit({ t: 'start', pursuitId: d.id });
+          break;
+        }
+        if (year.coups.length > 0 && rng.chance(0.4)) {
+          const coup = rng.pick(year.coups);
+          game.submit({ t: 'action', actionId: coup.id });
+          break;
         }
         game.submit({ t: 'advance' });
         break;

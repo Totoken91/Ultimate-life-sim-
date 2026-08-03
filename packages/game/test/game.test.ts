@@ -62,7 +62,7 @@ describe('Game', () => {
     const actions = game.availableActions();
     expect(actions.length).toBeGreaterThan(0);
     game.submit({ t: 'action', actionId: actions[0]!.id });
-    expect(game.actionUsed).toBe(true);
+    expect(game.spent).toBeGreaterThan(0);
     game.submit({ t: 'advance' }); // sort de l'écran de résultat
     const wealthBefore = game.player.wealth;
     game.submit({ t: 'action', actionId: actions[0]!.id });

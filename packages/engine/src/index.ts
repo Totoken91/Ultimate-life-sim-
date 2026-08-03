@@ -223,6 +223,30 @@ export {
 } from './economy/government.js';
 export { DomainEconomy, Governance, Subsistence2 } from './systems/domains.js';
 
+// ─── l'année du joueur ──────────────────────────────────────────────────────
+export { timeBudget, TEMPS_BASE, type TimeBudget, type TimeCost } from './player/time.js';
+export {
+  estimateCost,
+  progressOf,
+  describeProgress,
+  newPursuit,
+  ABANDON_APRES,
+  ENTREPRISES_MAX,
+  type Pursuit,
+  type PursuitDef,
+  type PursuitCtx,
+  type PursuitBeat,
+} from './player/pursuits.js';
+export {
+  drawOccasions,
+  occasionCtx,
+  OCCASIONS_PAR_AN,
+  REPOS_OCCASION,
+  type Occasion,
+  type OccasionDef,
+  type OccasionCtx,
+} from './player/occasions.js';
+
 // ─── simulation ─────────────────────────────────────────────────────────────
 export {
   Simulation,

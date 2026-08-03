@@ -95,9 +95,9 @@ function mainScreen(): void {
     { key: '1', label: 'Passer l\'année' },
     {
       key: '2',
-      label: 'Agir',
-      note: game.actionUsed ? 'déjà fait cette année' : 'une action par an',
-      locked: game.actionUsed,
+      label: 'Votre année',
+      note: `${game.timeLeft} temps sur ${game.budget.total}`,
+      locked: game.timeLeft < 1,
     },
     { key: '3', label: 'Gens', note: 'relations, famille' },
     { key: '4', label: 'Vous', note: 'traits, compétences, souvenirs' },
@@ -247,23 +247,116 @@ let deathChoices: DeathChoice[] = [];
 
 // ─── sous-menus ─────────────────────────────────────────────────────────────
 
+/**
+ * L'année du joueur (doc 16). Trois choses différentes se disputent le même
+ * temps : ce qui passe et ne repassera pas, ce qu'on mène depuis des années,
+ * et ce qu'on peut faire vite.
+ */
 async function actionsMenu(): Promise<void> {
-  const actions = game.availableActions();
-  clear();
-  say(heading('agir'));
-  say(c('  Une seule action par an. Le reste de l\'année vous échappe.', 'grey', 'italic'));
+  for (;;) {
+    const y = game.year();
+    clear();
+    say(heading('votre année'));
+    say();
+    const jauge = c('◆'.repeat(y.left), 'yellow') + c('◇'.repeat(Math.max(0, y.budget.total - y.left)), 'grey');
+    say(`  ${jauge}  ${c(`${y.left} temps sur ${y.budget.total}`, 'grey')}`);
+    if (y.budget.charges.length > 0) {
+      say(c(`  ${y.budget.charges.map((ch) => `${ch.label} (−${ch.cost})`).join(' · ')}`, 'grey', 'italic'));
+    }
+    say();
+
+    const entrees: { key: string; run: () => void | Promise<void> }[] = [];
+    let n = 1;
+
+    if (y.occasions.length > 0) {
+      say(c('  CE QUI PASSE', 'bold'));
+      for (const o of y.occasions) {
+        const key = String(n++);
+        const cout = c(`${o.cost} temps`, o.cost > y.left ? 'red' : 'grey');
+        const fin = o.closing ? c(' · dernière année', 'magenta', 'italic') : '';
+        say(`${c(` ${pad(key, 2)} `, 'bold', 'yellow')} ${pad(o.label, 44)} ${cout}${fin}`);
+        for (const line of wrap(o.detail, 66)) say(c(`      ${line}`, 'grey'));
+        if (o.cost <= y.left) {
+          entrees.push({ key, run: () => game.submit({ t: 'seize', occasionId: o.id }) });
+        }
+      }
+      say();
+    }
+
+    if (y.pursuits.length > 0) {
+      say(c('  CE QUE VOUS MENEZ', 'bold'));
+      for (const p of y.pursuits) {
+        const key = String(n++);
+        const barre = bar(p.progress, 12);
+        const cible = p.target ? c(` · ${p.target}`, 'grey') : '';
+        say(`${c(` ${pad(key, 2)} `, 'bold', 'cyan')} ${pad(p.label, 30)} ${barre}${cible}`);
+        say(c(`      ${p.where}${p.idle > 0 ? ` · délaissée depuis ${p.idle} an(s)` : ''}`, 'grey'));
+        if (y.left > 0) {
+          entrees.push({
+            key,
+            run: async () => {
+              const mise = await askTemps(y.left);
+              if (mise > 0) game.submit({ t: 'invest', pursuitId: p.id, temps: mise });
+            },
+          });
+        }
+      }
+      say();
+    }
+
+    if (y.openable.length > 0 && y.left > 0) {
+      say(c('  COMMENCER QUELQUE CHOSE', 'bold'));
+      for (const d of y.openable) {
+        const key = String(n++);
+        say(
+          `${c(` ${pad(key, 2)} `, 'bold', 'green')} ${pad(d.label, 30)} ` +
+            c(`${d.kind} · environ ${d.cost} temps`, 'grey'),
+        );
+        entrees.push({ key, run: () => game.submit({ t: 'start', pursuitId: d.id }) });
+      }
+      say();
+    }
+
+    if (y.coups.length > 0 && y.left > 0) {
+      say(c('  COUPS', 'bold') + c('  — un temps, sans lendemain', 'grey', 'italic'));
+      for (const a of y.coups) {
+        const key = String(n++);
+        say(`${c(` ${pad(key, 2)} `, 'yellow')} ${pad(a.label, 30)} ${c(a.desc, 'grey')}`);
+        entrees.push({ key, run: () => game.submit({ t: 'action', actionId: a.id }) });
+      }
+      say();
+    }
+
+    say(rule());
+    if (y.left > 0) say(c('  [r] souffler — laisser filer ce qui reste', 'grey'));
+    say(c('  [0] retour', 'grey'));
+    say();
+
+    const answer = (await ask()).trim().toLowerCase();
+    if (answer === '0' || answer === '') return;
+    if (answer === 'r' && y.left > 0) {
+      game.submit({ t: 'rest' });
+      return;
+    }
+    const entree = entrees.find((e) => e.key === answer);
+    if (!entree) {
+      notice = 'Ce n\'est pas une des lignes.';
+      continue;
+    }
+    await entree.run();
+    if (game.phase !== 'annee') return;
+  }
+}
+
+/** Combien de temps on y met. Une entreprise se nourrit par tranches. */
+async function askTemps(max: number): Promise<number> {
+  if (max <= 1) return 1;
   say();
-  actions.forEach((a, i) => {
-    say(`${c(` ${pad(String(i + 1), 2)} `, 'bold', 'yellow')} ${pad(a.label, 34)} ${c(a.desc, 'grey')}`);
-  });
+  say(c(`  Combien de temps y mettre ? (1 à ${max}, [0] annuler)`, 'grey'));
   say();
-  say(c('  [0] retour', 'grey'));
-  say();
-  const answer = await ask();
-  if (answer === '0' || answer === '') return;
-  const index = Number(answer) - 1;
-  const chosen = actions[index];
-  if (chosen) game.submit({ t: 'action', actionId: chosen.id });
+  const answer = Number((await ask()).trim());
+  if (!Number.isFinite(answer) || answer < 1) return 0;
+  return Math.min(max, Math.floor(answer));
 }
 
 async function peopleMenu(): Promise<void> {

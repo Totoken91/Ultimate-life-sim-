@@ -122,6 +122,18 @@ async function main(): Promise<void> {
     }
   }
 
+  // L'année du joueur : ses trois faces (doc 16). Il faut d'abord y revenir.
+  const vie = page.getByRole('button', { name: 'Vie', exact: true });
+  if (await vie.isVisible().catch(() => false)) await vie.click();
+  for (const chip of ['Ce qui passe', 'Ce que vous menez', 'Coups']) {
+    const c = page.getByRole('button', { name: chip, exact: true });
+    if (await c.isVisible().catch(() => false)) {
+      await step(`année → ${chip}`, async () => {
+        await c.click();
+      });
+    }
+  }
+
   // Et chaque onglet de statistiques.
   for (const chip of ['Lieu', 'Rumeurs', 'Groupes', 'Pays', 'Chiffres', 'Classements', 'Records', 'Chronique']) {
     const c = page.getByRole('button', { name: chip, exact: true });
