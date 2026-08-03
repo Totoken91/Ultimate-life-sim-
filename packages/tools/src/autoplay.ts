@@ -1,5 +1,28 @@
-import { Rng, ageOf, type Ruleset } from '@ed/engine';
+import { Rng, ageOf, hunger, regimeName, type Ruleset, type World } from '@ed/engine';
 import { Game } from '@ed/game';
+
+/** Le pire manque du monde, pour le banc d'émergence. */
+function worstHunger(world: World): number {
+  let worst = 0;
+  for (const d of world.domainList()) {
+    if (d.settlement !== null) worst = Math.max(worst, hunger(d));
+  }
+  return worst;
+}
+
+/** Le prix moyen du pain — le chiffre qui dit si le monde mange. */
+function breadOf(world: World): number {
+  let total = 0;
+  let n = 0;
+  for (const d of world.domainList()) {
+    const p = d.settlement !== null ? d.prices['vivres'] : undefined;
+    if (p !== undefined) {
+      total += p;
+      n += 1;
+    }
+  }
+  return n > 0 ? total / n : 0;
+}
 
 export interface AutoplayOptions {
   seed: number;
@@ -32,6 +55,11 @@ export interface AutoplayResult {
   factionsStanding?: number;
   clashes?: number;
   fallen?: number;
+  /** Renversements de régime, et l'état du pays à la fin (doc 15). */
+  upheavals?: number;
+  regimes?: string[];
+  hunger?: number;
+  breadPrice?: number;
   seed: number;
   lives: LifeRecord[];
   years: number;
@@ -136,6 +164,10 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
             factionsStanding: game.world.activeFactions().length,
             clashes: game.world.tally.clashes,
             fallen: game.world.tally.fallen,
+            upheavals: game.world.tally.upheavals,
+            regimes: game.world.domainList().filter((d) => d.settlement).map((d) => regimeName(d.government)),
+            hunger: worstHunger(game.world),
+            breadPrice: breadOf(game.world),
           };
         }
         const heir = rng.pick(heirs);
@@ -157,6 +189,10 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
           factionsStanding: game.world.activeFactions().length,
           clashes: game.world.tally.clashes,
           fallen: game.world.tally.fallen,
+          upheavals: game.world.tally.upheavals,
+          regimes: game.world.domainList().filter((d) => d.settlement).map((d) => regimeName(d.government)),
+          hunger: worstHunger(game.world),
+          breadPrice: breadOf(game.world),
         };
     }
   }

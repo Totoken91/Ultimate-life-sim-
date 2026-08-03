@@ -24,6 +24,14 @@ import {
   livingMembers,
   FACTION_KIND_LABELS,
   GOAL_LABELS,
+  GOOD_IDS,
+  GOOD_LABELS,
+  GOOD_BASE_PRICE,
+  SCALE_LABELS,
+  describeGovernment,
+  regimeName,
+  rulerName,
+  hunger,
   type Character,
   type EntityId,
   type StatId,
@@ -273,6 +281,72 @@ export function factions(game: Game): FactionView[] {
   }));
   out.sort((a, b) => b.power - a.power || (a.id < b.id ? -1 : 1));
   return out;
+}
+
+/**
+ * Le domaine où l'on vit, tel qu'on le raconterait (doc 11 §7) : des
+ * conséquences humaines avant des chiffres.
+ */
+export interface DomainView {
+  id: string;
+  name: string;
+  scale: string;
+  population: number;
+  /** « chefferie », « république »… déduit des sept axes. */
+  regime: string;
+  /** La phrase complète, sans tableau. */
+  loi: string;
+  ruler: string;
+  legitimacy: number;
+  unrest: number;
+  treasury: number;
+  /** Manque de vivres et d'eau, 0..100. */
+  faim: number;
+  /** Les prix qui bougent, avec leur écart au prix de référence. */
+  prices: { good: string; price: number; ratio: number }[];
+  /** Ce que le lieu produit en trop, et ce qui lui manque. */
+  surplus: string[];
+  manques: string[];
+  ici: boolean;
+}
+
+export function domains(game: Game): DomainView[] {
+  const world = game.world;
+  const chezMoi = game.player.settlement;
+  return world.domainList().map((d) => {
+    const prices = GOOD_IDS.filter((g) => d.prices[g] !== undefined)
+      .map((g) => ({
+        good: GOOD_LABELS[g],
+        price: d.prices[g] ?? 0,
+        ratio: (d.prices[g] ?? 0) / GOOD_BASE_PRICE[g],
+      }))
+      .sort((a, b) => b.ratio - a.ratio);
+    const surplus: string[] = [];
+    const manques: string[] = [];
+    for (const g of GOOD_IDS) {
+      const prod = d.production[g] ?? 0;
+      const besoin = d.consumption[g] ?? 0;
+      if (prod > besoin * 1.25 && prod > 0.5) surplus.push(GOOD_LABELS[g]);
+      if ((d.shortage[g] ?? 0) > 0.12) manques.push(GOOD_LABELS[g]);
+    }
+    return {
+      id: d.id,
+      name: d.name,
+      scale: SCALE_LABELS[d.scale],
+      population: d.population,
+      regime: regimeName(d.government),
+      loi: describeGovernment(d.government),
+      ruler: rulerName(world, d),
+      legitimacy: Math.round(d.legitimacy),
+      unrest: Math.round(d.unrest),
+      treasury: d.treasury,
+      faim: Math.round(hunger(d) * 100),
+      prices: prices.slice(0, 7),
+      surplus,
+      manques,
+      ici: d.settlement === chezMoi,
+    };
+  });
 }
 
 export interface WorldView {

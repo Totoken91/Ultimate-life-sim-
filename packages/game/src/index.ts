@@ -16,11 +16,13 @@ export {
   self,
   body,
   factions,
+  domains,
   worldView,
   type StatusView,
   type RelationView,
   type SelfView,
   type BodyView,
   type FactionView,
+  type DomainView,
   type WorldView,
 } from './views.js';

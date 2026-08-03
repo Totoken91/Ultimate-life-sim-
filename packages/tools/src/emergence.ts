@@ -27,6 +27,10 @@ let facDissolved = 0;
 let facStanding = 0;
 let clashes = 0;
 let fallen = 0;
+let upheavals = 0;
+let hungerSum = 0;
+let breadSum = 0;
+const regimeCounts = new Map<string, number>();
 let totalYears = 0;
 let totalSeeds = 0;
 
@@ -48,6 +52,10 @@ for (let i = 0; i < runs; i++) {
   facStanding += result.factionsStanding ?? 0;
   clashes += result.clashes ?? 0;
   fallen += result.fallen ?? 0;
+  upheavals += result.upheavals ?? 0;
+  hungerSum += result.hunger ?? 0;
+  breadSum += result.breadPrice ?? 0;
+  for (const r of result.regimes ?? []) regimeCounts.set(r, (regimeCounts.get(r) ?? 0) + 1);
 }
 
 const elapsed = Date.now() - started;
@@ -156,6 +164,17 @@ console.log(`    affrontements ........... ${clashes} (${(clashes / Math.max(1, 
 console.log(`    tombés au combat ........ ${fallen}`);
 console.log('');
 
+console.log('  PAYS ET POUVOIR');
+console.log(`    renversements ........... ${upheavals} (${(upheavals / Math.max(1, runs)).toFixed(1)} par partie)`);
+console.log(`    pire manque en fin ...... ${((hungerSum / Math.max(1, runs)) * 100).toFixed(0)} %`);
+console.log(`    prix moyen du pain ...... ${(breadSum / Math.max(1, runs)).toFixed(1)} sous (référence 12)`);
+console.log('');
+const regimeRanked = [...regimeCounts.entries()].sort((a, b) => b[1] - a[1]);
+for (const [nom, n] of regimeRanked) {
+  console.log(`      ${nom.padEnd(24, '.')} ${String(n).padStart(5)}`);
+}
+console.log('');
+
 // ─── verdict ────────────────────────────────────────────────────────────────
 
 const warnings: string[] = [];
@@ -182,6 +201,12 @@ if (clashes / Math.max(1, totalYears) > 1) {
   warnings.push('plus d\'un affrontement par année — le monde est en guerre permanente');
 }
 if (facFounded > 0 && clashes === 0) warnings.push('des factions, mais jamais un conflit');
+if (upheavals === 0) warnings.push('aucun régime ne change jamais — les gouvernements sont figés');
+if (regimeCounts.size <= 1) warnings.push('un seul régime dans tout le monde — pas de malléabilité');
+const faimMoyenne = hungerSum / Math.max(1, runs);
+if (faimMoyenne > 0.5) warnings.push('le monde a faim en permanence — l\'économie ne nourrit pas');
+const pain = breadSum / Math.max(1, runs);
+if (pain > 40 || (pain > 0 && pain < 3)) warnings.push(`prix du pain aberrant (${pain.toFixed(1)})`);
 
 if (warnings.length === 0) {
   console.log('  ✓ Aucun signal d\'alarme.');

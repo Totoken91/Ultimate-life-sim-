@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Game } from '@ed/game';
-import { factions, worldView } from '@ed/game';
+import { domains, factions, worldView } from '@ed/game';
 import { RECORD_LABELS, formatSous, renderEntry, type RecordId } from '@ed/engine';
 import { Bar, Btn, Card, Chips, Row, Section, pct } from '../ui.js';
 
@@ -8,6 +8,7 @@ type Onglet =
   | 'lieu'
   | 'rumeurs'
   | 'groupes'
+  | 'pays'
   | 'chiffres'
   | 'classements'
   | 'records'
@@ -17,6 +18,7 @@ const ONGLETS: { id: Onglet; label: string }[] = [
   { id: 'lieu', label: 'Lieu' },
   { id: 'rumeurs', label: 'Rumeurs' },
   { id: 'groupes', label: 'Groupes' },
+  { id: 'pays', label: 'Pays' },
   { id: 'chiffres', label: 'Chiffres' },
   { id: 'classements', label: 'Classements' },
   { id: 'records', label: 'Records' },
@@ -36,6 +38,8 @@ export function Monde({ game }: { game: Game }) {
       {tab === 'rumeurs' && <Rumeurs game={game} />}
 
       {tab === 'groupes' && <Groupes game={game} />}
+
+      {tab === 'pays' && <Pays game={game} />}
 
       {tab === 'chiffres' && (
         <>
@@ -317,6 +321,68 @@ function Groupes({ game }: { game: Game }) {
           <Row k="Cherche à" v={f.goal} />
           {f.losses > 0 && <Row k="Tombés" v={f.losses} tone="danger" />}
           {f.grip > 0 && <Row k="Emprise ici" v={`${f.grip} %`} tone={f.grip >= 60 ? 'danger' : undefined} />}
+        </Card>
+      ))}
+    </>
+  );
+}
+
+/**
+ * L'économie et le pouvoir, du lieu où l'on vit jusqu'au monde entier. Une
+ * seule structure les porte tous (doc 11 §1) : c'est pour ça que l'écran est
+ * le même à toutes les échelles.
+ */
+function Pays({ game }: { game: Game }) {
+  const list = domains(game);
+  const ici = list.filter((d) => d.ici);
+  const reste = list.filter((d) => !d.ici);
+  return (
+    <>
+      {[...ici, ...reste].map((d) => (
+        <Card key={d.id}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 10,
+            }}
+          >
+            <strong style={{ fontSize: 16 }}>{d.name}</strong>
+            <span style={{ opacity: 0.55, fontSize: 13 }}>{d.ici ? 'chez vous' : d.scale}</span>
+          </div>
+          <div className="prose" style={{ fontSize: 14, opacity: 0.72, margin: '3px 0 9px' }}>
+            {d.loi}
+          </div>
+          <Row k="Régime" v={d.regime} />
+          {d.ruler !== 'personne' && <Row k="Gouverne" v={d.ruler} />}
+          <Row k="Âmes" v={d.population} />
+          {d.population > 0 && (
+            <>
+              <Row k="Légitimité" v={`${d.legitimacy} %`} tone={d.legitimacy < 30 ? 'danger' : undefined} />
+              <Row
+                k="Mécontentement"
+                v={`${d.unrest} %`}
+                tone={d.unrest > d.legitimacy ? 'danger' : undefined}
+              />
+              <Row k="Trésor" v={`${d.treasury} sous`} />
+              {d.faim > 0 && <Row k="Il manque" v={`${d.faim} %`} tone="danger" />}
+            </>
+          )}
+          {d.surplus.length > 0 && <Row k="En trop" v={d.surplus.join(', ')} tone="good" />}
+          {d.manques.length > 0 && <Row k="Fait défaut" v={d.manques.join(', ')} tone="danger" />}
+          {d.prices.length > 0 && (
+            <div style={{ marginTop: 8 }}>
+              {d.prices.map((p) => (
+                <Row
+                  key={p.good}
+                  k={p.good}
+                  v={`${p.price.toFixed(1)} sous`}
+                  tone={p.ratio > 1.6 ? 'danger' : p.ratio < 0.7 ? 'good' : undefined}
+                />
+              ))}
+            </div>
+          )}
         </Card>
       ))}
     </>

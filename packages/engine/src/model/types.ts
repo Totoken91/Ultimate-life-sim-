@@ -363,6 +363,8 @@ export interface WorldTally {
   factionsFounded: number;
   factionsDissolved: number;
   clashes: number;
+  /** Renversements, réformes et effondrements de gouvernements (doc 11 §4). */
+  upheavals: number;
   /** Morts au combat, toutes échelles confondues. */
   fallen: number;
 }
@@ -380,6 +382,7 @@ export function emptyTally(): WorldTally {
     factionsFounded: 0,
     factionsDissolved: 0,
     clashes: 0,
+    upheavals: 0,
     fallen: 0,
   };
 }

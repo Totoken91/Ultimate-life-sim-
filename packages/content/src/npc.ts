@@ -124,12 +124,19 @@ export const NPC_ACTIONS: NpcActionDef[] = [
   A({
     id: 'se_soigner',
     label: 'aller voir quelqu\'un qui sait',
-    serves: { survie: 0.65 },
+    serves: { survie: 0.65, securite: 0.2 },
     minAge: 4,
     cooldown: 2,
-    requires: (c) => c.self.health < 60 && richerThan(c, 40),
+    // Plus on va mal, plus on finit par y aller. Sans ce poids, mendier et
+    // chercher un maître servaient la même pulsion et gagnaient toujours.
+    weight: (c) => 0.7 + (82 - c.self.health) / 45,
+    // Conduite morte pendant longtemps, et pas pour la raison qu'on croyait :
+    // ce n'était pas l'argent, c'est que **la santé d'un vivant ne descend
+    // jamais sous 64**. Le corps emporte les gens avant. On va voir le
+    // guérisseur quand on commence à aller mal, pas quand on agonise.
+    requires: (c) => c.self.health < 82 && richerThan(c, 12),
     effects: (c) => {
-      const cout = Math.min(c.self.wealth, 30 + Math.round(c.sit.upkeep * 0.2));
+      const cout = Math.min(c.self.wealth, 10 + Math.round(c.sit.upkeep * 0.15));
       // À cette époque, un remède sur trois aggrave. C'est le prix du soin.
       const bon = c.rng.chance(0.62);
       return [

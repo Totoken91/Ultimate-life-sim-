@@ -12,6 +12,7 @@ import type {
   Seed,
 } from '../model/types.js';
 import { World, type NewsItem, type TagHit, type WorldMode } from '../world/world.js';
+import type { Domain, Route } from '../model/domain.js';
 import { RelationGraph } from '../world/relations.js';
 import { emptyTally } from '../model/types.js';
 import { ORGAN_IDS, newBody } from '../body/body.js';
@@ -21,7 +22,7 @@ import { MemoryStore } from '../world/memory.js';
  * ADR-008 : instantané complet versionné, pas de rejeu d'event log.
  * Les paliers T2/T3 ne seront jamais sauvegardés — ils sont regénérés.
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 
 export interface WorldSnapshot {
   version: number;
@@ -33,6 +34,8 @@ export interface WorldSnapshot {
   characters: Character[];
   houses: House[];
   factions: Faction[];
+  domains: Domain[];
+  routes: Route[];
   relations: Relation[];
   memories: { nextId: number; rows: [EntityId, Memory[]][] };
   seeds: Seed[];
@@ -56,6 +59,8 @@ export function snapshot(world: World): WorldSnapshot {
     characters: [...world.characters.values()].sort((a, b) => a.id - b.id),
     houses: [...world.houses.values()].sort((a, b) => (a.id < b.id ? -1 : 1)),
     factions: [...world.factions.values()].sort((a, b) => (a.id < b.id ? -1 : 1)),
+    domains: world.domainList(),
+    routes: world.routes,
     relations: world.relations.toJSON(),
     memories: world.memories.toJSON(),
     seeds: world.seeds,
@@ -76,6 +81,8 @@ export function restore(snap: WorldSnapshot): World {
   for (const c of snap.characters) world.characters.set(c.id, c);
   for (const h of snap.houses) world.houses.set(h.id, h);
   for (const f of snap.factions ?? []) world.factions.set(f.id, f);
+  for (const d of snap.domains ?? []) world.domains.set(d.id, d);
+  world.routes = snap.routes ?? [];
   for (const r of snap.relations) world.relations.set(r);
   const memories = MemoryStore.fromJSON(snap.memories);
   Object.assign(world, { memories });
@@ -165,6 +172,18 @@ export const MIGRATIONS: Record<number, Migration> = {
       }
     }
     raw['version'] = 6;
+    return raw;
+  },
+
+  // v6 → v7 : les domaines, les prix locaux et les gouvernements. Une vieille
+  // partie repart sans : ils seront resemés au chargement, avec les stocks à
+  // zéro. On ne peut pas inventer une économie qui n'a pas eu lieu.
+  6: (raw) => {
+    if (!Array.isArray(raw['domains'])) raw['domains'] = [];
+    if (!Array.isArray(raw['routes'])) raw['routes'] = [];
+    const tally = raw['tally'] as Record<string, unknown> | undefined;
+    if (tally && typeof tally['upheavals'] !== 'number') tally['upheavals'] = 0;
+    raw['version'] = 7;
     return raw;
   },
 };

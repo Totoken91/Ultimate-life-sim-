@@ -123,7 +123,7 @@ async function main(): Promise<void> {
   }
 
   // Et chaque onglet de statistiques.
-  for (const chip of ['Lieu', 'Rumeurs', 'Groupes', 'Chiffres', 'Classements', 'Records', 'Chronique']) {
+  for (const chip of ['Lieu', 'Rumeurs', 'Groupes', 'Pays', 'Chiffres', 'Classements', 'Records', 'Chronique']) {
     const c = page.getByRole('button', { name: chip, exact: true });
     if (await c.isVisible().catch(() => false)) {
       await step(`chiffres → ${chip}`, async () => {

@@ -16,7 +16,7 @@ transmettre, compter — et, désormais, regarder le monde vivre sans vous.
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 123 tests
+pnpm test          # 144 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm profile       # où passent les millisecondes, système par système
@@ -74,6 +74,19 @@ passe par vous : l'onglet **Rumeurs** ne montre que ce qui vous serait revenu au
 oreilles. 663 000 décisions de PNJ au banc d'émergence, aucune conduite morte.
 Voir le [doc 13](docs/13-agentivite.md).
 
+**Un pays qui a des prix et un régime** : une seule structure récursive porte
+le monde, ses régions et ses villes — et portera un jour les planètes. Chaque
+lieu produit ce que ses gens produisent, consomme ce qu'ils consomment, et
+**ses prix naissent de sa propre rareté** : le pain vaut 3,8 sous au bourg des
+moulins et 11,4 à la cité des comptoirs, sans que personne l'ait écrit. Le
+revenu d'un forgeron, c'est ce qu'il vend, ici, à ce prix-là. Les gouvernements
+n'ont pas de type : sept axes réglables — qui décide, comment on y accède,
+combien de temps, ce qu'on peut imposer, à qui est la terre, ce qui légitime,
+qui paie quoi — dont les combinaisons ont produit **sept régimes distincts**
+sans qu'aucun soit écrit comme tel. Quand le mécontentement dépasse la
+légitimité, ça casse — et *comment* dépend du régime. Voir le
+[doc 15](docs/15-domaines-et-pouvoir.md).
+
 **Des groupes, et des guerres** : personne ne décrète les factions — elles se
 découvrent. Quand assez d'hommes ont juré à quelqu'un, le monde donne un nom au
 réseau : une bande, une compagnie, une guilde, un ordre, un clan, selon ce que
@@ -90,8 +103,8 @@ s'aggravent, rémettent, laissent des traces et finissent parfois par donner leu
 mort. `health` n'est plus une valeur qu'on pousse : c'est le résumé calculé de tout ça.
 Voir le [doc 12](docs/12-corps-et-esprit.md).
 
-Ce qui n'existe pas encore : économie de production et de prix, gouvernements, territoires
-et régions, diplomatie entre factions, le joueur *dans* la bataille, rumeurs qui se
+Ce qui n'existe pas encore : foyers et entreprises, le joueur qui gouverne, cultures et
+religions, diplomatie entre factions, le joueur *dans* la bataille, rumeurs qui se
 déforment, secrets et chantage, intrigues multi-années, voies de pouvoir, paliers LOD 2 et
 3, temps élastique, transcendance. Voir la [roadmap](docs/06-roadmap.md).
 
@@ -118,6 +131,7 @@ conception, c'est cette page qui a raison.
 | [12 — Corps & esprit](docs/12-corps-et-esprit.md) | Organes, constantes vitales, 46 maux qui sont des processus, maux de l'esprit |
 | [13 — Agentivité des PNJ](docs/13-agentivite.md) | Dix pulsions, 32 conduites, choix utilitaire, fil de rumeurs |
 | [14 — Factions & conflits](docs/14-factions-et-conflits.md) | Groupes nés des serments, buts, et un seul résolveur de bataille |
+| [15 — Domaines & pouvoir](docs/15-domaines-et-pouvoir.md) | Économie récursive, prix locaux, routes, gouvernements à sept axes |
 
 ## Code
 

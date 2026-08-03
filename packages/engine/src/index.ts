@@ -191,6 +191,38 @@ export {
 } from './conflict/clash.js';
 export { FactionAI, FactionFormation, Conflicts } from './systems/factions.js';
 
+// ─── domaines, économie, gouvernements ──────────────────────────────────────
+export * from './model/domain.js';
+export {
+  seedDomains,
+  seedRoutes,
+  newDomain,
+  defaultGovernment,
+  produceOf,
+  consumeOf,
+  priceOf,
+  frictionOf,
+  runDomainYear,
+  runTrade,
+  hunger,
+  taxRate,
+} from './economy/domains.js';
+export {
+  chooseRuler,
+  stabilityOf,
+  outputFactor,
+  tickMood,
+  upheaval,
+  reform,
+  collectTax,
+  rulerName,
+  LEGITIMITE_FRAGILE,
+  DELAI_UPHEAVAL,
+  type Upheaval,
+  type UpheavalKind,
+} from './economy/government.js';
+export { DomainEconomy, Governance, Subsistence2 } from './systems/domains.js';
+
 // ─── simulation ─────────────────────────────────────────────────────────────
 export {
   Simulation,

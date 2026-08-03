@@ -136,8 +136,8 @@ Une demande n'est « livrée » que lorsqu'elle est **jouable**, pas lorsqu'elle
 | Armements de toutes les ères | 📐 conçu | [09](09-echelle-totale.md) §3 — Phase 5 |
 | Magie | 📐 conçu | mode de monde *Mythe* — Phase 6 |
 | Patrimoine jusqu'au vaisseau-planète | 📐 conçu | [09](09-echelle-totale.md) §4 — Phase 5 |
-| Économie simulée à toutes les échelles | 📐 conçu | [11](11-economie-pouvoir.md) — Phase 3 puis 5 |
-| Gouvernements malléables | 📐 conçu | [11](11-economie-pouvoir.md) §4 — Phase 3 |
+| Économie simulée à toutes les échelles | 🟡 partiel | [15](15-domaines-et-pouvoir.md) — domaines récursifs, prix locaux, routes ; les paliers planétaires attendent des mondes |
+| Gouvernements malléables | ✅ livré | [15](15-domaines-et-pouvoir.md) §4 — sept axes, sept régimes émergés, renversements |
 | Immortalité, clonage, transfert, divinité | 📐 conçu | [03](03-systemes.md) §3 — Phase 6 |
 | Milliards de descendants | 📐 conçu | [02](02-lod-echelle.md) §2 — Phase 5 |
 | Millions d'années | 📐 conçu | [02](02-lod-echelle.md) §3 — Phase 5 |

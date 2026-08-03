@@ -11,6 +11,7 @@ import type {
 } from '../model/types.js';
 import { asEntityId, emptyTally } from '../model/types.js';
 import { emptyRecordBook, type RecordBook } from '../stats/records.js';
+import type { Domain, Route } from '../model/domain.js';
 import { RelationGraph } from './relations.js';
 import { MemoryStore } from './memory.js';
 import { Rng } from '../rng/rng.js';
@@ -54,6 +55,9 @@ export class World {
   readonly characters = new Map<EntityId, Character>();
   readonly houses = new Map<string, House>();
   readonly factions = new Map<string, Faction>();
+  /** L'économie et le pouvoir, à toutes les échelles (doc 11). */
+  readonly domains = new Map<string, Domain>();
+  routes: Route[] = [];
   readonly settlements = new Map<string, Settlement>();
   readonly relations = new RelationGraph();
   readonly memories = new MemoryStore();
@@ -127,6 +131,44 @@ export class World {
   houseList(): House[] {
     const out = [...this.houses.values()];
     out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    return out;
+  }
+
+  /** Les domaines, triés. Même règle que les maisons : écrire demande un tri. */
+  domainList(): Domain[] {
+    const out = [...this.domains.values()];
+    out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    return out;
+  }
+
+  /** Le domaine qui couvre une implantation. */
+  domainAt(settlement: string): Domain | undefined {
+    return this.domains.get(`dom_${settlement}`);
+  }
+
+  /**
+   * Les domaines du plus profond au plus englobant, à égalité triés par id.
+   * Agréger dans l'ordre alphabétique faisait additionner au monde des régions
+   * qui n'étaient pas encore à jour — la somme était celle de l'an dernier.
+   */
+  domainsBottomUp(): Domain[] {
+    const depth = new Map<string, number>();
+    const measure = (d: Domain): number => {
+      const seen = depth.get(d.id);
+      if (seen !== undefined) return seen;
+      let n = 0;
+      let cur: Domain | undefined = d;
+      const guard = new Set<string>();
+      while (cur?.parent && !guard.has(cur.id)) {
+        guard.add(cur.id);
+        cur = this.domains.get(cur.parent);
+        n += 1;
+      }
+      depth.set(d.id, n);
+      return n;
+    };
+    const out = this.domainList();
+    out.sort((a, b) => measure(b) - measure(a) || (a.id < b.id ? -1 : 1));
     return out;
   }
 

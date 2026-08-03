@@ -10,6 +10,8 @@ import { HousePrestige, Pruning, Records } from '../systems/house.js';
 import { Physiology } from '../systems/physiology.js';
 import { Agency } from '../systems/agency.js';
 import { Conflicts, FactionAI, FactionFormation } from '../systems/factions.js';
+import { DomainEconomy, Governance, Subsistence2 } from '../systems/domains.js';
+import { seedDomains, seedRoutes } from '../economy/domains.js';
 import type { PendingEvent } from '../events/types.js';
 import { Rng } from '../rng/rng.js';
 import { ageOf } from '../model/character.js';
@@ -32,11 +34,13 @@ export function defaultRegistry(): SystemRegistry {
   return new SystemRegistry().register(
     Aging,
     Physiology,
+    DomainEconomy,
     Economy,
     SkillDecay,
     RelationDrift,
     Forgetting,
     SeedMaturation,
+    Subsistence2,
     NpcLife,
     Agency,
     FactionAI,
@@ -47,6 +51,7 @@ export function defaultRegistry(): SystemRegistry {
     HousePrestige,
     FactionFormation,
     Conflicts,
+    Governance,
     Mortality,
     Pruning,
     Records,
@@ -74,6 +79,10 @@ export class Simulation {
     this.engine = new EventEngine(ruleset);
     this.registry = defaultRegistry();
     for (const s of ruleset.settlements) this.world.settlements.set(s.id, s);
+    // Les domaines et les routes sont du décor structurel : on les (re)pose
+    // même sur une partie rechargée d'avant leur existence.
+    seedDomains(this.world, ruleset);
+    seedRoutes(this.world);
 
     // Le monde existait avant le joueur. Une partie rechargée ne repeuple pas.
     if (fresh) {

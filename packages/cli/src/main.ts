@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 
 import { resolve } from 'node:path';
 
 import { loadRuleset } from '@ed/content';
-import { Game, body as bodyView, factions, relations, self, status, worldView } from '@ed/game';
+import { Game, body as bodyView, domains, factions, relations, self, status, worldView } from '@ed/game';
 import type { RelationView } from '@ed/game';
 import {
   RECORD_LABELS,
@@ -472,6 +472,40 @@ async function factionsScreen(): Promise<void> {
   await ask();
 }
 
+async function paysScreen(): Promise<void> {
+  const list = domains(game);
+  clear();
+  say(heading('le pays'));
+  say();
+  for (const d of [...list.filter((x) => x.ici), ...list.filter((x) => !x.ici)]) {
+    const titre = d.ici ? c(d.name, 'bold') : d.name;
+    say(`  ${titre} ${c(d.ici ? '· chez vous' : `· ${d.scale}`, 'grey')}`);
+    for (const line of wrap(d.loi)) say(c(`     ${line}`, 'grey'));
+    if (d.population > 0) {
+      const bits = [
+        `${d.population} âmes`,
+        `légitimité ${d.legitimacy} %`,
+        `mécontentement ${d.unrest} %`,
+      ];
+      if (d.ruler !== 'personne') bits.splice(1, 0, d.ruler);
+      if (d.faim > 0) bits.push(c(`il manque ${d.faim} %`, 'red'));
+      say(`     ${bits.join(' · ')}`);
+      const prix = d.prices
+        .slice(0, 4)
+        .map((p) => {
+          const txt = `${p.good} ${p.price.toFixed(1)}`;
+          return p.ratio > 1.6 ? c(txt, 'red') : p.ratio < 0.7 ? c(txt, 'green') : txt;
+        })
+        .join(' · ');
+      if (prix) say(c('     ', 'grey') + prix);
+    }
+    say();
+  }
+  say(rule());
+  say(c('  [entrée] retour', 'grey'));
+  await ask();
+}
+
 function bar(share: number, width = 16): string {
   const filled = Math.max(0, Math.min(width, Math.round(share * width)));
   return c('▓'.repeat(filled), 'cyan') + c('░'.repeat(width - filled), 'grey');
@@ -681,18 +715,20 @@ async function worldMenu(): Promise<void> {
     menu([
       { key: '1', label: 'Le lieu où vous êtes', note: 'et ce qu\'on y raconte' },
       { key: '2', label: 'Les groupes', note: 'bandes, compagnies, guildes' },
-      { key: '3', label: 'Statistiques du monde' },
-      { key: '4', label: 'Le livre des records' },
-      { key: '5', label: 'Chronique' },
+      { key: '3', label: 'Le pays', note: 'prix, vivres, qui gouverne' },
+      { key: '4', label: 'Statistiques du monde' },
+      { key: '5', label: 'Le livre des records' },
+      { key: '6', label: 'Chronique' },
       { key: '0', label: 'Retour' },
     ]);
     say();
     const answer = await ask();
     if (answer === '1') await placeScreen();
     else if (answer === '2') await factionsScreen();
-    else if (answer === '3') await statsScreen();
-    else if (answer === '4') await recordsScreen();
-    else if (answer === '5') await chronicleMenu();
+    else if (answer === '3') await paysScreen();
+    else if (answer === '4') await statsScreen();
+    else if (answer === '5') await recordsScreen();
+    else if (answer === '6') await chronicleMenu();
     else return;
   }
 }

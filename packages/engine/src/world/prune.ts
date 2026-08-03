@@ -51,6 +51,11 @@ export function protectedIds(world: World, opts: PruneOptions = {}): Set<EntityI
   for (const faction of world.factions.values()) {
     if (faction.dissolvedYear === null) keep.add(faction.leaderId);
   }
+  // Et un domaine garde le sien : « Vardhèn, oligarchie (personne) » n'était
+  // pas une crise politique, c'était un dirigeant effacé par l'élagage.
+  for (const dom of world.domains.values()) {
+    if (dom.rulerId !== null) keep.add(dom.rulerId);
+  }
   // les grands moments gardent leurs acteurs nommés
   for (const entry of world.chronicle) {
     if (entry.importance >= 4) for (const actor of entry.actors) keep.add(actor.id);
@@ -91,6 +96,9 @@ export function pruneDead(world: World, opts: PruneOptions = {}): number {
   }
   for (const faction of world.factions.values()) {
     faction.memberIds = faction.memberIds.filter((id) => !gone.has(id));
+  }
+  for (const dom of world.domains.values()) {
+    if (dom.rulerId !== null && gone.has(dom.rulerId)) dom.rulerId = null;
   }
 
   return doomed.length;

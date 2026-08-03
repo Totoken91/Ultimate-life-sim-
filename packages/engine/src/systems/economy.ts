@@ -1,5 +1,7 @@
 import type { System } from './types.js';
 import type { Character, SocialClass } from '../model/types.js';
+import type { GoodId } from '../model/domain.js';
+import { GOOD_BASE_PRICE } from '../model/domain.js';
 import { ageOf, effectiveStat } from '../model/character.js';
 import { clamp, diminishing } from '../util/math.js';
 
@@ -31,9 +33,34 @@ export const Economy: System = {
       if (age < 6) continue;
       const rng = ctx.rng.fork('economy', world.year, c.id);
 
+      // Le revenu n'est plus un nombre fixe : c'est ce qu'on vend, **ici**, au
+      // prix d'ici (doc 11 §3). Une pénurie de métal se voit désormais dans la
+      // bourse d'un forgeron, et une disette enrichit celui qui a du grain.
+      const dom = world.domainAt(c.settlement);
+      let facteurVente = 1;
+      let facteurVie = 1;
+      if (dom) {
+        const prixVivres = dom.prices['vivres'];
+        if (prixVivres !== undefined) {
+          facteurVie = clamp(prixVivres / GOOD_BASE_PRICE.vivres, 0.7, 2.4);
+        }
+      }
+
       let income = 0;
       const job = c.jobId ? ruleset.jobs[c.jobId] : undefined;
       if (job) {
+        if (dom && job.produces) {
+          let pondere = 0;
+          let total = 0;
+          for (const [good, qty] of Object.entries(job.produces)) {
+            const g = good as GoodId;
+            const prix = dom.prices[g];
+            if (prix === undefined || !qty) continue;
+            pondere += (prix / GOOD_BASE_PRICE[g]) * qty;
+            total += qty;
+          }
+          if (total > 0) facteurVente = clamp(pondere / total, 0.45, 2.6);
+        }
         // compétence + attribut lié font varier le revenu du simple au double
         const compétence = clamp(
           (c.skills[Object.keys(job.trains)[0] ?? ''] ?? 0) / 100,
@@ -42,7 +69,9 @@ export const Economy: System = {
         );
         const talent = clamp(effectiveStat(c, 'intelligence') / 200 + compétence * 0.6, 0, 1.1);
         const seniority = clamp(c.jobYears / 25, 0, 0.5);
-        income = Math.round(job.income * (0.6 + talent + seniority) * (0.85 + rng.float() * 0.3));
+        income = Math.round(
+          job.income * (0.6 + talent + seniority) * (0.85 + rng.float() * 0.3) * facteurVente,
+        );
         for (const [skillId, gain] of Object.entries(job.trains)) {
           c.skills[skillId] = diminishing(c.skills[skillId] ?? 0, gain ?? 0, 100);
         }
@@ -51,8 +80,14 @@ export const Economy: System = {
         income = Math.round(UPKEEP[c.socialClass] * (0.7 + rng.float() * 0.5));
       }
 
-      const upkeep = Math.round(UPKEEP[c.socialClass] * (age < 16 ? 0.4 : 1));
+      // Vivre coûte ce que coûte la vie sur place. C'est par là que la famine
+      // atteint la bourse avant d'atteindre le corps.
+      const upkeep = Math.round(UPKEEP[c.socialClass] * (age < 16 ? 0.4 : 1) * facteurVie);
       c.wealth = Math.round(c.wealth + income - upkeep);
+      // Le flux de l'année, lu ensuite par l'impôt : on taxe ce qui entre, pas
+      // ce qu'on possède — sinon le prélèvement devient confiscatoire et les
+      // trésors des domaines montent à des millions (doc 15 §5).
+      c.flags['revenu'] = Math.max(0, income);
 
       if (c.isPlayer && income > 0) {
         world.say(

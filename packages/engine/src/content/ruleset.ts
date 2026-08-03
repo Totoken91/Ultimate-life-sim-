@@ -12,6 +12,7 @@ import type {
 } from '../model/types.js';
 import type { EventDef, EventCtx, Effect, SelectCtx } from '../events/types.js';
 import type { ConditionDef } from '../body/conditions.js';
+import type { GoodId } from '../model/domain.js';
 import type { NpcActionDef } from '../ai/actions.js';
 import { DRIVE_IDS, type DriveId } from '../ai/drives.js';
 import type { World } from '../world/world.js';
@@ -60,6 +61,11 @@ export interface JobDef {
   requires?: (c: SelectCtx) => boolean;
   /** Compétences que le métier fait progresser chaque année. */
   trains: Partial<Record<string, number>>;
+  /**
+   * Ce que le métier verse à l'économie du lieu, par an (doc 11 §3). C'est ce
+   * qui fait qu'une pénurie de métal se voit dans la bourse d'un forgeron.
+   */
+  produces?: Partial<Record<GoodId, number>>;
   danger: number;
   prestige: number;
   desc: string;

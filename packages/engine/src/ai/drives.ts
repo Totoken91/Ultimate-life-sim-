@@ -176,7 +176,14 @@ export function computeDrives(sit: Situation): Drives {
   const gene = (v: number): number => v / 100;
 
   // Survie : la santé qui lâche, ou la bourse qui ne suit plus le train de vie.
-  const corps = clamp((58 - c.health) / 58, 0, 1);
+  //
+  // Le seuil était à 58, et **aucun vivant ne descend jamais sous 64** : le
+  // corps emporte les gens avant. La pulsion ne se déclenchait donc jamais
+  // pour raison de santé, et « aller voir quelqu'un qui sait » n'a pas été
+  // jouée une seule fois en cinq cent mille décisions. On commence à
+  // s'inquiéter en déclinant, pas en agonisant — mais l'urgence reste
+  // concentrée dans le bas, d'où l'exposant.
+  const corps = Math.pow(clamp((85 - c.health) / 85, 0, 1), 1.6);
   const bourse = sit.upkeep > 0 ? clamp(1 - c.wealth / (sit.upkeep * 2), 0, 1) : 0;
   const survie = clamp(corps * 0.75 + bourse * 0.55, 0, 1);
 

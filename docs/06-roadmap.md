@@ -84,11 +84,14 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 - ✅ **guerres et conflits entre PNJ** ([doc 14](14-factions-et-conflits.md) §3) : un seul
   résolveur, du duel à la guerre de civilisations, avec le carré sur le palier technologique
 - ✅ **profileur de tick** (`pnpm profile`) : où passent les millisecondes, système par système
-- **économie par domaines** ([doc 11](11-economie-pouvoir.md)) : foyer → région, biens de
-  base, prix locaux, routes, stocks — une seule structure récursive à toutes les échelles
-- **gouvernements malléables** ([doc 11](11-economie-pouvoir.md) §4) : sept axes dont les
-  combinaisons produisent chefferie, féodalité, république, dictature, théocratie…
-- régions, implantations, démographie
+- ✅ **économie par domaines** ([doc 15](15-domaines-et-pouvoir.md)) : monde → régions →
+  implantations, onze biens, prix locaux, routes, stocks — une seule structure récursive,
+  et le revenu d'un métier est enfin *ce qu'il vend, ici, à ce prix-là*
+- ✅ **gouvernements malléables** ([doc 15](15-domaines-et-pouvoir.md) §4) : sept axes dont
+  les combinaisons ont produit sept régimes distincts sans qu'aucun soit écrit
+- ✅ **régions et implantations** — l'arbre des domaines, avec agrégation de bas en haut
+- foyers et entreprises ([doc 11](11-economie-pouvoir.md) §3)
+- le joueur qui gouverne : réformer un axe, et le payer
 - cultures et religions (dérive, coutumes)
 - diplomatie entre factions (alliances, trahisons, traités)
 - le joueur *dans* la bataille — couche B du [doc 09](09-echelle-totale.md) §2
@@ -99,6 +102,10 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 
 **Fin de phase :** on lance 500 ans sans jouer, et le rapport montre un monde plausible — des
 dynasties naissent et meurent, les guerres ne sont ni continues ni absentes.
+
+*État au 3 août 2026 : le banc tourne sans signal d'alarme sur cinq mille années simulées.
+Restent les cultures et religions, la diplomatie, les rumeurs qui se déforment, les secrets,
+la réputation par groupe, et le joueur qui gouverne.*
 
 ---
 
