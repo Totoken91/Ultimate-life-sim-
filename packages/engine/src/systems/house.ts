@@ -42,9 +42,15 @@ export const HousePrestige: System = {
       house.prestige = clamp(house.prestige + gain - decay, 0, 100000);
 
       // le rang suit le prestige, jamais l'inverse
+      // Hystérésis : il faut dépasser le seuil de 6 % pour monter, et
+      // retomber 6 % sous lui pour redescendre. Sans marge, une maison assise
+      // *sur* un seuil montait et retombait chaque année, et la Chronique
+      // annonçait deux fois la même élévation.
       let rank: HouseRank = 'maison';
       for (const candidate of HOUSE_RANK_ORDER) {
-        if (house.prestige >= HOUSE_RANK_THRESHOLDS[candidate]) rank = candidate;
+        const seuil = HOUSE_RANK_THRESHOLDS[candidate];
+        const plusHaut = HOUSE_RANK_ORDER.indexOf(candidate) > HOUSE_RANK_ORDER.indexOf(house.rank);
+        if (house.prestige >= seuil * (plusHaut ? 1.06 : 0.94)) rank = candidate;
       }
       if (rank !== house.rank) {
         const rising = HOUSE_RANK_ORDER.indexOf(rank) > HOUSE_RANK_ORDER.indexOf(house.rank);
@@ -59,9 +65,14 @@ export const HousePrestige: System = {
         world.record({
           year: world.year,
           kind: rising ? 'ascension' : 'chute',
-          importance: rising ? 4 : 3,
+          // Toutes les maisons du monde franchissent « notable » un jour ou
+          // l'autre : au poids 4, elles inondaient la Chronique et couvraient
+          // les guerres. Seul le sommet mérite qu'on s'en souvienne.
+          importance: HOUSE_RANK_ORDER.indexOf(rank) >= 3 ? 4 : 2,
           actors: [{ id: house.headId, name: `Maison ${house.name}` }],
-          data: { quoi: `la maison ${rising ? 'atteint' : 'retombe à'} le rang de ${rank}` },
+          data: {
+            texte: `La Maison ${house.name} ${rising ? 's\'éleva' : 'retomba'} au rang de ${rank}.`,
+          },
         });
       }
 

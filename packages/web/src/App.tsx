@@ -9,11 +9,13 @@ import { Vous } from './screens/Vous.js';
 import { Dynastie } from './screens/Dynastie.js';
 import { Monde } from './screens/Monde.js';
 import { Evenement, Issue, Mort, Naissance } from './screens/Moments.js';
+import { Carte } from './screens/Carte.js';
+import { Observatoire } from './screens/Observatoire.js';
 
 const ruleset = loadRuleset();
 const SAVE_KEY = 'eternal-dynasty:save:v1';
 
-type Tab = 'vie' | 'gens' | 'vous' | 'dynastie' | 'monde';
+type Tab = 'vie' | 'gens' | 'vous' | 'dynastie' | 'monde' | 'carte';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'vie', label: 'Vie' },
@@ -21,6 +23,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'vous', label: 'Vous' },
   { id: 'dynastie', label: 'Dynastie' },
   { id: 'monde', label: 'Monde' },
+  { id: 'carte', label: 'Carte' },
 ];
 
 function load(): Game | null {
@@ -40,6 +43,7 @@ export function App() {
   const [, force] = useState(0);
   const [tab, setTab] = useState<Tab>('vie');
   const [booted, setBooted] = useState(false);
+  const [observing, setObserving] = useState(false);
 
   useEffect(() => {
     gameRef.current = load();
@@ -74,9 +78,20 @@ export function App() {
   );
 
   if (!booted) return null;
+
+  // L'observatoire ne touche pas à la partie en cours : c'est un monde à part,
+  // qu'on ouvre et qu'on referme (doc 19 §4).
+  if (observing) {
+    return (
+      <div className="app">
+        <Observatoire onQuit={() => setObserving(false)} />
+      </div>
+    );
+  }
+
   const game = gameRef.current;
 
-  if (!game) return <Titre onStart={start} />;
+  if (!game) return <Titre onStart={start} onObserve={() => setObserving(true)} />;
 
   // Les moments prennent tout l'écran : on ne joue pas avec des onglets
   // pendant qu'on est en train de choisir sa vie.
@@ -157,6 +172,7 @@ export function App() {
         {tab === 'vous' && <Vous game={game} me={me} status={s} body={myBody} act={act} />}
         {tab === 'dynastie' && <Dynastie game={game} act={act} />}
         {tab === 'monde' && <Monde game={game} />}
+        {tab === 'carte' && <Carte world={game.world} />}
       </div>
 
       <nav className="tabs">
@@ -174,7 +190,13 @@ export function App() {
   );
 }
 
-function Titre({ onStart }: { onStart: (seed?: number) => void }) {
+function Titre({
+  onStart,
+  onObserve,
+}: {
+  onStart: (seed?: number) => void;
+  onObserve: () => void;
+}) {
   const [seed, setSeed] = useState('');
   return (
     <div className="app">
@@ -210,6 +232,10 @@ function Titre({ onStart }: { onStart: (seed?: number) => void }) {
             Jouer
           </button>
         </div>
+        <button className="btn" onClick={onObserve}>
+          Observer un monde
+          <span className="hint">sans y jouer — on regarde, c’est tout</span>
+        </button>
         <div className="faint" style={{ fontSize: 12, marginTop: 16 }}>
           La partie est sauvegardée dans ce navigateur, à chaque choix.
         </div>

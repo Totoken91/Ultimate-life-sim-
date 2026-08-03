@@ -271,7 +271,19 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
     case 'foundHouse': {
       const self = ctx.subject;
       if (self.houseId) return;
-      const name = fx.name ?? ruleset.houseNameFor(ctx.rng.fork('house', self.id), self);
+      // Deux maisons du même nom sont illisibles : la Chronique annonçait
+      // « La Maison Cerneth s'éleva au rang de noble » deux fois en trois ans,
+      // et c'étaient deux maisons différentes. On tire jusqu'à trouver libre,
+      // puis on tranche par l'année de fondation.
+      let name = fx.name ?? ruleset.houseNameFor(ctx.rng.fork('house', self.id), self);
+      if (!fx.name) {
+        const pris = new Set<string>();
+        world.houses.forEach((h) => pris.add(h.name));
+        for (let essai = 0; essai < 8 && pris.has(name); essai++) {
+          name = ruleset.houseNameFor(ctx.rng.fork('house', self.id, essai), self);
+        }
+        if (pris.has(name)) name = `${name} le Jeune`;
+      }
       const id = `house_${self.id}`;
       world.houses.set(id, {
         id,

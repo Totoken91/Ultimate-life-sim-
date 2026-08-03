@@ -4,6 +4,7 @@ import type { Domain } from '../model/domain.js';
 import { GOOD_LABELS, regimeName } from '../model/domain.js';
 import { shortName } from '../model/character.js';
 import { clamp } from '../util/math.js';
+import { de } from '../util/text.js';
 import { applyHealthDelta } from './physiology.js';
 import { summarizeHealth } from '../body/body.js';
 import {
@@ -270,10 +271,10 @@ export const Governance: System = {
         if (bris.before !== bris.after) {
           world.record({
             year: world.year,
-            kind: bris.kind === 'coup' ? 'chute' : 'revelation',
+            kind: 'note',
             importance: 4,
             actors: [{ id: world.playerId, name: dom.name }],
-            data: { quoi: `${dom.name} passe de ${bris.before} à ${bris.after}` },
+            data: { texte: `${dom.name} passa ${de(bris.before)} à ${bris.after}.` },
           });
         }
       }

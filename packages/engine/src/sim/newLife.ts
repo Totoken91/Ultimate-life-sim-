@@ -1,4 +1,3 @@
-import { ans } from '../util/text.js';
 import type { Character, RelationType, Sex, SuccessionLaw } from '../model/types.js';
 import { CLASS_LABELS, HIDDEN_IDS, STAT_IDS } from '../model/types.js';
 import type { World } from '../world/world.js';
@@ -14,7 +13,7 @@ import { spawnCharacter } from '../world/spawn.js';
 import { Rng } from '../rng/rng.js';
 import { clamp } from '../util/math.js';
 import { fullName } from '../model/character.js';
-import { agreeLabel } from '../util/text.js';
+import { agreeLabel, ans, de } from '../util/text.js';
 import { MEMORY_BUDGET_FOCUS } from '../world/memory.js';
 
 export interface NewLife {
@@ -616,7 +615,7 @@ export function continueAsHeir(world: World, ruleset: Ruleset, heirId: Character
     importance: 4,
     actors: [{ id: heir.id, name: fullName(heir) }],
     data: {
-      quoi: `hérite de ${fullName(dead)}${inherited > 0 ? ` et de ${inherited} sous` : ''}`,
+      quoi: `hérite ${de(fullName(dead))}${inherited > 0 ? ` et de ${inherited} sous` : ''}`,
     },
   });
 

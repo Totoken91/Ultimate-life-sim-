@@ -113,7 +113,7 @@ async function main(): Promise<void> {
   }
 
   // Les onglets doivent tous s'ouvrir sans exploser.
-  for (const tab of ['Gens', 'Vous', 'Dynastie', 'Monde']) {
+  for (const tab of ['Gens', 'Vous', 'Dynastie', 'Monde', 'Carte']) {
     const btn = page.getByRole('button', { name: tab, exact: true });
     if (await btn.isVisible().catch(() => false)) {
       await step(`onglet ${tab}`, async () => {
@@ -156,6 +156,23 @@ async function main(): Promise<void> {
     }
   }
 
+  // La carte doit se parcourir : on remonte jusqu'à l'univers puis on
+  // redescend jusqu'au monde habité, sans rien casser (doc 19).
+  const carte = page.getByRole('button', { name: 'Carte', exact: true });
+  if (await carte.isVisible().catch(() => false)) {
+    await carte.click();
+    await step('carte → l’univers', async () => {
+      await page.getByRole('button', { name: 'l’univers', exact: true }).click();
+    });
+    for (let i = 0; i < 6; i++) {
+      const bas = page.getByRole('button', { name: 'vers le monde habité', exact: true });
+      if (!(await bas.isVisible().catch(() => false))) break;
+      await bas.click();
+      await page.waitForTimeout(40);
+    }
+    console.log('  ✓ carte → descente jusqu’au monde habité');
+  }
+
   await page.screenshot({ path: 'packages/web/dist/_smoke.png', fullPage: false });
 
   // La sauvegarde doit survivre à un rechargement.
@@ -167,6 +184,24 @@ async function main(): Promise<void> {
     .catch(() => false);
   if (!stillPlaying) problems.push('la partie ne survit pas au rechargement');
   else console.log('  ✓ la partie survit au rechargement');
+
+  // L'observatoire : un monde qu'on regarde sans y jouer (doc 19 §4).
+  await page.evaluate(() => localStorage.clear());
+  await page.reload({ waitUntil: 'networkidle' });
+  await step('observatoire', async () => {
+    await page.getByRole('button', { name: /Observer un monde/ }).click();
+    await page.getByRole('button', { name: /Commencer à regarder/ }).click();
+    await page.getByRole('button', { name: /Encore vingt-cinq ans/ }).click();
+    await page.getByRole('button', { name: /Un siècle/ }).click();
+  });
+  for (const chip of ['La carte', 'Le pays', 'Ce qui arrive']) {
+    const c = page.getByRole('button', { name: chip, exact: true });
+    if (await c.isVisible().catch(() => false)) {
+      await step(`observatoire → ${chip}`, async () => {
+        await c.click();
+      });
+    }
+  }
 
   await browser.close();
   server.close();

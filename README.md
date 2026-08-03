@@ -16,7 +16,7 @@ transmettre, compter — et, désormais, regarder le monde vivre sans vous.
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 175 tests
+pnpm test          # 183 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm profile       # où passent les millisecondes, système par système
@@ -94,6 +94,21 @@ le titre dit ce que les autres verraient : *un gosse d'Orin-sur-Loë*, puis
 *Apprenti forgeron*, puis *des hommes d'Erisgar*, puis *qui gouverne Vardhèn*.
 Voir le [doc 18](docs/18-lisibilite.md).
 
+**Une carte, du lieu à l'univers** : six paliers de tuiles — l'univers, une
+galaxie, un secteur, un système, un monde, une région. Cinq clics séparent le
+vide absolu du sol où l'on vit. Le ciel n'est **pas simulé, il est calculé** :
+une tuile est une fonction pure de la graine et de son chemin, donc zéro octet
+de sauvegarde, zéro milliseconde de tick, et toujours le même ciel pour la même
+graine. Ce que la simulation touche vraiment se pose par-dessus sa tuile.
+Voir le [doc 19](docs/19-carte-et-observatoire.md).
+
+**On peut regarder sans jouer** : l'observatoire fait tourner un monde entier
+sans vous — un fil de vie qui décide seul, une succession automatique, et
+l'histoire qui défile par **chapitres** de vingt-cinq ans, résumés aux quatorze
+lignes qui pèsent le plus. *An 425–450 — On s'est beaucoup battu.* C'est autant
+un mode de jeu qu'une mise à l'épreuve : si le monde n'est intéressant que
+parce qu'on y joue, il n'est pas intéressant.
+
 **L'argent achète du temps** : une chambre à soi, une maison, un atelier, une
 ferme, une demeure, un manoir muré — chacun avec sa facture annuelle qui ne
 s'arrête jamais. Et de la place pour des gens : une nourrice, un intendant, un
@@ -165,6 +180,7 @@ conception, c'est cette page qui a raison.
 | [16 — L'année du joueur](docs/16-annee-du-joueur.md) | Budget de temps, entreprises longues, occasions tirées du monde |
 | [17 — Patrimoine & domesticité](docs/17-patrimoine-et-domesticite.md) | Ce que l'argent achète, à commencer par du temps — et ce que ça coûte de le garder |
 | [18 — Lisibilité](docs/18-lisibilite.md) | Ce qu'on lit en jouant : les marches, le journal, les attributs, l'humeur, la dette |
+| [19 — Carte & observatoire](docs/19-carte-et-observatoire.md) | Des tuiles de la région à l'univers, calculées et non simulées — et un mode où l'on regarde le monde tourner sans y toucher |
 
 ## Code
 

@@ -1,4 +1,4 @@
-import { ans } from '../util/text.js';
+import { ans, de } from '../util/text.js';
 import type { ChronicleEntry } from '../model/types.js';
 
 /**
@@ -20,6 +20,15 @@ const num = (e: ChronicleEntry, k: string, fallback = 0): number => {
 };
 
 export function renderEntry(e: ChronicleEntry): string {
+  // Sortie de secours : tout ce qui n'est pas la vie d'une personne — la chute
+  // d'un régime, un changement de loi — écrit sa phrase entière et court-circuite
+  // les gabarits. Sans elle on lisait « Bas-Vardhèn apprit la vérité :
+  // Bas-Vardhèn passe de féodalité à république ».
+  // `{sujet}` s'y remplace par le premier acteur : une phrase entière peut
+  // donc quand même nommer quelqu'un.
+  const texte = str(e, 'texte');
+  if (texte) return texte.replace(/\{sujet\}/g, nameOf(e));
+
   const who = nameOf(e);
   const other = e.actors.length > 1 ? nameOf(e, 1) : null;
 
@@ -37,13 +46,17 @@ export function renderEntry(e: ChronicleEntry): string {
     case 'mariage':
       return `${who} épousa ${other ?? 'un inconnu'}.`;
     case 'enfant':
-      return `${other ?? 'Un enfant'} naquit de ${who}.`;
+      return `${other ?? 'Un enfant'} naquit ${de(who)}.`;
     case 'metier':
       return `${who} devint ${str(e, 'metier', 'autre chose')}.`;
-    case 'ascension':
-      return `${who} s'éleva : ${str(e, 'quoi')}.`;
-    case 'chute':
-      return `${who} tomba : ${str(e, 'quoi')}.`;
+    case 'ascension': {
+      const quoi = str(e, 'quoi');
+      return quoi ? `${who} s'éleva : ${quoi}.` : `${who} s'éleva.`;
+    }
+    case 'chute': {
+      const quoi = str(e, 'quoi');
+      return quoi ? `${who} tomba : ${quoi}.` : `${who} tomba.`;
+    }
     case 'trahison': {
       const how = str(e, 'quoi');
       return `${other ?? 'Quelqu\'un'} trahit ${who}${how ? `, ${how}` : ''}.`;
@@ -72,7 +85,7 @@ export function renderEntry(e: ChronicleEntry): string {
     case 'ruine':
       return `${who} perdit tout : ${str(e, 'quoi')}.`;
     case 'revelation':
-      return `${who} apprit la vérité : ${str(e, 'quoi')}.`;
+      return `${who} apprit ${str(e, 'quoi', 'ce qu\'il ne voulait pas savoir')}.`;
     case 'note':
     default:
       return str(e, 'texte', '—');

@@ -167,7 +167,7 @@ export const SEED_EVENTS = [
         out(byStat('charisme', 1.4), (c) => `Vous racontez tout, sans rien arranger. ${n(c.role('vengeur'))} pleure et s'en va. La chaîne s'arrête là.`, [
           { k: 'rel', to: 'vengeur', from: 'vengeur', affection: 25, trust: 20 },
           { k: 'hidden', id: 'karma', d: 25 },
-          { k: 'chronicle', kind: 'revelation', importance: 4, data: { quoi: 'brisa une vendetta avec la vérité' } },
+          { k: 'chronicle', kind: 'note', importance: 4, data: { texte: '{sujet} brisa une vendetta avec la vérité.' } },
         ]),
         out(1.5, () => 'Il écoute et il frappe quand même. Il avait besoin de le faire plus que de comprendre.', [
           { k: 'health', d: -35 },
@@ -246,7 +246,7 @@ export const SEED_EVENTS = [
           { k: 'trait', add: 'notoire' },
           { k: 'hidden', id: 'karma', d: 20 },
           { k: 'rel', to: 'maitre', from: 'maitre', affection: -40 },
-          { k: 'chronicle', kind: 'revelation', importance: 4, data: { quoi: 'avoua avant qu\'on l\'y force' } },
+          { k: 'chronicle', kind: 'note', importance: 4, data: { texte: '{sujet} avoua avant qu\'on l\'y force.' } },
         ],
       )),
       opt('supprimer', 'Faire taire définitivement', [
@@ -318,7 +318,7 @@ export const SEED_EVENTS = [
           { k: 'mood', d: 20 },
           { k: 'rel', to: 'messager', type: 'sang', label: 'celui qui m\'a posé là', affection: 10, mutual: true },
           { k: 'memory', text: 'J\'ai su pourquoi on m\'avait laissé dans la caisse.', salience: 100, tags: ['origine', 'revelation'], actors: ['messager'] },
-          { k: 'chronicle', kind: 'revelation', importance: 5, data: { quoi: 'apprit qui l\'avait abandonné' } },
+          { k: 'chronicle', kind: 'revelation', importance: 5, data: { quoi: 'qui l\'avait abandonné' } },
         ],
       )),
       opt('frapper', 'Ne pas écouter', sure(
@@ -388,7 +388,7 @@ export const SEED_EVENTS = [
           { k: 'stat', stat: 'volonte', d: 8 },
           { k: 'flag', name: 'prophetie_connue', value: true },
           { k: 'memory', text: 'La troisième phrase. Je la répète chaque nuit.', salience: 100, tags: ['prophetie'] },
-          { k: 'chronicle', kind: 'revelation', importance: 5, data: { quoi: 'entendit la fin de sa prophétie' } },
+          { k: 'chronicle', kind: 'note', importance: 5, data: { texte: '{sujet} entendit la fin de sa prophétie.' } },
         ]),
         out(1.2, () => 'Il ouvre la bouche et meurt. Il n\'y a jamais eu de troisième phrase, ou bien il y en a une et vous ne la connaîtrez pas.', [
           { k: 'kill', who: 'prophete', cause: 'sans avoir fini sa phrase' },
@@ -1084,7 +1084,7 @@ export const SEED_EVENTS = [
           { k: 'rel', to: 'enfant', type: 'sang', label: 'mon enfant', affection: 35, mutual: true },
           { k: 'hidden', id: 'karma', d: 20 },
           { k: 'stat', stat: 'charisme', d: -5 },
-          { k: 'chronicle', kind: 'revelation', importance: 4, data: { quoi: 'reconnut publiquement un enfant caché' } },
+          { k: 'chronicle', kind: 'note', importance: 4, data: { texte: '{sujet} reconnut publiquement un enfant caché.' } },
         ],
       ), { hint: 'irréversible' }),
       opt('payer', 'L\'acheter une dernière fois', sure(

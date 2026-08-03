@@ -2,10 +2,11 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 
 import { resolve } from 'node:path';
 
 import { loadRuleset } from '@ed/content';
-import { Game, body as bodyView, domains, factions, relations, self, standing, status, urges, worldView } from '@ed/game';
+import { Game, Observer, body as bodyView, domains, factions, relations, self, standing, status, urges, worldView } from '@ed/game';
 import type { RelationView } from '@ed/game';
 import {
   ans,
+  KIND_GLYPH,
   RECORD_LABELS,
   SUCCESSION_LABELS,
   countTree,
@@ -14,8 +15,13 @@ import {
   renderChronicle,
   renderEpitaph,
   renderTree,
+  regimeName,
   shortName,
+  homePath,
+  parentPath,
+  tileMap,
   type EntityId,
+  type TileMap,
 } from '@ed/engine';
 
 import { block, c, clear, gauge, heading, keyval, menu, pad, rule, say, wrap } from './ui.js';
@@ -952,6 +958,7 @@ async function worldMenu(): Promise<void> {
       { key: '4', label: 'Statistiques du monde' },
       { key: '5', label: 'Le livre des records' },
       { key: '6', label: 'Chronique' },
+      { key: '7', label: 'La carte', note: 'du lieu où vous êtes à l\'univers' },
       { key: '0', label: 'Retour' },
     ]);
     say();
@@ -962,6 +969,56 @@ async function worldMenu(): Promise<void> {
     else if (answer === '4') await statsScreen();
     else if (answer === '5') await recordsScreen();
     else if (answer === '6') await chronicleMenu();
+    else if (answer === '7') await mapScreen();
+    else return;
+  }
+}
+
+/**
+ * La carte, du lieu à l'univers (doc 19). Le ciel n'est pas simulé : il est
+ * calculé à partir de la graine, ce qui permet de le parcourir sans rien
+ * stocker et sans jamais mentir deux fois de la même façon.
+ */
+async function mapScreen(start?: string): Promise<void> {
+  let path = start ?? homePath(game.world.seed);
+  for (;;) {
+    const m: TileMap = tileMap(game.world, path);
+    clear();
+    say(heading('la carte'));
+    say(`  ${c(m.title, 'bold')}`);
+    say(`  ${c(m.subtitle, 'grey')}`);
+    say();
+    for (let r = 0; r < m.rows; r++) {
+      let ligne = '   ';
+      for (let q = 0; q < m.cols; q++) {
+        const t = m.tiles[r * m.cols + q];
+        if (!t) continue;
+        const g = KIND_GLYPH[t.kind];
+        ligne += t.onHomePath ? c(`[${g}]`, 'yellow') : t.enterable ? c(` ${g} `, 'cyan') : `   `;
+      }
+      say(ligne);
+    }
+    say();
+    const notables = m.tiles.filter((t) => t.onHomePath || t.domainId);
+    for (const t of notables) {
+      say(`   ${c('▸', 'yellow')} ${pad(t.name, 24)} ${c(t.label, 'grey')}${t.note ? ` — ${t.note}` : ''}`);
+    }
+    say();
+    say(rule());
+    menu([
+      ...(m.home ? [{ key: '1', label: 'Descendre vers le monde habité' }] : []),
+      ...(m.up ? [{ key: '2', label: 'Remonter d\'un cran' }] : []),
+      { key: '3', label: 'Repartir de l\'univers' },
+      { key: '0', label: 'Retour' },
+    ]);
+    say();
+    const answer = await ask();
+    if (answer === '1' && m.home) {
+      // On descend d'exactement un palier vers chez soi.
+      const reste = m.home.slice(path.length + 1).split('/')[0];
+      path = `${path}/${reste}`;
+    } else if (answer === '2' && m.up) path = m.up;
+    else if (answer === '3') path = 'u';
     else return;
   }
 }
@@ -1186,6 +1243,118 @@ async function loadMenu(): Promise<void> {
 
 // ─── titre ──────────────────────────────────────────────────────────────────
 
+/**
+ * **Le mode observateur** (doc 19 §4) : on ne joue pas, on regarde. Un fil de
+ * vie décide tout seul, la succession est automatique, et le monde défile par
+ * chapitres. C'est aussi un aveu — si le monde n'est intéressant que parce
+ * qu'on y joue, alors il n'est pas intéressant.
+ */
+async function observeScreen(): Promise<void> {
+  const raw = await ask('Graine (vide = au hasard) : ');
+  const seed = Number.parseInt(raw, 10);
+  const obs = Observer.create(ruleset, Number.isFinite(seed) ? { seed, chapter: 25 } : { chapter: 25 });
+  let path = homePath(obs.world.seed);
+
+  for (;;) {
+    const ch = obs.chapters[obs.chapters.length - 1] ?? obs.next();
+    clear();
+    say(heading('observatoire'));
+    say(`  ${c(`An ${ch.from} – ${ch.to}`, 'bold')}   ${c(ch.headline, 'yellow')}`);
+    say(
+      `  ${c(`${ch.population} vivants · ${ch.births} naissances · ${ch.deaths} morts · ` +
+        `${ch.factions} groupes · pain ${ch.breadPrice.toFixed(1)} sous`, 'grey')}`,
+    );
+    say(
+      `  ${c(`on suit ${ch.following}, ${ans(ch.followingAge)}` +
+        (ch.generations > 0 ? ` — ${ch.generations} succession(s) dans le chapitre` : ''), 'grey')}`,
+    );
+    say();
+    for (const l of ch.lines) {
+      const marque = l.kind === 'rumeur' ? c('~', 'grey') : c('·', 'cyan');
+      for (const [i, w] of wrap(l.text, 64).entries()) {
+        say(i === 0 ? `   ${c(String(l.year), 'grey')} ${marque} ${w}` : `        ${w}`);
+      }
+    }
+    if (ch.omitted > 0) say(c(`   … et ${ch.omitted} lignes de moindre portée`, 'grey'));
+    say();
+    say(rule());
+    menu([
+      { key: '1', label: 'Encore 25 ans' },
+      { key: '2', label: 'Un siècle' },
+      { key: '3', label: 'La carte' },
+      { key: '4', label: 'Le pays', note: 'régimes, prix, mécontentement' },
+      { key: '0', label: 'Assez vu' },
+    ]);
+    say();
+    const answer = await ask();
+    if (answer === '1') obs.next();
+    else if (answer === '2') for (let i = 0; i < 4 && !obs.over; i++) obs.next();
+    else if (answer === '3') path = await observeMap(obs, path);
+    else if (answer === '4') observeCountries(obs);
+    else return;
+    if (obs.over) {
+      say(c('  Le fil s\'est éteint : plus personne à suivre.', 'red'));
+      await ask('');
+      return;
+    }
+  }
+}
+
+/** La même carte, mais depuis l'observatoire — sans joueur pour la centrer. */
+async function observeMap(obs: Observer, start: string): Promise<string> {
+  let path = start;
+  for (;;) {
+    const m = tileMap(obs.world, path);
+    clear();
+    say(heading('la carte'));
+    say(`  ${c(m.title, 'bold')}`);
+    say(`  ${c(m.subtitle, 'grey')}`);
+    say();
+    for (let r = 0; r < m.rows; r++) {
+      let ligne = '   ';
+      for (let q = 0; q < m.cols; q++) {
+        const t = m.tiles[r * m.cols + q];
+        if (!t) continue;
+        const g = KIND_GLYPH[t.kind];
+        ligne += t.onHomePath ? c(`[${g}]`, 'yellow') : t.enterable ? c(` ${g} `, 'cyan') : '   ';
+      }
+      say(ligne);
+    }
+    say();
+    for (const t of m.tiles.filter((x) => x.onHomePath || x.domainId)) {
+      say(`   ${c('▸', 'yellow')} ${pad(t.name, 24)} ${c(t.label, 'grey')}${t.note ? ` — ${t.note}` : ''}`);
+    }
+    say();
+    say(rule());
+    menu([
+      ...(m.home ? [{ key: '1', label: 'Descendre vers le monde habité' }] : []),
+      ...(m.up ? [{ key: '2', label: 'Remonter d\'un cran' }] : []),
+      { key: '3', label: 'Repartir de l\'univers' },
+      { key: '0', label: 'Retour' },
+    ]);
+    say();
+    const answer = await ask();
+    if (answer === '1' && m.home) path = `${path}/${m.home.slice(path.length + 1).split('/')[0]}`;
+    else if (answer === '2' && m.up) path = m.up;
+    else if (answer === '3') path = 'u';
+    else return path;
+  }
+}
+
+function observeCountries(obs: Observer): void {
+  clear();
+  say(heading('le pays'));
+  say();
+  for (const d of obs.world.domainList()) {
+    if (d.settlement === null) continue;
+    say(
+      `   ${pad(d.name, 22)} ${pad(regimeName(d.government), 22)} ` +
+        c(`légitimité ${Math.round(d.legitimacy)} · mécontentement ${Math.round(d.unrest)}`, 'grey'),
+    );
+  }
+  say();
+}
+
 async function titleScreen(): Promise<'quit' | void> {
   clear();
   say();
@@ -1204,11 +1373,16 @@ async function titleScreen(): Promise<'quit' | void> {
     { key: '1', label: 'Nouvelle vie' },
     { key: '2', label: 'Nouvelle vie avec une graine précise', note: 'parties reproductibles' },
     { key: '3', label: 'Charger une partie' },
+    { key: '4', label: 'Observer un monde', note: 'sans y jouer — on regarde, c\'est tout' },
     { key: '0', label: 'Quitter' },
   ]);
   say();
   const answer = await ask();
   if (answer === '0') return 'quit';
+  if (answer === '4') {
+    await observeScreen();
+    return titleScreen();
+  }
   if (answer === '3') {
     await loadMenu();
     if (!game) return titleScreen();

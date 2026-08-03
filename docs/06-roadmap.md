@@ -95,6 +95,12 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 - ✅ **patrimoine et domesticité** ([doc 17](17-patrimoine-et-domesticite.md)) : ce que
   l'argent achète, à commencer par du temps — et l'entretien qui l'éteint par étages
 - ✅ **le joueur qui gouverne** : réformer un des sept axes, contre du temps et de la légitimité
+- ✅ **la carte, du lieu à l'univers** ([doc 19](19-carte-et-observatoire.md)) : six paliers de
+  tuiles, calculées et non simulées — le ciel ne coûte ni sauvegarde ni tick, et la
+  simulation se pose par-dessus ses tuiles
+- ✅ **l'observatoire** ([doc 19](19-carte-et-observatoire.md) §4) : regarder un monde tourner
+  sans y jouer, par chapitres de vingt-cinq ans. Il a dénoncé onze défauts de Chronique
+  qu'aucune vie jouée ne montrait
 - ✅ **lisibilité** ([doc 18](18-lisibilite.md)) : dix marches qui disent où l'on en est et
   comment monter, des attributs qui expliquent ce qu'ils décident *et qui bougent*, un
   journal qui ne parle que de gens qu'on connaît, une bourse comptée en années de vie, et

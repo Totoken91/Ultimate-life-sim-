@@ -11,6 +11,13 @@ export {
 } from './game.js';
 
 export {
+  Observer,
+  type Chapter,
+  type ObservedLine,
+  type ObserverOptions,
+} from './observer.js';
+
+export {
   status,
   relations,
   self,

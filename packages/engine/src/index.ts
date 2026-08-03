@@ -265,6 +265,23 @@ export {
   type OccasionCtx,
 } from './player/occasions.js';
 
+// ─── la carte, de la région à l'univers ────────────────────────────────────
+export {
+  tileMap,
+  homePath,
+  levelOf,
+  parentOf as parentPath,
+  MAP_LEVELS,
+  LEVEL_LABELS,
+  TILE_OF,
+  KIND_LABELS,
+  KIND_GLYPH,
+  type MapLevel,
+  type Tile,
+  type TileKind,
+  type TileMap,
+} from './cosmos/cosmos.js';
+
 // ─── simulation ─────────────────────────────────────────────────────────────
 export {
   Simulation,

@@ -2,6 +2,7 @@ import type { Character } from '../model/types.js';
 import type { Rng } from '../rng/rng.js';
 import { effectiveStat } from '../model/character.js';
 import { clamp } from '../util/math.js';
+import { plural } from '../util/text.js';
 
 /**
  * Le système de conflit (doc 09 §2).
@@ -223,9 +224,11 @@ export function ofName(label: string): string {
 export function describeClash(result: ClashResult, a: Side, b: Side): string {
   const nom = TIER_LABELS[result.tier];
   const pertes = result.fallenA + result.fallenB;
-  const morts = pertes === 0 ? 'sans un mort' : pertes === 1 ? '1 mort' : `${pertes} morts`;
+  const morts = pertes === 0 ? 'sans un mort' : plural(pertes, 'mort');
   if (result.winner === 'nul') {
-    return `${nom} indécise entre ${a.label} et ${b.label} — ${morts}.`;
+    // Majuscule : cette phrase ouvre une ligne de Chronique.
+    const titre = nom.charAt(0).toUpperCase() + nom.slice(1);
+    return `${titre} indécise entre ${a.label} et ${b.label} — ${morts}.`;
   }
   const vainqueur = result.winner === 'a' ? a : b;
   const vaincu = result.winner === 'a' ? b : a;

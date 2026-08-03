@@ -34,7 +34,12 @@ export const EVENTS: EventDef[] = [
   ...SEED_EVENTS,
 ];
 
-const HOUSE_PREFIXES = ['', '', '', 'de ', 'du '];
+/**
+ * Une maison sur cinq porte une particule. Elle doit s'élider (« Maison
+ * d'Ysgwyd ») et ne jamais produire « Maison du Ysgwyd » ni « Maison de
+ * Ibn-Sael » — deux choses qu'on lisait dans la Chronique.
+ */
+const HOUSE_PREFIXES = ['', '', '', 'de', 'du'];
 
 export const RIVAGE: Ruleset = {
   id: 'rivage',
@@ -65,7 +70,11 @@ export const RIVAGE: Ruleset = {
   houseNameFor(rng: Rng, founder: Character) {
     const def = CULTURES[founder.culture] ?? CULTURES['vardhen'];
     const base = founder.family ?? (def ? rng.pick(def.families) : 'Sans-Nom');
-    return `${rng.pick(HOUSE_PREFIXES)}${base}`.trim();
+    const prefixe = rng.pick(HOUSE_PREFIXES);
+    if (!prefixe) return base;
+    const voyelle = /^[aeiouyàâéèêëîïôöûüh]/i.test(base);
+    if (voyelle) return `d'${base}`;
+    return `${prefixe} ${base}`;
   },
 };
 

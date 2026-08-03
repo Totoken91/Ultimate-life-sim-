@@ -384,7 +384,9 @@ export const OCCASIONS: OccasionDef[] = [
           : `${shortName(promis)}. Vous apprendrez à vivre à côté.`,
         effects: [
           { k: 'wealth', d: Math.round(200 + classRank(c.subject.socialClass) * 400) },
-          { k: 'chronicle', kind: 'mariage', importance: 3 },
+          // Sans acteurs, la Chronique écrivait « épousa un inconnu » — alors
+          // que le promis a un nom depuis dix lignes.
+          { k: 'chronicle', kind: 'mariage', importance: 3, actors: ['subject', 'cible'] },
         ],
       };
     },
