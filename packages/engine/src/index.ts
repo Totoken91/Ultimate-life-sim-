@@ -222,7 +222,7 @@ export {
   type Upheaval,
   type UpheavalKind,
 } from './economy/government.js';
-export { DomainEconomy, Governance, Subsistence2 } from './systems/domains.js';
+export { DomainEconomy, Governance, Realms, Subsistence2 } from './systems/domains.js';
 export { Household } from './systems/household.js';
 
 // ─── l'année du joueur ──────────────────────────────────────────────────────

@@ -97,6 +97,43 @@ export const DomainEconomy: System = {
 };
 
 /**
+ * RESOLVE — l'humeur des domaines qui en englobent d'autres.
+ *
+ * `Governance` ne s'occupe que des implantations : une région n'a ni résidents
+ * ni percepteur. Résultat, les quatre régions et le monde affichaient une
+ * légitimité de 55 et un mécontentement de 0 **du premier au dernier siècle**
+ * — les deux tiers de l'écran « Pays » étaient des chiffres morts. Ils sont
+ * désormais la moyenne de leurs enfants, pondérée par la population : une
+ * région va mal quand ses villes vont mal, et c'est tout ce qu'on lui demande.
+ */
+export const Realms: System = {
+  id: 'domain.realms',
+  phase: 'RESOLVE',
+  priority: 45,
+  run(ctx) {
+    const { world } = ctx;
+    if (world.domains.size === 0) return;
+    for (const dom of world.domainsBottomUp()) {
+      if (dom.settlement !== null) continue;
+      let poids = 0;
+      let leg = 0;
+      let unrest = 0;
+      for (const childId of dom.children) {
+        const child = world.domains.get(childId);
+        if (!child) continue;
+        const p = Math.max(1, child.population);
+        poids += p;
+        leg += child.legitimacy * p;
+        unrest += child.unrest * p;
+      }
+      if (poids === 0) continue;
+      dom.legitimacy = clamp(leg / poids, 0, 100);
+      dom.unrest = clamp(unrest / poids, 0, 100);
+    }
+  },
+};
+
+/**
  * MAIN — ce que la disette fait aux corps.
  *
  * Règle du doc 11 §7 : le joueur voit **des conséquences humaines** avant des

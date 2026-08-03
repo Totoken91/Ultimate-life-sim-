@@ -4,7 +4,7 @@ import { regimeName } from '../model/domain.js';
 import type { World } from '../world/world.js';
 import type { Rng } from '../rng/rng.js';
 import { ageOf, classRank, effectiveStat } from '../model/character.js';
-import { clamp } from '../util/math.js';
+import { clamp, drift } from '../util/math.js';
 import { hunger } from './domains.js';
 
 /**
@@ -145,18 +145,19 @@ export function tickMood(dom: Domain, ruler: Character | null, year: number): vo
   // L'ancienneté du régime légitime, jusqu'à un point.
   const duree = clamp(year - dom.lastUpheaval, 0, 60);
 
-  // Légitimité : ce qui la nourrit, ce qui la ronge.
-  let dLeg = 0.7 + stabilityOf(g) / 12 + duree / 90;
-  dLeg -= faim * 4;
-  if (ruler) dLeg += effectiveStat(ruler, 'charisme') / 220;
-  else dLeg -= 1.5;
-  if (dom.treasury <= 0) dLeg -= 0.6;
-  // **Un pouvoir contesté s'use.** Sans cette ligne, légitimité et
-  // mécontentement montaient tous deux à 100 et s'y bloquaient : la comparaison
-  // qui déclenche les révolutions n'était plus jamais vraie, et plus rien ne
-  // tombait jamais.
-  dLeg -= clamp((dom.unrest - 55) / 14, 0, 4);
-  dom.legitimacy = clamp(dom.legitimacy + dLeg, 0, 100);
+  // Légitimité : elle **tend vers ce que la situation autorise**, elle ne
+  // s'empile pas. Tant que c'était une somme de petits gains positifs, 22 % des
+  // domaines vivaient collés à 100 — un pouvoir littéralement indéboulonnable,
+  // et la comparaison avec le mécontentement (qui déclenche tout, §5) ne se
+  // jouait plus jamais chez eux. Le plafond de 96 est volontaire : personne
+  // n'est légitime au point que rien ne puisse arriver.
+  let cible = 34 + stabilityOf(g) * 1.4 + duree * 0.35;
+  if (ruler) cible += effectiveStat(ruler, 'charisme') * 0.18;
+  else cible -= 26;
+  cible -= faim * 60;
+  cible -= clamp((dom.unrest - 45) * 0.7, 0, 30);
+  if (dom.treasury <= 0) cible -= 8;
+  dom.legitimacy = clamp(drift(dom.legitimacy, clamp(cible, 0, 96), 0.16), 0, 100);
 
   // Mécontentement : la faim d'abord, toujours.
   let dUn = frictionOf(g) - 1.6;

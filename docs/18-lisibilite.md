@@ -218,6 +218,26 @@ serein  50.0 %   exalté  31.5 %   brisé  6.2 %   le reste  12.3 %
 
 ---
 
+## 5 bis. L'écran « Pays » était mort
+
+Deux chiffres y trônaient, et aucun des deux ne bougeait.
+
+| Ce qu'on lisait | Ce qui se passait |
+|---|---|
+| `légitimité 100` sur 22 % des domaines | elle s'*empilait* : une somme de petits gains positifs sans plafond réel. Un pouvoir à 100 est indéboulonnable, et la comparaison légitimité/mécontentement — qui déclenche tout ce qui tombe — ne se jouait plus jamais chez lui |
+| `Le Rivage · légitimité 55 · mécontentement 0`, du premier au dernier siècle | `Governance` ne s'occupe que des implantations. Les quatre régions et le monde n'avaient personne pour les faire vivre : deux tiers de l'écran étaient des chiffres gelés à leur valeur de départ |
+
+La légitimité **tend** désormais vers ce que la situation autorise (stabilité du
+régime, ancienneté, charisme de qui gouverne, faim, contestation), plafonnée à
+96 — personne n'est légitime au point que rien ne puisse arriver. Et un nouveau
+système, `Realms`, donne aux domaines englobants la moyenne de leurs enfants
+pondérée par la population : une région va mal quand ses villes vont mal.
+
+Effet mesuré au banc : les renversements passent de 8,0 à **11,4 par partie**,
+et plus aucun domaine ne vit collé au plafond.
+
+---
+
 ## 6. Le couloir de l'enfance
 
 Une partie commençait par une douzaine d'années identiques : un temps, aucune
@@ -242,3 +262,6 @@ rien à offrir, et l'engagement de ne jamais sauter une année qui en a.
 - **Le monde ne voit pas ce que le joueur mène.** Les PNJ ignorent qu'il
   apprend à lire ou qu'il rassemble des gens.
 - **`exalté` reste à 31 %.** Le mot est encore trop facile à atteindre.
+- **Les régions ne se gouvernent pas.** Leur humeur est une moyenne ; personne
+  n'y règne, aucun régime n'y tombe. C'est le prochain palier d'échelle
+  ([doc 09](09-echelle-totale.md)).

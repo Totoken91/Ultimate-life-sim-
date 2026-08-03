@@ -10,7 +10,7 @@ import { HousePrestige, Pruning, Records } from '../systems/house.js';
 import { Physiology } from '../systems/physiology.js';
 import { Agency } from '../systems/agency.js';
 import { Conflicts, FactionAI, FactionFormation } from '../systems/factions.js';
-import { DomainEconomy, Governance, Subsistence2 } from '../systems/domains.js';
+import { DomainEconomy, Governance, Realms, Subsistence2 } from '../systems/domains.js';
 import { Household } from '../systems/household.js';
 import { seedDomains, seedRoutes } from '../economy/domains.js';
 import type { PendingEvent } from '../events/types.js';
@@ -54,6 +54,7 @@ export function defaultRegistry(): SystemRegistry {
     FactionFormation,
     Conflicts,
     Governance,
+    Realms,
     Mortality,
     Pruning,
     Records,
