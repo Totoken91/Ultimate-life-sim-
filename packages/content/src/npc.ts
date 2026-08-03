@@ -1,5 +1,5 @@
 import type { NpcActionDef, NpcActionCtx, Effect, JobDef, Rng } from '@ed/engine';
-import { shortName, classRank } from '@ed/engine';
+import { shortName, classRank, de } from '@ed/engine';
 import { JOBS } from './jobs.js';
 import { SKILLS } from './skills.js';
 
@@ -42,6 +42,9 @@ const me = (c: NpcActionCtx): string => shortName(c.self);
 const e = (c: NpcActionCtx): string => (c.self.sex === 'f' ? 'e' : '');
 const place = (c: NpcActionCtx): string =>
   c.sit.world.settlement(c.self.settlement)?.name ?? 'ailleurs';
+
+/** `de` + élision devant un nom propre : « d'Emran », « de Sorel ». */
+const of = (nom: string): string => de(nom);
 
 const richerThan = (c: NpcActionCtx, n: number): boolean => c.self.wealth >= n;
 
@@ -381,7 +384,7 @@ export const NPC_ACTIONS: NpcActionDef[] = [
         tags: ['renom'],
       },
     ],
-    news: (c) => `On commence à connaître le nom de ${me(c)}.`,
+    news: (c) => `On commence à connaître le nom ${of(me(c))}.`,
     reach: 'local',
     tags: ['renom'],
   }),
@@ -515,7 +518,7 @@ export const NPC_ACTIONS: NpcActionDef[] = [
       { k: 'rel', to: 'cible', from: 'cible', type: 'serment', label: 'mon homme', trust: 10, affection: 6 },
       { k: 'hidden', id: 'influence', d: 3 },
     ],
-    news: (c) => `${me(c)} s'est engagé${e(c)} auprès de ${them(c)}.`,
+    news: (c) => `${me(c)} s'est engagé${e(c)} auprès ${of(them(c))}.`,
     reach: 'local',
     tags: ['serment'],
   }),
@@ -561,7 +564,7 @@ export const NPC_ACTIONS: NpcActionDef[] = [
       }
       return fx;
     },
-    news: (c) => `On dit du mal de ${them(c)} à ${place(c)}.`,
+    news: (c) => `On dit du mal ${of(them(c))} à ${place(c)}.`,
     reach: 'local',
     tags: ['intrigue'],
   }),

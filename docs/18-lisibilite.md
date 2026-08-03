@@ -42,6 +42,18 @@ une exécution ce que trois hypothèses avaient manqué (§5).
 | `For 48.228321947818166` | la croissance annuelle est fractionnaire ; l'affichage ne doit jamais l'être |
 | `Bourse 199 sous (misère)` à côté de `pauvre` | deux échelles qui partagent leur vocabulaire se lisent comme une contradiction |
 | `Cendre Draum est morte — usé par les années` | accord du participe sur la cause |
+| `Ysera Draum · celui qui m'a appris à lire` | une étiquette dit *qui est cette personne* : elle ne peut pas se tromper sur elle |
+| `Nerys Maenol · époux` | l'étiquette décrit la personne visée, pas celle qui regarde |
+| `Jamila s'est engagée auprès de Emran` | élision manquante, encore |
+| `des la bande à Sorel` | un nom de groupe porte déjà son article : il faut la contraction |
+
+L'accord des étiquettes est fait **une seule fois, à l'endroit où l'on connaît
+la personne** (`agreeLabel`, appelé par l'effet `rel`, par `pick.generate`, et
+par les quatre endroits qui nouent un mariage). Le contenu écrit au masculin et
+marque d'un `{e}` ce qui varie : `celui qui est parti{e} avec ma mise`. Le reste
+est une table courte — le français ne se dérive pas (« le maître » → « la
+maîtresse », « le desservant » → « la desservante », « le complice » → « la
+complice »).
 
 Aucune de ces lignes n'est un bug de simulation. Toutes rendent le jeu illisible.
 
@@ -140,6 +152,12 @@ Apprenti forgeron à Orin-sur-Loë        1/10
 | Gouverner | dirigeant d'un domaine ([doc 15](15-domaines-et-pouvoir.md)) |
 | Durer plus qu'une vie | trois chefs de maison successifs |
 
+Franchir une marche **s'entend** : l'année où elle bascule, le journal dit ce
+que ça change — *« Avoir un métier. De quoi entre chaque année sans que vous
+ayez à le voler. »* Une seule fois par vie, même si l'influence retombe sous 35
+ou qu'un veuvage est suivi d'un remariage : sinon la phrase cesse d'être un
+moment pour devenir un tic.
+
 Trois propriétés en font autre chose qu'une liste de quêtes :
 
 - **Rien ne s'impose.** On peut mourir sans en avoir pris une seule, et la
@@ -223,6 +241,4 @@ rien à offrir, et l'engagement de ne jamais sauter une année qui en a.
   revenir autrement ([doc 16](16-annee-du-joueur.md) §7).
 - **Le monde ne voit pas ce que le joueur mène.** Les PNJ ignorent qu'il
   apprend à lire ou qu'il rassemble des gens.
-- **Les étiquettes de relation ne s'accordent pas** (`Ysolde, jurée` s'affiche
-  `juré`).
 - **`exalté` reste à 31 %.** Le mot est encore trop facile à atteindre.

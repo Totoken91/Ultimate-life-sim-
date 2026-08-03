@@ -1,4 +1,5 @@
 import type { Character, SocialClass } from '../model/types.js';
+import { agreeLabel } from '../util/text.js';
 import type { World } from './world.js';
 import type { Ruleset } from '../content/ruleset.js';
 import { Rng } from '../rng/rng.js';
@@ -92,8 +93,8 @@ export function seedPopulation(
         });
         head.spouseId = spouse.id;
         spouse.spouseId = head.id;
-        world.relations.ensure(head.id, spouse.id, 'mariage', 'époux', world.year);
-        world.relations.ensure(spouse.id, head.id, 'mariage', 'époux', world.year);
+        world.relations.ensure(head.id, spouse.id, 'mariage', agreeLabel('époux', spouse.sex), world.year);
+        world.relations.ensure(spouse.id, head.id, 'mariage', agreeLabel('époux', head.sex), world.year);
         world.relations.modify(head.id, spouse.id, { affection: 35, trust: 30 });
         world.relations.modify(spouse.id, head.id, { affection: 35, trust: 30 });
         world.tally.marriages += 1;

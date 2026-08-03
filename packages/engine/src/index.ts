@@ -4,7 +4,7 @@ export { Rng, hashKey, type RngKeyPart } from './rng/rng.js';
 // ─── utilitaires ────────────────────────────────────────────────────────────
 export { clamp, lerp, drift, diminishing, band } from './util/math.js';
 export { wealthBand, formatSous, describeWealth, pursePhrase } from './util/money.js';
-export { ans, plural, de } from './util/text.js';
+export { ans, plural, de, agreeLabel } from './util/text.js';
 
 // ─── modèle ─────────────────────────────────────────────────────────────────
 export * from './model/types.js';

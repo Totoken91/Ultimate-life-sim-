@@ -2,6 +2,7 @@ import type { Character, EntityId, Sex } from '../model/types.js';
 import type { Effect, EventCtx, Ref } from './types.js';
 import { clamp } from '../util/math.js';
 import { fullName, shortName } from '../model/character.js';
+import { agreeLabel } from '../util/text.js';
 import { spawnChild } from '../world/spawn.js';
 import { MEMORY_BUDGET_ACTIVE, MEMORY_BUDGET_FOCUS } from '../world/memory.js';
 import { summarizeHealth } from '../body/body.js';
@@ -101,15 +102,18 @@ export function applyEffect(ctx: EventCtx, fx: Effect): void {
       const from = resolve(ctx, fx.from ?? 'subject');
       const to = resolve(ctx, fx.to);
       if (!from || !to || from.id === to.id) return;
+      // Une étiquette est écrite au masculin dans le contenu et s'accorde ici,
+      // au seul endroit où l'on connaît la personne qu'elle désigne.
+      const etiquette = fx.label ? agreeLabel(fx.label, to.sex) : shortName(to);
       const rel = world.relations.ensure(
         from.id,
         to.id,
         fx.type ?? 'amitie',
-        fx.label ?? shortName(to),
+        etiquette,
         world.year,
       );
       if (fx.type) rel.type = fx.type;
-      if (fx.label) rel.label = fx.label;
+      if (fx.label) rel.label = etiquette;
       world.relations.modify(from.id, to.id, fx);
       if (fx.mutual) {
         world.relations.ensure(

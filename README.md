@@ -16,7 +16,7 @@ transmettre, compter — et, désormais, regarder le monde vivre sans vous.
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 174 tests
+pnpm test          # 175 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm profile       # où passent les millisecondes, système par système

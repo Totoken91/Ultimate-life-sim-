@@ -1,6 +1,7 @@
 import type { Character, RelationType, Sex, SocialClass } from '../model/types.js';
 import type { RolePicker, SelectCtx } from './types.js';
 import { spawnCharacter } from '../world/spawn.js';
+import { agreeLabel } from '../util/text.js';
 import { ageOf } from '../model/character.js';
 
 export interface KnownFilter {
@@ -110,7 +111,7 @@ function generate(opts: GenerateOptions = {}): RolePicker {
         ctx.subject.id,
         c.id,
         opts.bond.type,
-        opts.bond.label,
+        agreeLabel(opts.bond.label, c.sex),
         ctx.world.year,
       );
       if (opts.bond.affection) {

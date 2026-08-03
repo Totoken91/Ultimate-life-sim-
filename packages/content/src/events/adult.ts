@@ -78,7 +78,7 @@ export const ADULT_EVENTS = [
         ]),
         out(1.5, (c) => `${n(c.role('associe'))} disparaît avec la mise au bout de huit mois. On ne le revoit pas dans la région.`, [
           { k: 'wealth', d: -1200 },
-          { k: 'rel', to: 'associe', type: 'haine', label: 'celui qui est parti avec ma mise', affection: -70, trust: -80 },
+          { k: 'rel', to: 'associe', type: 'haine', label: 'celui qui est parti{e} avec ma mise', affection: -70, trust: -80 },
           { k: 'trait', add: 'mefiant' },
           { k: 'seed', eventId: 'seed.trahison.retrouvailles', min: 8, max: 25, actors: ['associe'], note: 'celui qui vous a volé' },
         ]),
@@ -133,7 +133,7 @@ export const ADULT_EVENTS = [
         (c) => `Vous attendez la nuit et vous apportez ce que vous pouvez. ${n(c.role('victime'))} ne l'oublie pas. ${n(c.role('puissant'))} ne le sait pas.`,
         [
           { k: 'wealth', d: -200 },
-          { k: 'rel', to: 'victime', from: 'victime', type: 'dette', label: 'celui qui est venu la nuit', affection: 45, trust: 55 },
+          { k: 'rel', to: 'victime', from: 'victime', type: 'dette', label: 'celui qui est venu{e} la nuit', affection: 45, trust: 55 },
           { k: 'hidden', id: 'karma', d: 10 },
           { k: 'seed', eventId: 'seed.dette.faveur', min: 5, max: 20, actors: ['victime'], note: 'la dette de celui que vous avez aidé' },
         ],

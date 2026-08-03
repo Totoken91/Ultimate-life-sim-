@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Game, standing, status } from '@ed/game';
 import { loadRuleset } from '@ed/content';
-import { ans, lifeStage, plural, pursePhrase } from '@ed/engine';
+import { agreeLabel, ans, lifeStage, plural, pursePhrase } from '@ed/engine';
 
 const ruleset = loadRuleset();
 
@@ -33,6 +33,20 @@ describe('lisibilité', () => {
     expect(ans(2)).toBe('2 ans');
     expect(plural(1, 'mort')).toBe('1 mort');
     expect(plural(3, 'mort')).toBe('3 morts');
+  });
+
+  it('accorde les étiquettes de relation à qui elles désignent', () => {
+    expect(agreeLabel('celui qui m\'a appris à lire', 'f')).toBe('celle qui m\'a appris à lire');
+    expect(agreeLabel('celui qui est parti{e} avec ma mise', 'f')).toBe(
+      'celle qui est partie avec ma mise',
+    );
+    expect(agreeLabel('celui qui est parti{e} avec ma mise', 'm')).toBe(
+      'celui qui est parti avec ma mise',
+    );
+    expect(agreeLabel('le desservant', 'f')).toBe('la desservante');
+    expect(agreeLabel('mon chef', 'f')).toBe('ma cheffe');
+    expect(agreeLabel('époux', 'f')).toBe('épouse');
+    expect(agreeLabel('époux', 'm')).toBe('époux');
   });
 
   it('ne traite pas un enfant de cinq ans en nourrisson', () => {

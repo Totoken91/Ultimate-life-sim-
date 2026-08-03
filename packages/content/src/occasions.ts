@@ -1,4 +1,5 @@
 import type { OccasionCtx, OccasionDef } from '@ed/engine';
+import { agreeLabel } from '@ed/engine';
 import {
   GOOD_BASE_PRICE,
   ageOf,
@@ -369,8 +370,8 @@ export const OCCASIONS: OccasionDef[] = [
       const promis = pick.local({ minAge: 16, maxAge: 50 })(c);
       if (!promis) return { text: 'L\'arrangement a échoué avant vous.', effects: [] };
       const chanceux = rng.chance(0.4);
-      c.world.relations.ensure(c.subject.id, promis.id, 'mariage', 'époux', c.world.year);
-      c.world.relations.ensure(promis.id, c.subject.id, 'mariage', 'époux', c.world.year);
+      c.world.relations.ensure(c.subject.id, promis.id, 'mariage', agreeLabel('époux', promis.sex), c.world.year);
+      c.world.relations.ensure(promis.id, c.subject.id, 'mariage', agreeLabel('époux', c.subject.sex), c.world.year);
       c.subject.spouseId = promis.id;
       promis.spouseId = c.subject.id;
       promis.lod = 0;

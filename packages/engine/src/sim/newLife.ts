@@ -14,6 +14,7 @@ import { spawnCharacter } from '../world/spawn.js';
 import { Rng } from '../rng/rng.js';
 import { clamp } from '../util/math.js';
 import { fullName } from '../model/character.js';
+import { agreeLabel } from '../util/text.js';
 import { MEMORY_BUDGET_FOCUS } from '../world/memory.js';
 
 export interface NewLife {
@@ -124,7 +125,7 @@ function makeBirthContext(
     label: string,
     opts: BondOptions = {},
   ): void => {
-    world.relations.ensure(from.id, to.id, type, label, world.year);
+    world.relations.ensure(from.id, to.id, type, agreeLabel(label, to.sex), world.year);
     world.relations.modify(from.id, to.id, opts);
   };
 

@@ -44,6 +44,7 @@ import {
   rulerName,
   hunger,
   de,
+  ofName,
   type Character,
   type EntityId,
   type StatId,
@@ -605,15 +606,20 @@ export function standing(game: Game): StandingView {
 
   // Le titre dit ce que *les autres* verraient. On prend la marche la plus
   // haute franchie, pas la somme.
+  const elle = me.sex === 'f';
   let title: string;
   if (domaine) title = `qui gouverne ${domaine.name}`;
-  else if (jeSuisChef && maison) title = `chef de la maison ${maison.name}`;
+  else if (jeSuisChef && maison) title = `${elle ? 'cheffe' : 'chef'} de la maison ${maison.name}`;
   else if (jeMene && maFaction) title = `on vous suit : ${maFaction.name}`;
-  else if (maFaction) title = `des ${maFaction.name}`;
+  // « des la bande à Sorel » : un nom de groupe porte déjà son article. La
+  // contraction seule se lit comme une apposition et marche pour les trois
+  // formes — « de la bande à Sorel », « des gens de Semar », « du comptoir
+  // de Toven ».
+  else if (maFaction) title = ofName(maFaction.name);
   else if (me.hidden.influence >= 35) title = `un nom qu'on connaît à ${lieu}`;
-  else if (mesBiens.length > 0) title = `un homme établi à ${lieu}`;
+  else if (mesBiens.length > 0) title = `${elle ? 'établie' : 'établi'} à ${lieu}`;
   else if (me.jobId) title = `${game.ruleset.jobs[me.jobId]?.label ?? 'artisan'} à ${lieu}`;
-  else if (age < 16) title = `un gosse ${de(lieu)}`;
+  else if (age < 16) title = `${elle ? 'une gosse' : 'un gosse'} ${de(lieu)}`;
   else title = `personne, pour l'instant, à ${lieu}`;
 
   return {

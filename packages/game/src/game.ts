@@ -65,6 +65,9 @@ import {
   type Retainer,
   type RetainerDef,
 } from '@ed/engine';
+// `views.ts` ne prend de `game.ts` qu'un type : le cycle est effacé à la
+// compilation, et le runtime n'en voit rien.
+import { standing } from './views.js';
 
 export type Phase =
   | 'naissance'
@@ -344,7 +347,32 @@ export class Game {
     this.occasions = this.occasions.filter(
       (o) => o.roleId === null || (this.world.get(o.roleId)?.alive ?? false),
     );
+    if (!closing.playerDied) this.announceSteps();
     this.phase = closing.playerDied ? 'mort' : 'annee';
+  }
+
+  /**
+   * Franchir une marche doit **s'entendre** (doc 18 §4). Sans ça, la vue
+   * « votre place » était un tableau de bord qu'on consultait, jamais un
+   * moment qu'on vivait : on découvrait trois ans plus tard qu'on avait un
+   * toit. On compare l'état d'avant, gardé sur le personnage pour survivre à
+   * la sauvegarde, et on dit ce que ça change.
+   */
+  private announceSteps(): void {
+    const place = standing(this);
+    // Le jeu de marches **déjà annoncées** ne fait que grandir. Une influence
+    // qui oscille autour de 35, un veuvage suivi d'un remariage : sans ça, la
+    // même phrase revenait quatre fois dans une vie et cessait d'être un
+    // moment pour devenir un tic.
+    const premiere = this.player.flags['marches'] === undefined;
+    const vues = new Set(String(this.player.flags['marches'] ?? '').split(',').filter(Boolean));
+    for (const step of place.steps) {
+      if (!step.done || vues.has(step.id)) continue;
+      vues.add(step.id);
+      if (!premiere) this.world.say(`${step.label}. ${step.got}`);
+    }
+    this.player.flags['marches'] = [...vues].sort().join(',');
+    this.yearLog = [...this.yearLog, ...this.world.drainLog()];
   }
 
   private choose(optionId: string): void {

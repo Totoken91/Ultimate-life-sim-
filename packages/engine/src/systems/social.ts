@@ -2,6 +2,7 @@ import type { System } from './types.js';
 import { clamp } from '../util/math.js';
 import type { Character } from '../model/types.js';
 import { ageOf, shortName } from '../model/character.js';
+import { agreeLabel } from '../util/text.js';
 import { relevance } from '../world/memory.js';
 import { spawnChild } from '../world/spawn.js';
 import { carryingCapacity } from '../world/population.js';
@@ -188,8 +189,10 @@ export const NpcLife: System = {
           else if (match.sex === 'm' && match.family) c.family = match.family;
           c.spouseId = match.id;
           match.spouseId = c.id;
-          world.relations.ensure(c.id, match.id, 'mariage', 'époux', world.year);
-          world.relations.ensure(match.id, c.id, 'mariage', 'époux', world.year);
+          // « Nerys Maenol · époux » : l'étiquette décrit la personne visée,
+          // pas celle qui regarde.
+          world.relations.ensure(c.id, match.id, 'mariage', agreeLabel('époux', match.sex), world.year);
+          world.relations.ensure(match.id, c.id, 'mariage', agreeLabel('époux', c.sex), world.year);
           world.relations.modify(c.id, match.id, { affection: 30, trust: 25 });
           world.relations.modify(match.id, c.id, { affection: 30, trust: 25 });
           world.tally.marriages += 1;
