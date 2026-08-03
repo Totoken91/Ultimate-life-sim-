@@ -8,11 +8,14 @@
 const WEALTH_BANDS: readonly (readonly [number, string])[] = [
   [-Infinity, 'endetté'],
   [0, 'sans rien'],
-  [30, 'misère'],
-  [200, 'pauvre'],
-  [800, 'modeste'],
-  [3000, 'à l\'aise'],
-  [12000, 'aisé'],
+  // Ces mots ne doivent surtout pas reprendre ceux des classes sociales
+  // (« pauvre », « aisé ») : le joueur lisait « Bourse 199 sous (misère) » à
+  // côté de « pauvre » et croyait à deux échelles contradictoires (doc 18 §3).
+  [30, 'trois fois rien'],
+  [200, 'de quoi manger'],
+  [800, 'un petit bas de laine'],
+  [3000, 'de quoi voir venir'],
+  [12000, 'bien pourvu'],
   [50000, 'riche'],
   [250000, 'fortuné'],
   [1_500_000, 'opulent'],
@@ -41,4 +44,28 @@ export function formatSous(sous: number): string {
 
 export function describeWealth(sous: number): string {
   return `${formatSous(sous)} sous (${wealthBand(sous)})`;
+}
+
+/**
+ * Ce que la bourse vaut **en temps**, la seule unité qui parle : un chiffre nu
+ * ne dit rien, « de quoi tenir deux ans » dit tout. `annuel` est le coût de la
+ * vie sur une année, tel que le système économique vient de le prélever.
+ */
+export function pursePhrase(sous: number, annuel: number): string {
+  if (sous < 0) return `vous devez ${formatSous(-sous)} sous`;
+  if (annuel <= 0) return `${formatSous(sous)} sous`;
+  const annees = sous / annuel;
+  const combien =
+    annees < 0.25
+      ? 'pas de quoi finir l\'année'
+      : annees < 1
+        ? 'de quoi tenir quelques mois'
+        : annees < 2
+          ? 'de quoi tenir un an'
+          : annees < 6
+            ? `de quoi tenir ${Math.floor(annees)} ans`
+            : annees < 20
+              ? 'de quoi ne plus compter'
+              : 'de quoi ne plus jamais y penser';
+  return `${formatSous(sous)} sous — ${combien}`;
 }

@@ -398,13 +398,24 @@ export const OCCASIONS: OccasionDef[] = [
     when: (c) => (c.subject.skills['lettres'] ?? 0) < 60,
     weight: () => 0.8,
     label: (c) => `${them(c)} veut parler à quelqu'un`,
-    detail: () => 'Il n\'a plus grand monde et il sait des choses qu\'on ne réécrira pas.',
+    detail: (c) => {
+      const elle = c.maybe('cible')?.sex === 'f';
+      return `${elle ? 'Elle' : 'Il'} n'a plus grand monde et ${elle ? 'elle' : 'il'} sait des choses qu'on ne réécrira pas.`;
+    },
     take: (c) => ({
       text: `Vous écoutez ${them(c)} pendant des heures. Vous ne comprenez qu'un tiers, pour l'instant.`,
       effects: [
         { k: 'skill', id: 'lettres', d: 5 },
         { k: 'stat', stat: 'intelligence', d: 2 },
-        { k: 'rel', to: 'cible', type: 'mentorat', label: 'le vieux', affection: 18, respect: 14, mutual: true },
+        {
+          k: 'rel',
+          to: 'cible',
+          type: 'mentorat',
+          label: c.maybe('cible')?.sex === 'f' ? 'la vieille' : 'le vieux',
+          affection: 18,
+          respect: 14,
+          mutual: true,
+        },
         {
           k: 'memory',
           text: `Ce que le vieux m'a raconté, et que je n'ai pas encore compris.`,

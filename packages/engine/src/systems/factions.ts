@@ -4,7 +4,7 @@ import type { EventCtx } from '../events/types.js';
 import { shortName } from '../model/character.js';
 import { killCharacter } from '../events/effects.js';
 import { clamp } from '../util/math.js';
-import { clash, describeClash, sideOf, TIER_LABELS } from '../conflict/clash.js';
+import { clash, describeClash, ofName, sideOf, TIER_LABELS } from '../conflict/clash.js';
 import {
   SEUIL_DISSOLUTION,
   SEUIL_FONDATION,
@@ -102,7 +102,7 @@ export const FactionFormation: System = {
       if (membres < SEUIL_DISSOLUTION) {
         f.dissolvedYear = world.year;
         world.tally.factionsDissolved += 1;
-        report(ctx, f, `${f.name} n'existe plus.`, 'local');
+        report(ctx, f, `On ne parle plus ${ofName(f.name)}.`, 'local');
         continue;
       }
       f.power = recomputePower(world, f);
@@ -117,7 +117,15 @@ export const FactionFormation: System = {
       const f = foundFaction(world, ctx.rng.fork('faction.naissance', world.year, c.id), c, sworn);
       affilies.set(c.id, f);
       for (const m of sworn) affilies.set(m.id, f);
-      report(ctx, f, `${f.name} s'est formée à ${world.settlement(f.seat)?.name ?? f.seat}.`, 'local');
+      // Tournure nominale : « les hommes de Sarrach s'est formée » est une
+      // faute que le moteur ne peut pas éviter autrement — il ne connaît ni le
+      // genre ni le nombre des noms qu'il fabrique.
+      report(
+        ctx,
+        f,
+        `Un groupe s'est formé à ${world.settlement(f.seat)?.name ?? f.seat} : ${f.name}.`,
+        'local',
+      );
     }
   },
 };

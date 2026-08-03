@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { Game } from '@ed/game';
 import { domains, factions, worldView } from '@ed/game';
-import { RECORD_LABELS, formatSous, renderEntry, type RecordId } from '@ed/engine';
+import { RECORD_LABELS, ans, formatSous, renderEntry, type RecordId } from '@ed/engine';
 import { Bar, Btn, Card, Chips, Row, Section, pct } from '../ui.js';
 
 type Onglet =
@@ -47,8 +47,8 @@ export function Monde({ game }: { game: Game }) {
           <Card>
             <Row k="Vivants" v={st.population} />
             <Row k="Ont vécu en tout" v={st.everLived} />
-            <Row k="Âge médian" v={`${st.medianAge} ans`} />
-            <Row k="Vie médiane" v={`${st.medianLifespan} ans`} />
+            <Row k="Âge médian" v={`${ans(st.medianAge)}`} />
+            <Row k="Vie médiane" v={`${ans(st.medianLifespan)}`} />
             <Row k="Morts avant 13 ans" v={pct(st.childMortality)} tone="danger" />
           </Card>
 

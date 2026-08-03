@@ -1,6 +1,6 @@
 import type { Game } from '@ed/game';
 import { self, status } from '@ed/game';
-import { fullName, renderEpitaph } from '@ed/engine';
+import { ans, fullName, renderEpitaph } from '@ed/engine';
 import { Btn, Card, Prose, Section } from '../ui.js';
 
 /** Les écrans qui prennent tout l'espace : naissance, événement, issue, mort. */
@@ -64,7 +64,7 @@ export function Evenement({ game, act }: { game: Game; act: (fn: () => void) => 
   return (
     <div className="scroll">
       <Section>
-        An {s.year} · {s.age} ans
+        An {s.year} · {ans(s.age)}
       </Section>
       <Prose text={ev.text} />
       <hr className="rule" />
@@ -127,7 +127,7 @@ export function Mort({
         {fullName(p)}
       </h1>
       <div className="muted">
-        {p.birthYear} – {p.deathYear ?? game.world.year} · {age} ans
+        {p.birthYear} – {p.deathYear ?? game.world.year} · {ans(age)}
       </div>
       <div className="faint" style={{ fontStyle: 'italic', marginBottom: 16 }}>
         {p.causeOfDeath ?? 'de sa belle mort'}
@@ -149,7 +149,7 @@ export function Mort({
             <Btn
               key={h.id}
               primary
-              hint={`${h.age} ans · ${h.relation}${h.note ? ` · ${h.note}` : ''}`}
+              hint={`${ans(h.age)} · ${h.relation}${h.note ? ` · ${h.note}` : ''}`}
               onClick={() => act(() => game.submit({ t: 'continueAs', heirId: h.id }))}
             >
               {h.name}
@@ -168,7 +168,7 @@ export function Mort({
           {strangers.map((s) => (
             <Btn
               key={s.id}
-              hint={`${s.age} ans · ${s.hook} · ${s.place}`}
+              hint={`${ans(s.age)} · ${s.hook} · ${s.place}`}
               onClick={() => act(() => game.submit({ t: 'follow', id: s.id }))}
             >
               {s.name}

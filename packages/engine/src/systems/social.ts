@@ -182,6 +182,10 @@ export const NpcLife: System = {
           match = null;
         }
         if (match) {
+          // Un foyer porte un nom. C'est la condition pour qu'un joueur
+          // reconnaisse une famille en la lisant.
+          if (c.sex === 'm' && c.family) match.family = c.family;
+          else if (match.sex === 'm' && match.family) c.family = match.family;
           c.spouseId = match.id;
           match.spouseId = c.id;
           world.relations.ensure(c.id, match.id, 'mariage', 'époux', world.year);
@@ -211,7 +215,10 @@ export const NpcVisible: System = {
       const rng = ctx.rng.fork('social.npcVisible', world.year, other.id);
       if (!rng.chance(0.05)) continue;
       const age = ageOf(other, world.year);
-      if (age >= 17 && other.spouseId && rng.chance(0.4)) {
+      // « (mère) parle de fonder un foyer » : elle en a déjà un, et c'est le
+      // vôtre. La condition testait la présence d'un époux au lieu de son
+      // absence.
+      if (age >= 17 && age <= 45 && !other.spouseId && rng.chance(0.4)) {
         world.say(`${shortName(other)} (${rel.label}) parle de fonder un foyer.`);
       } else if (rel.affection < -30 && rng.chance(0.5)) {
         world.say(`${shortName(other)} (${rel.label}) dit du mal de vous en ville.`);

@@ -1,4 +1,5 @@
 import type { BodyView } from '@ed/game';
+import { ans } from '@ed/engine';
 import { Bar, Card, Row, Section } from '../ui.js';
 
 const tone = (v: number): 'good' | 'gold' | 'danger' =>
@@ -30,7 +31,7 @@ export function Corps({ body }: { body: BodyView }) {
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span className={c.severity >= 60 ? 'danger' : 'gold'}>{c.label}</span>
                 <span className="faint" style={{ fontSize: 12 }}>
-                  {c.years === 0 ? 'cette année' : `depuis ${c.years} ans`}
+                  {c.years === 0 ? 'cette année' : `depuis ${ans(c.years)}`}
                 </span>
               </div>
               <div className="muted" style={{ fontSize: 13, margin: '4px 0 6px' }}>

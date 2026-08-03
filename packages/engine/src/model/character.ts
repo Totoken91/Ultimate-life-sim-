@@ -16,7 +16,8 @@ export function ageOf(c: Character, year: number): number {
 }
 
 export function lifeStage(age: number): LifeStage {
-  if (age <= 5) return 'nourrisson';
+  // On lisait « 5 ans · nourrisson ». Un nourrisson ne vole pas sur un étal.
+  if (age <= 2) return 'nourrisson';
   if (age <= 12) return 'enfant';
   if (age <= 17) return 'adolescent';
   if (age <= 29) return 'jeune adulte';
@@ -45,9 +46,15 @@ export function injuryPenalty(c: Character, stat: StatId): number {
   return total;
 }
 
-/** Valeur effective d'un attribut, blessures comprises. C'est celle qu'on teste. */
+/**
+ * Valeur effective d'un attribut, blessures comprises. C'est celle qu'on teste
+ * et celle qu'on affiche.
+ *
+ * **Arrondie** : la croissance annuelle est fractionnaire pour que les petits
+ * gains ne soient pas perdus, mais personne ne doit jamais lire « For 48,2283 ».
+ */
 export function effectiveStat(c: Character, stat: StatId): number {
-  return clamp(c.stats[stat] - injuryPenalty(c, stat), 1, 120);
+  return Math.round(clamp(c.stats[stat] - injuryPenalty(c, stat), 1, 120));
 }
 
 export function statTotal(c: Character): number {

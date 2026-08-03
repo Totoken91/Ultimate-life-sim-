@@ -1,3 +1,4 @@
+import { ans } from '../util/text.js';
 import type { Character, EntityId, House } from '../model/types.js';
 import { ageOf, fullName } from '../model/character.js';
 import type { World } from '../world/world.js';
@@ -81,7 +82,7 @@ export function updateRecords(world: World): void {
       holder: name,
       value: c.wealth,
       year: world.year,
-      detail: `à ${age} ans`,
+      detail: `à ${ans(age)}`,
     });
     challenge(book, 'longevite', {
       holderId: c.id,

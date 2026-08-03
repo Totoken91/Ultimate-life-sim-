@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Game, RelationView } from '@ed/game';
 import { TRAININGS } from '@ed/game';
 import type { EntityId } from '@ed/engine';
+import { ans } from '@ed/engine';
 import { Btn, Card, Row, Section } from '../ui.js';
 
 const tone = (r: RelationView): 'good' | 'danger' | 'muted' =>
@@ -39,7 +40,7 @@ export function Gens({
         <Section>{target.name}</Section>
         <Card>
           <Row k="Lien" v={target.label} />
-          <Row k="Âge" v={`${target.age} ans`} />
+          <Row k="Âge" v={`${ans(target.age)}`} />
           <Row k="Envers vous" v={target.feeling} tone={tone(target)} />
         </Card>
 
@@ -119,7 +120,7 @@ export function Gens({
         <Btn
           key={p.id}
           onClick={() => setOpenId(p.id)}
-          hint={`${p.label} · ${p.age} ans`}
+          hint={`${p.label} · ${ans(p.age)}`}
         >
           {p.isSpouse ? '♦ ' : p.isChild ? '· ' : ''}
           {p.name}

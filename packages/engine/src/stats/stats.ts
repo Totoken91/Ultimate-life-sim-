@@ -1,3 +1,4 @@
+import { ans } from '../util/text.js';
 import type { Character, HouseRank, SocialClass } from '../model/types.js';
 import { CLASS_ORDER } from '../model/types.js';
 import { ageOf, fullName, shortName } from '../model/character.js';
@@ -164,12 +165,12 @@ export function worldStats(world: World, ruleset: Ruleset, limit = 5): WorldStat
     medianLifespan: median(lifespans),
     childMortality: dead.length > 0 ? childDeaths / dead.length : 0,
 
-    richest: rank(living, (c) => c.wealth, (c) => `${ageOf(c, world.year)} ans`, limit),
+    richest: rank(living, (c) => c.wealth, (c) => ans(ageOf(c, world.year)), limit),
     oldest: rank(living, (c) => ageOf(c, world.year), (c) => c.settlement, limit),
     mostChildren: rank(
       living,
       (c) => c.childrenIds.length,
-      (c) => `${ageOf(c, world.year)} ans`,
+      (c) => ans(ageOf(c, world.year)),
       limit,
     ),
     bloodiest: rank(all, bloodOf, (c) => (c.alive ? 'vivant' : `mort en ${c.deathYear}`), limit),

@@ -33,7 +33,10 @@ export function spawnCharacter(
 
   const stats = {} as Record<StatId, number>;
   for (const s of STAT_IDS) {
-    stats[s] = rng.fork('spawn.stat', s, world.year, names.given).stat(mean + (bias[s] ?? 0), 13);
+    // Plancher à 16 : un « Cha 6 » tiré au hasard est une infirmité que rien
+    // ne raconte et dont on ne se relève jamais. Les vraies infirmités passent
+    // par les traits et les scénarios de naissance, qui, eux, l'expliquent.
+    stats[s] = rng.fork('spawn.stat', s, world.year, names.given).stat(mean + (bias[s] ?? 0), 13, 16, 100);
   }
 
   const hidden = {} as Character['hidden'];
@@ -67,7 +70,10 @@ export function spawnCharacter(
     traits: opts.traits ? [...opts.traits] : [],
     skills: {},
     health: clamp(rng.stat(82, 12), 20, 100),
-    mood: rng.stat(58, 14),
+    // Un nouveau-né n'a pas d'humeur : afficher « amer » sur un nourrisson
+    // était une des premières choses que le joueur lisait, et ça ne voulait
+    // rien dire.
+    mood: opts.age <= 3 ? rng.stat(72, 6) : rng.stat(58, 14),
     wealth: opts.wealth ?? Math.round(CLASS_WEALTH[socialClass] * (0.5 + rng.float())),
     jobId: opts.jobId ?? null,
     jobYears: 0,

@@ -37,6 +37,34 @@ export const STAT_LABELS: Record<StatId, string> = {
   volonte: 'Volonté',
 };
 
+/**
+ * Ce que chaque attribut *fait*. Sans cette table, le joueur lisait
+ * « For 48 Int 32 Cha 6 » et n'avait aucun moyen de savoir ce que ça changeait
+ * dans sa vie — ce qui est la définition de jouer dans le vide.
+ */
+export const STAT_DESC: Record<StatId, string> = {
+  force: 'Frapper, porter, tenir. Décide des rixes et du travail dur.',
+  intelligence: 'Comprendre vite. Apprendre coûte moins de temps, et les métiers de savoir s\'ouvrent.',
+  charisme: 'Ce qu\'on vous accorde sans réfléchir. Courtiser, commander, convaincre.',
+  agilite: 'Les mains et les pieds. Voler, esquiver, les métiers de précision.',
+  endurance: 'Ce que le corps encaisse. Maladie, faim, coups, vieillesse.',
+  volonte: 'Ne pas céder. Tenir une entreprise, résister à la peur et à soi-même.',
+};
+
+/**
+ * Où l'on se situe. Un nombre nu ne dit rien ; « remarquable » se lit d'un
+ * coup d'œil et se compare sans calcul.
+ */
+export function statBand(value: number): string {
+  if (value >= 85) return 'exceptionnel';
+  if (value >= 70) return 'remarquable';
+  if (value >= 56) return 'au-dessus';
+  if (value >= 42) return 'dans la moyenne';
+  if (value >= 28) return 'faible';
+  if (value >= 15) return 'très faible';
+  return 'infirme';
+}
+
 export const STAT_SHORT: Record<StatId, string> = {
   force: 'For',
   intelligence: 'Int',

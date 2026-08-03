@@ -71,6 +71,14 @@ export const OCCASIONS_PAR_AN = 3;
  */
 export const REPOS_OCCASION = 6;
 
+/**
+ * Et le même délai, plus court, pour une occasion **laissée passer**. Le jeu
+ * reproposait « Untel cherche quelqu'un à former » six années d'affilée, avec
+ * un nom différent à chaque fois : mécaniquement correct, et lassant au point
+ * qu'on cesse de lire la liste (doc 18 §3).
+ */
+export const REPOS_REFUS = 3;
+
 export function occasionCtx(
   world: World,
   ruleset: Ruleset,
@@ -112,9 +120,16 @@ export function drawOccasions(
   const age = ageOf(subject, world.year);
   // Une occasion dont l'acteur est mort n'est plus une occasion : elle produit
   // « vous écoutez quelqu'un pendant des heures », ce que personne ne devrait lire.
-  const vivantes = keep.filter(
-    (o) => o.until >= world.year && (o.roleId === null || (world.get(o.roleId)?.alive ?? false)),
-  );
+  const vivantes: Occasion[] = [];
+  for (const o of keep) {
+    const encore = o.until >= world.year;
+    const acteur = o.roleId === null || (world.get(o.roleId)?.alive ?? false);
+    if (encore && acteur) vivantes.push(o);
+    // Refermée sans avoir été prise : on la met au repos avant de la reproposer.
+    else if (typeof subject.flags[`occ:${o.defId}`] !== 'number') {
+      subject.flags[`occ:${o.defId}`] = world.year - (REPOS_OCCASION - REPOS_REFUS);
+    }
+  }
   const dejaLa = new Set(vivantes.map((o) => o.defId));
   const out = [...vivantes];
 

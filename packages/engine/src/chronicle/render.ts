@@ -1,3 +1,4 @@
+import { ans } from '../util/text.js';
 import type { ChronicleEntry } from '../model/types.js';
 
 /**
@@ -31,7 +32,7 @@ export function renderEntry(e: ChronicleEntry): string {
     case 'mort': {
       const age = num(e, 'age');
       const cause = str(e, 'cause', 'de sa belle mort');
-      return `${who} mourut à ${age} ans, ${cause}.`;
+      return `${who} mourut à ${ans(age)}, ${cause}.`;
     }
     case 'mariage':
       return `${who} épousa ${other ?? 'un inconnu'}.`;

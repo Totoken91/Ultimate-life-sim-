@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { loadRuleset } from '@ed/content';
-import { Game, body as bodyView, relations, self, status } from '@ed/game';
+import { Game, body as bodyView, relations, self, standing, status } from '@ed/game';
+import { ans } from '@ed/engine';
 import { Meter } from './ui.js';
 import { Vie } from './screens/Vie.js';
 import { Gens } from './screens/Gens.js';
@@ -112,13 +113,17 @@ export function App() {
   const people = relations(game);
   const me = self(game);
   const myBody = bodyView(game);
+  const place = standing(game);
 
   return (
     <div className="app">
       <header className="hdr">
         <h1>{s.name}</h1>
         <div className="sub">
-          {s.age} ans · {s.stage} · {s.settlement}
+          {ans(s.age)} · {s.stage} · {s.settlement}
+        </div>
+        <div className="sub" style={{ color: 'var(--accent, #b98a3a)' }}>
+          {place.title}
         </div>
         <div className="sub">
           {[s.house, s.socialClass, s.job].filter(Boolean).join(' · ')}

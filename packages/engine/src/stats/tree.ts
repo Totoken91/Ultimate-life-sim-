@@ -1,3 +1,4 @@
+import { ans } from '../util/text.js';
 import type { Character, EntityId } from '../model/types.js';
 import { ageOf, shortName } from '../model/character.js';
 import type { World } from '../world/world.js';
@@ -94,7 +95,7 @@ export function familyTree(
 
 /** Rendu texte de l'arbre, en lignes prêtes à afficher. */
 export function renderTree(node: TreeNode, prefix = '', isLast = true, isRoot = true): string[] {
-  const life = node.alive ? `${node.age} ans` : `†${node.deathYear ?? '?'}`;
+  const life = node.alive ? `${ans(node.age)}` : `†${node.deathYear ?? '?'}`;
   const marks = [node.isPlayer ? '◆' : null, node.spouse ? `⚭ ${node.spouse}` : null]
     .filter(Boolean)
     .join(' ');

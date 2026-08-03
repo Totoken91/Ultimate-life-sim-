@@ -16,7 +16,7 @@ transmettre, compter — et, désormais, regarder le monde vivre sans vous.
 pnpm install
 pnpm play          # jouer dans le terminal
 pnpm web           # jouer dans le navigateur (http://localhost:5173)
-pnpm test          # 167 tests
+pnpm test          # 174 tests
 pnpm sim 300 3     # banc d'émergence : 300 parties sans joueur, 3 générations
 pnpm smoke:web     # build + vrai navigateur : joue 40 ans et échoue à la moindre erreur
 pnpm profile       # où passent les millisecondes, système par système
@@ -84,6 +84,15 @@ on les délaisse, et des **occasions** que la simulation elle-même fabrique :
 le grain est tombé à 3,9 sous, une bande recrute, plus personne ne gouverne la
 cité, le mécontentement est à 60. Elles ne durent pas. Voir le
 [doc 16](docs/16-annee-du-joueur.md).
+
+**On vous dit où vous en êtes** : dix marches — passer l'enfance, un métier, un
+toit, quelqu'un à côté de vous, du sang après vous, un nom qu'on connaît, des
+hommes à vous, une maison, gouverner, durer plus qu'une vie. Aucune ne
+s'impose, aucune ne se coche à la main : elles se lisent dans l'état du monde,
+et **chacune de celles qui restent porte son mode d'emploi**. En tête d'écran,
+le titre dit ce que les autres verraient : *un gosse d'Orin-sur-Loë*, puis
+*Apprenti forgeron*, puis *des hommes d'Erisgar*, puis *qui gouverne Vardhèn*.
+Voir le [doc 18](docs/18-lisibilite.md).
 
 **L'argent achète du temps** : une chambre à soi, une maison, un atelier, une
 ferme, une demeure, un manoir muré — chacun avec sa facture annuelle qui ne
@@ -155,6 +164,7 @@ conception, c'est cette page qui a raison.
 | [15 — Domaines & pouvoir](docs/15-domaines-et-pouvoir.md) | Économie récursive, prix locaux, routes, gouvernements à sept axes |
 | [16 — L'année du joueur](docs/16-annee-du-joueur.md) | Budget de temps, entreprises longues, occasions tirées du monde |
 | [17 — Patrimoine & domesticité](docs/17-patrimoine-et-domesticite.md) | Ce que l'argent achète, à commencer par du temps — et ce que ça coûte de le garder |
+| [18 — Lisibilité](docs/18-lisibilite.md) | Ce qu'on lit en jouant : les marches, le journal, les attributs, l'humeur, la dette |
 
 ## Code
 

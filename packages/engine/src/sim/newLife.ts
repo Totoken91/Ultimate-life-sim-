@@ -1,3 +1,4 @@
+import { ans } from '../util/text.js';
 import type { Character, RelationType, Sex, SuccessionLaw } from '../model/types.js';
 import { CLASS_LABELS, HIDDEN_IDS, STAT_IDS } from '../model/types.js';
 import type { World } from '../world/world.js';
@@ -51,6 +52,7 @@ export function createLife(
   const ctx = makeBirthContext(world, ruleset, rng.fork('newlife.setup', scenario.id), player);
   const result = scenario.setup(ctx);
   applyBirthResult(world, ruleset, player, result);
+  settleHousehold(world, player);
 
   world.record({
     year: world.year,
@@ -65,6 +67,46 @@ export function createLife(
   });
 
   return { player, scenario, result };
+}
+
+/**
+ * **Un foyer.** Pas quatre inconnus qui partagent un toit.
+ *
+ * Sans ça, l'écran d'ouverture disait : « Idris Erisgar · père Derwen Cerneth ·
+ * mère Tegwen Dolwyn · aîné Cadoc Rhoswen ». Quatre patronymes pour une seule
+ * famille, et un joueur qui ne peut pas savoir qui est qui. C'est la première
+ * chose qu'il lit, et c'était illisible.
+ *
+ * Deuxième défaut, plus sournois : **aucun scénario de naissance ne mariait les
+ * parents.** Le père et la mère n'étaient, pour le moteur, que deux adultes qui
+ * partagent un enfant — d'où « Derwen Cerneth fait la cour à Tegwen Cerneth »
+ * lu par le joueur à un an, et d'où la mère qui épousait un voisin trois ans
+ * plus tard. On noue le lien ici, une fois, pour tous les scénarios.
+ */
+export function settleHousehold(world: World, player: Character): void {
+  const pere = world.get(player.fatherId);
+  const mere = world.get(player.motherId);
+
+  if (pere && mere && pere.alive && mere.alive && !pere.spouseId && !mere.spouseId) {
+    pere.spouseId = mere.id;
+    mere.spouseId = pere.id;
+    world.relations.ensure(pere.id, mere.id, 'mariage', 'épouse', world.year);
+    world.relations.ensure(mere.id, pere.id, 'mariage', 'époux', world.year);
+    world.relations.modify(pere.id, mere.id, { affection: 35, trust: 30 });
+    world.relations.modify(mere.id, pere.id, { affection: 35, trust: 30 });
+  }
+
+  const nom = player.family;
+  if (!nom) return;
+  if (pere) pere.family = nom;
+  if (mere) mere.family = nom;
+  // Frères et sœurs : on les reconnaît à l'étiquette que la naissance a posée.
+  const fratrie = new Set(['frère', 'sœur', 'soeur', 'aîné', 'aînée', 'cadet', 'cadette', 'jumeau', 'jumelle']);
+  for (const rel of world.relations.from(player.id)) {
+    if (rel.type !== 'sang' || !fratrie.has(rel.label)) continue;
+    const autre = world.get(rel.to);
+    if (autre) autre.family = nom;
+  }
 }
 
 function makeBirthContext(
@@ -149,6 +191,18 @@ function makeBirthContext(
       if (parent.sex === 'm') child.fatherId = parent.id;
       else child.motherId = parent.id;
       if (!parent.childrenIds.includes(child.id)) parent.childrenIds.push(child.id);
+      // Un enfant porte le nom de son père, ou de sa mère à défaut. Sans ça,
+      // « Idris Erisgar, fils de Derwen Cerneth et de Tegwen Dolwyn » : trois
+      // patronymes dans une même famille, et le joueur ne sait plus qui est qui.
+      const pere = world.get(child.fatherId);
+      const mere = world.get(child.motherId);
+      const nom = pere?.family ?? mere?.family ?? child.family;
+      if (nom) {
+        child.family = nom;
+        // Et la mère prend le nom du foyer : à cette époque, c'est ainsi, et
+        // surtout ça rend une famille lisible d'un coup d'œil.
+        if (pere?.family && mere && mere.family !== pere.family) mere.family = pere.family;
+      }
       bond(parent, child, 'sang', child.sex === 'm' ? 'fils' : 'fille', {
         affection: 40,
         trust: 30,
@@ -493,9 +547,9 @@ export function continueAsStranger(
     importance: 4,
     actors: [{ id: next.id, name: fullName(next) }],
     data: {
-      texte: `Le fil se déplace : on suit désormais ${fullName(next)}, ${
-        world.year - next.birthYear
-      } ans.`,
+      texte: `Le fil se déplace : on suit désormais ${fullName(next)}, ${ans(
+        world.year - next.birthYear,
+      )}.`,
     },
   });
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { BodyView, Game, SelfView, StatusView } from '@ed/game';
+import { ans } from '@ed/engine';
 import { Bar, Btn, Card, Chips, Row, Section } from '../ui.js';
 import { Corps } from './Corps.js';
 
@@ -35,8 +36,22 @@ export function Vous({
       <Section>Attributs</Section>
       <Card>
         {status.stats.map((s) => (
-          <Row key={s.id} k={s.short} v={s.value} />
+          <div key={s.id} style={{ padding: '6px 0', borderTop: '1px solid var(--line)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+              <strong style={{ fontSize: 15 }}>{s.label}</strong>
+              <span style={{ fontSize: 14 }}>
+                {s.value} <span style={{ opacity: 0.55 }}>· {s.band}</span>
+              </span>
+            </div>
+            <div className="prose" style={{ fontSize: 13, opacity: 0.62, marginTop: 2 }}>
+              {s.desc}
+            </div>
+          </div>
         ))}
+      </Card>
+      <Card>
+        <Row k="Revenus de l'année" v={`${status.income} sous`} tone={status.income > 0 ? 'good' : undefined} />
+        <Row k="Coût de la vie" v={`${status.upkeep} sous`} tone="danger" />
       </Card>
 
       {me.traits.length > 0 && (
@@ -93,7 +108,7 @@ export function Vous({
               <Row
                 key={k.name}
                 k={k.name}
-                v={k.alive ? `${k.age} ans` : 'mort'}
+                v={k.alive ? `${ans(k.age)}` : 'mort'}
                 tone={k.alive ? undefined : 'danger'}
               />
             ))}

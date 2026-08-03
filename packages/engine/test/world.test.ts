@@ -128,8 +128,11 @@ describe('présentation des valeurs', () => {
     expect(band(50)).toBe('modeste');
     expect(band(100)).toBe('légendaire');
     expect(wealthBand(-50)).toBe('endetté');
-    expect(wealthBand(5000)).toBe('à l\'aise');
-    expect(wealthBand(20000)).toBe('aisé');
+    // Ces mots ne reprennent volontairement aucun label de classe sociale
+    // (doc 18 §3) : deux échelles qui partagent leur vocabulaire se lisent
+    // comme une contradiction.
+    expect(wealthBand(5000)).toBe('de quoi voir venir');
+    expect(wealthBand(20000)).toBe('bien pourvu');
     expect(wealthBand(10 ** 9)).toBe('démesuré');
   });
 

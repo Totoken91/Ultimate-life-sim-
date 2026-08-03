@@ -261,8 +261,21 @@ export const Agency: System = {
             place: self.settlement,
             actors: target ? [self.id, target.id] : [self.id],
           });
-          // Ce qui touche le joueur directement remonte aussi dans son année.
-          if (target?.isPlayer || reach === 'monde') world.say(text);
+          // Ce qui remonte dans *l'année du joueur* est plus étroit que ce qui
+          // remonte dans les rumeurs du monde. « Hala de Hammar a fondé une
+          // maison à Kaleth-la-Blanche » est une vraie nouvelle — mais lue par
+          // un enfant de trois ans à l'autre bout du Rivage, c'est du bruit,
+          // et c'est ce bruit qui rendait le journal illisible (doc 18 §2).
+          //
+          // La règle : **son année ne parle que de gens qu'il connaît.** Les
+          // actes des inconnus existent toujours — ils vont aux rumeurs, où on
+          // va les chercher quand on veut savoir. Le filtre « même lieu » ne
+          // suffisait pas : soixante habitants font six lignes par an, toutes
+          // sur des noms qui ne veulent rien dire.
+          const moi = world.player;
+          const meConcerne =
+            target?.isPlayer || world.relations.get(moi.id, self.id) !== undefined;
+          if (meConcerne) world.say(text);
         }
       }
     }

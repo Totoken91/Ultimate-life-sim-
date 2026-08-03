@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import type { Game } from '@ed/game';
+import { standing, urges } from '@ed/game';
+import { ans } from '@ed/engine';
 import { Btn, Card, Chips, Section } from '../ui.js';
 
 type Onglet = 'occasions' | 'entreprises' | 'coups';
@@ -16,6 +18,9 @@ const ONGLETS: { id: Onglet; label: string }[] = [
  */
 export function Vie({ game, act }: { game: Game; act: (fn: () => void) => void }) {
   const y = game.year();
+  const tire = urges(game);
+  const place = standing(game);
+  const creuse = game.idleYear;
   const [tab, setTab] = useState<Onglet>('occasions');
   const [temps, setTemps] = useState<Record<number, number>>({});
 
@@ -36,6 +41,54 @@ export function Vie({ game, act }: { game: Game; act: (fn: () => void) => void }
         </>
       )}
 
+      {tire.length > 0 && (
+        <>
+          <Section>Ce qui vous tire</Section>
+          <Card>
+            {tire.slice(0, 3).map((u) => (
+              <div key={u.id} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '3px 0' }}>
+                <div
+                  style={{
+                    width: 52,
+                    height: 4,
+                    borderRadius: 2,
+                    background: 'var(--line)',
+                    flexShrink: 0,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div style={{ width: `${u.force}%`, height: '100%', background: 'var(--accent, #b98a3a)' }} />
+                </div>
+                <div className="prose" style={{ fontSize: 14 }}>
+                  {u.phrase}
+                </div>
+              </div>
+            ))}
+          </Card>
+        </>
+      )}
+
+      <Section>
+        Votre place <span style={{ opacity: 0.5, fontWeight: 400 }}>{place.done}/{place.total}</span>
+      </Section>
+      <Card>
+        {place.steps.map((st) => (
+          <div key={st.id} style={{ display: 'flex', gap: 8, padding: '3px 0', opacity: st.done ? 0.45 : 1 }}>
+            <span style={{ width: 14, flexShrink: 0 }}>{st.done ? '●' : '○'}</span>
+            <div>
+              <div style={{ fontSize: 14, textDecoration: st.done ? 'line-through' : 'none' }}>
+                {st.label}
+              </div>
+              {!st.done && (
+                <div className="prose" style={{ fontSize: 13, opacity: 0.6 }}>
+                  {st.how}
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+      </Card>
+
       <Section>Votre temps</Section>
       <Card>
         <div style={{ fontSize: 22, letterSpacing: 3 }}>{jauge}</div>
@@ -51,10 +104,19 @@ export function Vie({ game, act }: { game: Game; act: (fn: () => void) => void }
         )}
       </Card>
 
-      <Btn primary onClick={() => act(() => game.submit({ t: 'advance' }))}>
-        Passer l’année
-        <span className="hint">L’an {game.world.year} s’achève. Vous avez {game.age} ans.</span>
-      </Btn>
+      {creuse ? (
+        <Btn primary onClick={() => act(() => game.submit({ t: 'skip' }))}>
+          Laisser filer les années
+          <span className="hint">
+            Rien ne vous est demandé. Vous avez {ans(game.age)}.
+          </span>
+        </Btn>
+      ) : (
+        <Btn primary onClick={() => act(() => game.submit({ t: 'advance' }))}>
+          Passer l’année
+          <span className="hint">L’an {game.world.year} s’achève. Vous avez {ans(game.age)}.</span>
+        </Btn>
+      )}
 
       {y.left > 0 && (
         <Btn onClick={() => act(() => game.submit({ t: 'rest' }))} hint="Ce qui reste, à ne rien faire. On en a besoin.">

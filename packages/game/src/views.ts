@@ -8,6 +8,8 @@ import {
   describeHealth,
   describeMood,
   describeWealth,
+  pursePhrase,
+  UPKEEP,
   describeVital,
   effectiveStat,
   organState,
@@ -24,6 +26,15 @@ import {
   livingMembers,
   FACTION_KIND_LABELS,
   GOAL_LABELS,
+  DRIVE_LABELS,
+  DRIVE_IDS,
+  STAT_DESC,
+  STAT_LABELS,
+  computeDrives,
+  emptyCast,
+  readRelations,
+  upkeepOf,
+  statBand,
   GOOD_IDS,
   GOOD_LABELS,
   GOOD_BASE_PRICE,
@@ -32,6 +43,7 @@ import {
   regimeName,
   rulerName,
   hunger,
+  de,
   type Character,
   type EntityId,
   type StatId,
@@ -52,8 +64,11 @@ export interface StatusView {
   mood: string;
   moodValue: number;
   wealth: string;
-  stats: { id: StatId; short: string; value: number }[];
+  stats: { id: StatId; short: string; label: string; value: number; band: string; desc: string }[];
   titles: string[];
+  /** Ce qui entre et ce qui sort chaque année. Lisible, pas répété. */
+  income: number;
+  upkeep: number;
 }
 
 export function status(game: Game): StatusView {
@@ -74,13 +89,30 @@ export function status(game: Game): StatusView {
     healthValue: p.health,
     mood: describeMood(p),
     moodValue: p.mood,
-    wealth: describeWealth(p.wealth),
+    wealth: pursePhrase(
+      p.wealth,
+      // On mesure la bourse au train de vie d'un adulte, et **jamais sous
+      // celui d'un homme du commun** : sinon 3 000 sous deviennent « de quoi
+      // ne plus jamais y penser » pour un pauvre (dont l'année coûte 90) et
+      // retombent à « de quoi tenir » dès qu'il monte d'un rang. L'échelle
+      // doit être stable, sans quoi elle ne veut plus rien dire.
+      Math.max(
+        Number(p.flags['depenseAn'] ?? 0),
+        UPKEEP[p.socialClass],
+        UPKEEP.commun,
+      ),
+    ),
     stats: STAT_IDS.map((id) => ({
       id,
       short: STAT_SHORT[id],
+      label: STAT_LABELS[id],
+      band: statBand(effectiveStat(p, id)),
+      desc: STAT_DESC[id],
       value: effectiveStat(p, id),
     })),
     titles: [...p.titles],
+    income: Number(p.flags['revenuAn'] ?? 0),
+    upkeep: Number(p.flags['depenseAn'] ?? 0),
   };
 }
 
@@ -349,6 +381,69 @@ export function domains(game: Game): DomainView[] {
   });
 }
 
+/**
+ * Ce que votre personnage veut (doc 18 §2).
+ *
+ * Le moteur calcule ces dix manques pour chaque PNJ depuis le doc 13 ; le
+ * joueur a exactement les mêmes et ne les voyait pas. C'est la réponse directe
+ * à « j'ai l'impression de jouer dans le vide » : une boussole qui ne dicte
+ * rien, mais qui dit où ça tire.
+ */
+export interface UrgeView {
+  id: string;
+  label: string;
+  /** 0 à 100. */
+  force: number;
+  /** Une phrase à la première personne. */
+  phrase: string;
+}
+
+const URGE_PHRASES: Record<string, string> = {
+  survie: 'Vous ne tiendrez pas comme ça.',
+  securite: 'Vous ne dormez pas tranquille.',
+  lien: 'Vous êtes seul, et ça pèse.',
+  descendance: 'Vous voudriez que quelque chose vous survive.',
+  statut: 'Vous en avez assez qu\'on ne vous voie pas.',
+  richesse: 'Vous comptez trop souvent ce qu\'il vous reste.',
+  pouvoir: 'Vous supportez mal qu\'un autre décide pour vous.',
+  vengeance: 'Il y a quelqu\'un à qui vous pensez trop souvent.',
+  savoir: 'Il y a des choses que vous voulez comprendre.',
+  sens: 'Vous vous demandez ce qui restera.',
+};
+
+/** Les manques du joueur, du plus criant au moins, filtrés au significatif. */
+export function urges(game: Game): UrgeView[] {
+  const world = game.world;
+  const me = game.player;
+  const cast = emptyCast();
+  const read = readRelations(world, me, cast);
+  let kids = 0;
+  for (const id of me.childrenIds) if (world.get(id)?.alive) kids += 1;
+  const drives = computeDrives({
+    self: me,
+    world,
+    ruleset: game.ruleset,
+    age: game.age,
+    cast,
+    grudge: read.grudge,
+    allies: read.allies,
+    enemies: read.enemies,
+    bonds: read.bonds,
+    kids,
+    upkeep: upkeepOf(me, world.year),
+    danger: world.settlement(me.settlement)?.danger ?? 0,
+  });
+  return DRIVE_IDS.map((id) => ({
+    id,
+    label: DRIVE_LABELS[id],
+    force: Math.round(drives[id] * 100),
+    phrase: URGE_PHRASES[id] ?? '',
+  }))
+    .filter((u) => u.force >= 18)
+    .sort((a, b) => b.force - a.force)
+    .slice(0, 4);
+}
+
 export interface WorldView {
   settlement: { name: string; description: string; size: string; danger: string };
   year: number;
@@ -379,5 +474,153 @@ export function worldView(game: Game): WorldView {
       text: n.text,
       ici: n.place === game.player.settlement,
     })),
+  };
+}
+
+// ─── votre place (doc 18 §4) ─────────────────────────────────────────────────
+
+export interface StepView {
+  id: string;
+  /** Ce qu'on a, ou ce qu'on n'a pas encore. */
+  label: string;
+  done: boolean;
+  /** Comment y arriver — la phrase qui manquait au jeu. */
+  how: string;
+  /** Ce que ça a changé, une fois obtenu. */
+  got: string;
+}
+
+export interface StandingView {
+  /** Une phrase qui dit ce que vous êtes, aujourd'hui, pour les autres. */
+  title: string;
+  /** Combien de marches sur combien. */
+  done: number;
+  total: number;
+  steps: StepView[];
+  /** Les trois prochaines, dans l'ordre où on les prend d'habitude. */
+  next: StepView[];
+}
+
+/**
+ * **Où vous en êtes, et ce qui vient après.**
+ *
+ * Le joueur disait : « je comprends rien à comment évoluer ». Il avait raison —
+ * le jeu simulait une ascension sans jamais la nommer. Cette vue ne simule
+ * rien : elle *lit* l'état du monde et le dit en marches. Aucune ne s'impose,
+ * aucune ne se coche à la main ; on les franchit en jouant, et on peut mourir
+ * sans en avoir pris une seule.
+ */
+export function standing(game: Game): StandingView {
+  const world = game.world;
+  const me = game.player;
+  const age = game.age;
+
+  const mesBiens = world.holdingsOf(me.id);
+  const maFaction = world.activeFactions().find(
+    (f) => f.leaderId === me.id || f.memberIds.includes(me.id),
+  );
+  const jeMene = maFaction?.leaderId === me.id;
+  const maison = world.house(me.houseId);
+  const jeSuisChef = maison?.headId === me.id;
+  const domaine = world.domainList().find((d) => d.rulerId === me.id);
+  let enfants = 0;
+  for (const id of me.childrenIds) if (world.get(id)?.alive) enfants += 1;
+  const generations = maison ? maison.headHistory.length : 0;
+
+  const steps: StepView[] = [
+    {
+      id: 'grandir',
+      label: 'Passer l\'enfance',
+      done: age >= 16,
+      how: 'Tenir jusqu\'à seize ans. Beaucoup n\'y arrivent pas.',
+      got: 'Votre année vous appartient : on ne décide plus pour vous.',
+    },
+    {
+      id: 'metier',
+      label: 'Avoir un métier',
+      done: !!me.jobId,
+      how: 'Un voisin qui exerce cherche parfois quelqu\'un à former — guettez l\'occasion. Ou apprenez, puis proposez-vous.',
+      got: 'De quoi entre chaque année sans que vous ayez à le voler.',
+    },
+    {
+      id: 'toit',
+      label: 'Un toit à vous',
+      done: mesBiens.length > 0,
+      how: 'Amassez de quoi acheter, puis achetez chez vous. Un bien se paie encore chaque année après.',
+      got: 'On sait où vous trouver, et vous dormez mieux.',
+    },
+    {
+      id: 'foyer',
+      label: 'Quelqu\'un à côté de vous',
+      done: !!world.get(me.spouseId)?.alive,
+      how: 'Faites la cour. Ça prend des années, et ça se refuse.',
+      got: 'Vous n\'êtes plus seul à porter ce que vous portez.',
+    },
+    {
+      id: 'sang',
+      label: 'Du sang après vous',
+      done: enfants > 0,
+      how: 'Un foyer, du temps, et un peu de chance.',
+      got: 'Il y a désormais quelqu\'un à qui tout ça pourra revenir.',
+    },
+    {
+      id: 'nom',
+      label: 'Un nom qu\'on connaît',
+      done: me.hidden.influence >= 35,
+      how: 'Se faire un nom se mène sur plusieurs années. Les coups d\'éclat aident, les scandales aussi.',
+      got: 'On vous écoute avant de savoir ce que vous valez.',
+    },
+    {
+      id: 'hommes',
+      label: 'Des hommes à vous',
+      done: !!maFaction,
+      how: 'Rassemblez des gens — ou entrez chez ceux qui recrutent. Il en faut trois pour que ça tienne debout.',
+      got: jeMene ? 'Ils font ce que vous dites.' : 'Vous n\'êtes plus seul quand ça tourne mal.',
+    },
+    {
+      id: 'maison',
+      label: 'Fonder une maison',
+      done: !!maison,
+      how: 'Un nom, de quoi vivre, et une descendance. Une maison se fonde, elle ne s\'achète pas.',
+      got: 'Votre nom survit à votre corps.',
+    },
+    {
+      id: 'terre',
+      label: 'Gouverner',
+      done: !!domaine,
+      how: 'Le pouvoir se prend là où il tombe : quand personne ne gouverne, quand le mécontentement monte, quand vos hommes sont plus nombreux que les leurs.',
+      got: `Vous décidez pour ${domaine?.name ?? 'les autres'}, et on vous en tient responsable.`,
+    },
+    {
+      id: 'dynastie',
+      label: 'Durer plus qu\'une vie',
+      done: generations >= 3,
+      how: 'Transmettre, puis que l\'héritier transmette à son tour. Trois chefs de maison, et ce n\'est plus vous : c\'est une lignée.',
+      got: 'On ne compte plus les hommes, on compte les règnes.',
+    },
+  ];
+
+  const done = steps.filter((s) => s.done).length;
+  const lieu = world.settlement(me.settlement)?.name ?? me.settlement;
+
+  // Le titre dit ce que *les autres* verraient. On prend la marche la plus
+  // haute franchie, pas la somme.
+  let title: string;
+  if (domaine) title = `qui gouverne ${domaine.name}`;
+  else if (jeSuisChef && maison) title = `chef de la maison ${maison.name}`;
+  else if (jeMene && maFaction) title = `on vous suit : ${maFaction.name}`;
+  else if (maFaction) title = `des ${maFaction.name}`;
+  else if (me.hidden.influence >= 35) title = `un nom qu'on connaît à ${lieu}`;
+  else if (mesBiens.length > 0) title = `un homme établi à ${lieu}`;
+  else if (me.jobId) title = `${game.ruleset.jobs[me.jobId]?.label ?? 'artisan'} à ${lieu}`;
+  else if (age < 16) title = `un gosse ${de(lieu)}`;
+  else title = `personne, pour l'instant, à ${lieu}`;
+
+  return {
+    title,
+    done,
+    total: steps.length,
+    steps,
+    next: steps.filter((s) => !s.done).slice(0, 3),
   };
 }

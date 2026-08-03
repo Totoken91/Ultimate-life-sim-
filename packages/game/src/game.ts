@@ -100,6 +100,8 @@ export type Command =
   | { t: 'seize'; occasionId: number }
   /** Ne rien faire de son année, et s'en porter mieux. */
   | { t: 'rest' }
+  /** Laisser filer les années où l'on n'a rien à décider (doc 18 §4). */
+  | { t: 'skip' }
   /** Le patrimoine (doc 17) : ce que l'argent achète, à commencer par du temps. */
   | { t: 'acquire'; holdingId: string }
   | { t: 'sell'; holdingId: number }
@@ -265,6 +267,9 @@ export class Game {
         return;
       case 'rest':
         this.rest();
+        return;
+      case 'skip':
+        this.skipYears();
         return;
       case 'acquire':
         this.acquire(cmd.holdingId);
@@ -534,6 +539,46 @@ export class Game {
     this.phase = 'resultat';
   }
 
+  /**
+   * Y a-t-il quoi que ce soit à décider cette année ?
+   *
+   * Entre zéro et cinq ans, la réponse est non : un temps, aucune occasion,
+   * aucune entreprise ouvrable. Le joueur cliquait « passer l'année » cinq
+   * fois de suite en lisant le même écran. Ce n'est pas de la simulation,
+   * c'est une salle d'attente.
+   */
+  get idleYear(): boolean {
+    if (this.phase !== 'annee') return false;
+    const y = this.year();
+    return (
+      y.occasions.filter((o) => o.cost <= y.left).length === 0 &&
+      y.pursuits.length === 0 &&
+      y.openable.length === 0 &&
+      y.coups.length === 0
+    );
+  }
+
+  /**
+   * Laisse filer les années jusqu'à ce que quelque chose arrive : un
+   * événement, une porte qui s'ouvre, ou la fin de l'enfance.
+   */
+  private skipYears(): void {
+    if (this.phase !== 'annee') return;
+    const debut = this.age;
+    for (let i = 0; i < 25; i++) {
+      this.advance();
+      if (this.phase !== 'annee') return;
+      if (!this.idleYear) break;
+    }
+    const passees = this.age - debut;
+    if (passees > 1) {
+      this.yearLog = [
+        `${passees} années passent. Vous grandissez, et rien ne vous est demandé.`,
+        ...this.yearLog,
+      ];
+    }
+  }
+
   /** Ne rien faire est un choix, et il soigne. */
   private rest(): void {
     if (this.phase !== 'annee') return;
@@ -542,9 +587,15 @@ export class Game {
     this.spent += reste;
     const rng = new Rng(this.world.seed).fork('repos', this.world.year, this.player.id);
     const ctx = makeEventCtx(this.world, this.ruleset, rng, this.player, {});
+    // Souffler **répare**, ça n'exalte pas. À +3 d'humeur par temps versé, un
+    // joueur qui soufflait chaque année passait 56 % de sa vie « exalté » : le
+    // mot ne voulait plus rien dire, et rien de ce qui lui arrivait ne se
+    // lisait plus dans son humeur (doc 18 §5). Le gain est désormais
+    // proportionnel à ce qui manque.
+    const manque = Math.max(0, 78 - this.player.mood);
     applyEffects(ctx, [
       { k: 'health', d: 2 + reste * 2 },
-      { k: 'mood', d: 4 + reste * 3 },
+      { k: 'mood', d: 3 + Math.min(manque, reste * 7) },
     ]);
     this.outcome = {
       title: 'Souffler',

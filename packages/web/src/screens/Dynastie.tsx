@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Game } from '@ed/game';
-import { SUCCESSION_LABELS, formatSous, renderTree, type SuccessionLaw } from '@ed/engine';
+import { SUCCESSION_LABELS, ans, formatSous, renderTree, type SuccessionLaw } from '@ed/engine';
 import { Btn, Card, Row, Section } from '../ui.js';
 
 export function Dynastie({ game, act }: { game: Game; act: (fn: () => void) => void }) {
@@ -107,7 +107,7 @@ export function Dynastie({ game, act }: { game: Game; act: (fn: () => void) => v
               <Row
                 key={h.id}
                 k={`${h.claim}. ${h.name}`}
-                v={`${h.age} ans · ${h.note || h.relation}`}
+                v={`${ans(h.age)} · ${h.note || h.relation}`}
               />
             ))
         )}

@@ -2,9 +2,10 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 
 import { resolve } from 'node:path';
 
 import { loadRuleset } from '@ed/content';
-import { Game, body as bodyView, domains, factions, relations, self, status, worldView } from '@ed/game';
+import { Game, body as bodyView, domains, factions, relations, self, standing, status, urges, worldView } from '@ed/game';
 import type { RelationView } from '@ed/game';
 import {
+  ans,
   RECORD_LABELS,
   SUCCESSION_LABELS,
   countTree,
@@ -45,9 +46,11 @@ let game: Game;
 function renderStatus(): void {
   const s = status(game);
   say(heading(s.name));
-  const line1 = `${s.age} ans · ${s.stage} · ${s.settlement}`;
+  const st = standing(game);
+  const line1 = `${ans(s.age)} · ${s.stage} · ${s.settlement}`;
   const line2 = [s.house, s.socialClass, s.job].filter(Boolean).join(' · ');
   say(`  ${c(line1, 'bold')}`);
+  say(`  ${c(st.title, 'yellow')}`);
   say(`  ${c(line2, 'grey')}`);
   if (s.titles.length > 0) say(`  ${c(s.titles.join(' · '), 'magenta')}`);
   say();
@@ -60,13 +63,38 @@ function renderStatus(): void {
   say(`  ${s.stats.map((st) => `${c(st.short, 'grey')} ${pad(String(st.value), 3)}`).join(' ')}`);
 }
 
+/** Ce qui tire le personnage. Une boussole, pas une consigne (doc 18 §2). */
+function renderUrges(): void {
+  const list = urges(game);
+  if (list.length === 0) return;
+  say();
+  say(`  ${c('Ce qui vous tire', 'bold')}`);
+  for (const u of list.slice(0, 3)) {
+    const jauge = '▪'.repeat(Math.max(1, Math.round(u.force / 20)));
+    say(`   ${c(jauge.padEnd(5), 'magenta')} ${u.phrase}`);
+  }
+}
+
+/**
+ * Où l'on en est, et ce qui vient après (doc 18 §4). La réponse à « je ne
+ * comprends pas comment évoluer » : ce n'est pas une quête, c'est un état.
+ */
+function renderStanding(): void {
+  const st = standing(game);
+  say();
+  say(`  ${c('Votre place', 'bold')}  ${c(`${st.done}/${st.total}`, 'grey')}`);
+  for (const step of st.next) {
+    say(`   ${c('○', 'grey')} ${pad(step.label, 26)} ${c(step.how, 'grey')}`);
+  }
+}
+
 function renderCircle(limit = 4): void {
   const rels = relations(game).slice(0, limit);
   if (rels.length === 0) return;
   say();
   say(c('  Proches', 'grey'));
   for (const r of rels) {
-    const name = `${r.name}, ${r.age} ans`;
+    const name = `${r.name}, ${ans(r.age)}`;
     say(`   ${pad(name, 26)} ${c(pad(r.label, 18), 'grey')} ${feelingColour(r)}`);
   }
 }
@@ -86,13 +114,18 @@ function renderLog(): void {
 function mainScreen(): void {
   clear();
   renderStatus();
+  renderUrges();
+  renderStanding();
   renderCircle();
   renderLog();
   say();
   say(rule());
   showNotice();
+  const creuse = game.idleYear;
   menu([
-    { key: '1', label: 'Passer l\'année' },
+    creuse
+      ? { key: '1', label: 'Laisser filer les années', note: 'rien ne vous est demandé' }
+      : { key: '1', label: 'Passer l\'année' },
     {
       key: '2',
       label: 'Votre année',
@@ -113,7 +146,7 @@ function eventScreen(): void {
   if (!ev) return;
   clear();
   const s = status(game);
-  say(heading(`An ${s.year} · ${s.age} ans`));
+  say(heading(`An ${s.year} · ${ans(s.age)}`));
   say();
   for (const line of wrap(ev.text)) say(`  ${line}`);
   say();
@@ -179,7 +212,7 @@ function deathScreen(): void {
   say(heading('mort'));
   say();
   say(`  ${c(fullName(p), 'bold')}`);
-  say(`  ${p.birthYear} – ${p.deathYear ?? game.world.year}  ·  ${age} ans`);
+  say(`  ${p.birthYear} – ${p.deathYear ?? game.world.year}  ·  ${ans(age)}`);
   say(`  ${c(p.causeOfDeath ?? 'de sa belle mort', 'grey', 'italic')}`);
   say();
   say(c('  Ce qui restera', 'grey'));
@@ -202,7 +235,7 @@ function deathScreen(): void {
       deathChoices.push({ kind: 'heir', id: h.id });
       say(
         `${c(` ${pad(String(deathChoices.length), 2)} `, 'bold', 'yellow')} ` +
-          `${pad(h.name, 24)} ${h.age} ans — ${h.relation}${note}`,
+          `${pad(h.name, 24)} ${ans(h.age)} — ${h.relation}${note}`,
       );
     }
     say();
@@ -217,7 +250,7 @@ function deathScreen(): void {
       deathChoices.push({ kind: 'stranger', id: st.id });
       say(
         `${c(` ${pad(String(deathChoices.length), 2)} `, 'bold', 'cyan')} ` +
-          `${pad(st.name, 24)} ${pad(`${st.age} ans`, 8)} ${c(`${st.hook} · ${st.place}`, 'grey')}`,
+          `${pad(st.name, 24)} ${pad(`${ans(st.age)}`, 8)} ${c(`${st.hook} · ${st.place}`, 'grey')}`,
       );
     }
     say();
@@ -371,7 +404,7 @@ async function peopleMenu(): Promise<void> {
     rels.forEach((r, i) => {
       const tag = r.isSpouse ? c(' ♦', 'magenta') : r.isChild ? c(' ·', 'cyan') : '  ';
       say(
-        `${c(` ${pad(String(i + 1), 2)} `, 'yellow')}${tag} ${pad(`${r.name}, ${r.age} ans`, 26)} ` +
+        `${c(` ${pad(String(i + 1), 2)} `, 'yellow')}${tag} ${pad(`${r.name}, ${ans(r.age)}`, 26)} ` +
           `${c(pad(r.label, 20), 'grey')} ${feelingColour(r)}`,
       );
     });
@@ -395,7 +428,7 @@ async function personMenu(target: RelationView): Promise<boolean> {
   say(heading(shortName(other)));
   say();
   say(`  ${keyval('Lien', target.label)}`);
-  say(`  ${keyval('Âge', `${target.age} ans`)}`);
+  say(`  ${keyval('Âge', `${ans(target.age)}`)}`);
   say(`  ${keyval('Envers vous', feelingColour(target))}`);
   const mems = world.memories.about(game.player.id, other.id, world.year).slice(0, 4);
   if (mems.length > 0) {
@@ -481,7 +514,7 @@ async function selfMenu(): Promise<void> {
   if (sv.children.length > 0) {
     say(c('  Descendance', 'grey'));
     for (const k of sv.children) {
-      say(`   ${pad(k.name, 20)} ${k.alive ? `${k.age} ans` : c('mort', 'red')}`);
+      say(`   ${pad(k.name, 20)} ${k.alive ? `${ans(k.age)}` : c('mort', 'red')}`);
     }
     say();
   }
@@ -721,8 +754,8 @@ async function statsScreen(): Promise<void> {
   say(c('  POPULATION', 'grey'));
   say(`   ${keyval('Vivants', String(st.population), 20)}`);
   say(`   ${keyval('Ont vécu en tout', String(st.everLived), 20)}`);
-  say(`   ${keyval('Âge médian', `${st.medianAge} ans`, 20)}`);
-  say(`   ${keyval('Vie médiane', `${st.medianLifespan} ans`, 20)}`);
+  say(`   ${keyval('Âge médian', `${ans(st.medianAge)}`, 20)}`);
+  say(`   ${keyval('Vie médiane', `${ans(st.medianLifespan)}`, 20)}`);
   say(`   ${keyval('Morts avant 13 ans', pc(st.childMortality), 20)}`);
   say();
   say(c('  DEPUIS LE DÉBUT', 'grey'));
@@ -880,7 +913,7 @@ async function bodyScreen(): Promise<void> {
   if (b.conditions.length > 0) {
     say(c('  CE QUE VOUS PORTEZ', 'grey'));
     for (const cond of b.conditions) {
-      const since = cond.years === 0 ? 'cette année' : `depuis ${cond.years} ans`;
+      const since = cond.years === 0 ? 'cette année' : `depuis ${ans(cond.years)}`;
       say(
         `   ${c(pad(cond.label, 28), cond.severity >= 60 ? 'red' : 'yellow')} ` +
           `${gauge(cond.severity, 100, 10)} ${c(since, 'grey')}`,
@@ -1015,7 +1048,7 @@ async function dynastyMenu(): Promise<void> {
       say(c('  ORDRE SUCCESSORAL', 'grey'));
       for (const h of heirs.slice(0, 6)) {
         const note = h.note ? c(`  (${h.note})`, 'grey') : '';
-        say(`   ${c(pad(`${h.claim}.`, 4), 'yellow')} ${pad(h.name, 24)} ${pad(`${h.age} ans`, 9)} ${c(h.relation, 'grey')}${note}`);
+        say(`   ${c(pad(`${h.claim}.`, 4), 'yellow')} ${pad(h.name, 24)} ${pad(`${ans(h.age)}`, 9)} ${c(h.relation, 'grey')}${note}`);
       }
       say();
     } else {
@@ -1204,7 +1237,11 @@ async function loop(): Promise<void> {
       case 'annee': {
         mainScreen();
         const answer = await ask();
-        if (answer === '1' || answer === '') game.submit({ t: 'advance' });
+        if (answer === '1' || answer === '') {
+          // Les années creuses filent d'un coup : à cinq ans, on n'a rien à
+          // décider, et cliquer cinq fois sur le même écran n'est pas jouer.
+          game.submit(game.idleYear ? { t: 'skip' } : { t: 'advance' });
+        }
         else if (answer === '2') await actionsMenu();
         else if (answer === '3') await peopleMenu();
         else if (answer === '4') await selfMenu();

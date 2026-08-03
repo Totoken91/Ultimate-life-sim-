@@ -95,6 +95,10 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 - ✅ **patrimoine et domesticité** ([doc 17](17-patrimoine-et-domesticite.md)) : ce que
   l'argent achète, à commencer par du temps — et l'entretien qui l'éteint par étages
 - ✅ **le joueur qui gouverne** : réformer un des sept axes, contre du temps et de la légitimité
+- ✅ **lisibilité** ([doc 18](18-lisibilite.md)) : dix marches qui disent où l'on en est et
+  comment monter, des attributs qui expliquent ce qu'ils décident *et qui bougent*, un
+  journal qui ne parle que de gens qu'on connaît, une bourse comptée en années de vie, et
+  la dette sans fond supprimée — 96 % des vies « brisées » venaient d'elle
 - entreprises économiques qui produisent et emploient ([doc 11](11-economie-pouvoir.md) §3)
 - transports, du mulet à la flotte personnelle ([doc 09](09-echelle-totale.md) §4bis)
 - cultures et religions (dérive, coutumes)
@@ -108,9 +112,11 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
 **Fin de phase :** on lance 500 ans sans jouer, et le rapport montre un monde plausible — des
 dynasties naissent et meurent, les guerres ne sont ni continues ni absentes.
 
-*État au 3 août 2026 : le banc tourne sans signal d'alarme sur cinq mille années simulées.
-Restent les cultures et religions, la diplomatie, les rumeurs qui se déforment, les secrets,
-la réputation par groupe, et le joueur qui gouverne.*
+*État au 3 août 2026 : le banc tourne sans signal d'alarme sur cinq mille années simulées,
+et une passe entière a été consacrée à ce que le joueur **lit** — parce qu'un monde profond
+dont on ne comprend rien n'est pas profond, il est opaque. Restent les cultures et religions,
+la diplomatie, les rumeurs qui se déforment, les secrets, la réputation par groupe, et une
+leçon des choses au premier tour.*
 
 ---
 
