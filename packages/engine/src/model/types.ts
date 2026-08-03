@@ -286,6 +286,65 @@ export interface House {
 }
 
 /**
+ * Une faction (doc 14). Elle naît d'un réseau de serments, pas d'une décision
+ * du moteur : quelqu'un se fait assez d'hommes, et le monde lui donne un nom.
+ */
+export type FactionKind = 'bande' | 'compagnie' | 'guilde' | 'ordre' | 'clan';
+
+export const FACTION_KIND_LABELS: Record<FactionKind, string> = {
+  bande: 'bande',
+  compagnie: 'compagnie',
+  guilde: 'guilde',
+  ordre: 'ordre',
+  clan: 'clan',
+};
+
+/**
+ * Ce qu'une faction cherche cette décennie. Une seule à la fois : une bande
+ * qui veut tout à la fois ne veut rien, et le joueur ne peut pas la lire.
+ */
+export type FactionGoal =
+  | 'croitre'
+  | 'enrichir'
+  | 'tenir'
+  | 'dominer'
+  | 'abattre'
+  | 'venger';
+
+export const GOAL_LABELS: Record<FactionGoal, string> = {
+  croitre: 'grossir',
+  enrichir: 'amasser',
+  tenir: 'se maintenir',
+  dominer: 'tenir la ville',
+  abattre: 'en finir avec un rival',
+  venger: 'laver un affront',
+};
+
+export interface Faction {
+  id: string;
+  name: string;
+  kind: FactionKind;
+  foundedYear: number;
+  leaderId: EntityId;
+  memberIds: EntityId[];
+  /** Implantation où elle a son siège. */
+  seat: string;
+  /** Puissance recalculée chaque année : nombre, valeur et loyauté des membres. */
+  power: number;
+  treasury: number;
+  goal: FactionGoal;
+  /** Cible du but courant : id de faction, ou d'implantation pour `dominer`. */
+  goalTarget: string | null;
+  /** Sentiment envers les autres factions, -100..100. */
+  standing: Record<string, number>;
+  /** Emprise sur les implantations où elle pèse, 0..100. */
+  grip: Record<string, number>;
+  /** Combattants perdus depuis la fondation — c'est son histoire. */
+  losses: number;
+  dissolvedYear: number | null;
+}
+
+/**
  * Compteurs cumulés du monde. Le joueur aime les chiffres, et un monde qui
  * ne compte rien n'a pas d'Histoire (doc 10).
  */
@@ -300,6 +359,12 @@ export interface WorldTally {
   birthsByYear: Record<number, number>;
   /** Combien de fois chaque conduite de PNJ a été jouée (doc 13 §6). */
   npcActions: Record<string, number>;
+  /** Factions fondées, dissoutes, affrontements livrés (doc 14). */
+  factionsFounded: number;
+  factionsDissolved: number;
+  clashes: number;
+  /** Morts au combat, toutes échelles confondues. */
+  fallen: number;
 }
 
 export function emptyTally(): WorldTally {
@@ -312,6 +377,10 @@ export function emptyTally(): WorldTally {
     deathsByYear: {},
     birthsByYear: {},
     npcActions: {},
+    factionsFounded: 0,
+    factionsDissolved: 0,
+    clashes: 0,
+    fallen: 0,
   };
 }
 
@@ -332,6 +401,7 @@ export type ChronicleKind =
   | 'fortune'
   | 'ruine'
   | 'revelation'
+  | 'guerre'
   | 'note';
 
 export interface ChronicleActor {

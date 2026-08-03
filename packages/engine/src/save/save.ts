@@ -3,6 +3,7 @@ import type {
   Character,
   ChronicleEntry,
   EntityId,
+  Faction,
   FlagValue,
   House,
   WorldTally,
@@ -20,7 +21,7 @@ import { MemoryStore } from '../world/memory.js';
  * ADR-008 : instantané complet versionné, pas de rejeu d'event log.
  * Les paliers T2/T3 ne seront jamais sauvegardés — ils sont regénérés.
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 
 export interface WorldSnapshot {
   version: number;
@@ -31,6 +32,7 @@ export interface WorldSnapshot {
   counters: { nextEntity: number; nextSeed: number };
   characters: Character[];
   houses: House[];
+  factions: Faction[];
   relations: Relation[];
   memories: { nextId: number; rows: [EntityId, Memory[]][] };
   seeds: Seed[];
@@ -53,6 +55,7 @@ export function snapshot(world: World): WorldSnapshot {
     counters: world.counters(),
     characters: [...world.characters.values()].sort((a, b) => a.id - b.id),
     houses: [...world.houses.values()].sort((a, b) => (a.id < b.id ? -1 : 1)),
+    factions: [...world.factions.values()].sort((a, b) => (a.id < b.id ? -1 : 1)),
     relations: world.relations.toJSON(),
     memories: world.memories.toJSON(),
     seeds: world.seeds,
@@ -72,6 +75,7 @@ export function restore(snap: WorldSnapshot): World {
   world.setPlayer(snap.playerId);
   for (const c of snap.characters) world.characters.set(c.id, c);
   for (const h of snap.houses) world.houses.set(h.id, h);
+  for (const f of snap.factions ?? []) world.factions.set(f.id, f);
   for (const r of snap.relations) world.relations.set(r);
   const memories = MemoryStore.fromJSON(snap.memories);
   Object.assign(world, { memories });
@@ -146,6 +150,21 @@ export const MIGRATIONS: Record<number, Migration> = {
     const tally = raw['tally'] as Record<string, unknown> | undefined;
     if (tally && !tally['npcActions']) tally['npcActions'] = {};
     raw['version'] = 5;
+    return raw;
+  },
+
+  // v5 → v6 : les factions et le système de conflit. Une vieille partie n'en
+  // a aucune : elles se découvriront d'elles-mêmes dès que les serments
+  // auront tissé assez de réseau.
+  5: (raw) => {
+    if (!Array.isArray(raw['factions'])) raw['factions'] = [];
+    const tally = raw['tally'] as Record<string, unknown> | undefined;
+    if (tally) {
+      for (const k of ['factionsFounded', 'factionsDissolved', 'clashes', 'fallen']) {
+        if (typeof tally[k] !== 'number') tally[k] = 0;
+      }
+    }
+    raw['version'] = 6;
     return raw;
   },
 };

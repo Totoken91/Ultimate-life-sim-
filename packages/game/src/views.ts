@@ -21,6 +21,9 @@ import {
   lifeStage,
   relevance,
   shortName,
+  livingMembers,
+  FACTION_KIND_LABELS,
+  GOAL_LABELS,
   type Character,
   type EntityId,
   type StatId,
@@ -223,6 +226,53 @@ export function body(game: Game): BodyView {
       })
       .sort((a, b2) => b2.severity - a.severity),
   };
+}
+
+/** Un groupe, tel qu'on en parlerait en ville (doc 14 §4). */
+export interface FactionView {
+  id: string;
+  name: string;
+  kind: string;
+  seat: string;
+  members: number;
+  power: number;
+  goal: string;
+  losses: number;
+  since: number;
+  /** Emprise sur le lieu du joueur, 0..100. */
+  grip: number;
+  /** Chez vous. */
+  ici: boolean;
+  /** Vous en êtes. */
+  mien: boolean;
+  /** Vous connaissez son chef. */
+  connu: boolean;
+}
+
+/**
+ * Les groupes debout, du plus puissant au plus faible. On ne cache rien :
+ * l'écran du monde est un écran de chiffres, pas la tête du personnage.
+ */
+export function factions(game: Game): FactionView[] {
+  const world = game.world;
+  const me = game.player;
+  const out: FactionView[] = world.activeFactions().map((f) => ({
+    id: f.id,
+    name: f.name,
+    kind: FACTION_KIND_LABELS[f.kind],
+    seat: world.settlement(f.seat)?.name ?? f.seat,
+    members: livingMembers(world, f).length,
+    power: f.power,
+    goal: GOAL_LABELS[f.goal],
+    losses: f.losses,
+    since: f.foundedYear,
+    grip: Math.round(f.grip[me.settlement] ?? 0),
+    ici: f.seat === me.settlement,
+    mien: f.leaderId === me.id || f.memberIds.includes(me.id),
+    connu: !!world.relations.get(me.id, f.leaderId),
+  }));
+  out.sort((a, b) => b.power - a.power || (a.id < b.id ? -1 : 1));
+  return out;
 }
 
 export interface WorldView {

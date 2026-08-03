@@ -18,7 +18,8 @@ export const HousePrestige: System = {
   priority: 50,
   run(ctx) {
     const { world } = ctx;
-    for (const house of world.houses.values()) {
+    // Parcours trié : ce système écrit dans la Chronique (voir houseList).
+    for (const house of world.houseList()) {
       const members = house.memberIds
         .map((id) => world.get(id))
         .filter((c): c is NonNullable<typeof c> => !!c);

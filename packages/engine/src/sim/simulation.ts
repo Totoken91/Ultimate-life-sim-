@@ -9,6 +9,7 @@ import { EventDraw, SeedMaturation } from '../systems/events.js';
 import { HousePrestige, Pruning, Records } from '../systems/house.js';
 import { Physiology } from '../systems/physiology.js';
 import { Agency } from '../systems/agency.js';
+import { Conflicts, FactionAI, FactionFormation } from '../systems/factions.js';
 import type { PendingEvent } from '../events/types.js';
 import { Rng } from '../rng/rng.js';
 import { ageOf } from '../model/character.js';
@@ -38,11 +39,14 @@ export function defaultRegistry(): SystemRegistry {
     SeedMaturation,
     NpcLife,
     Agency,
+    FactionAI,
     NpcVisible,
     EventDraw,
     Subsistence,
     SocialMobility,
     HousePrestige,
+    FactionFormation,
+    Conflicts,
     Mortality,
     Pruning,
     Records,

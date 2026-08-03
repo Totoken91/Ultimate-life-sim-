@@ -83,6 +83,11 @@ Sans lui, « mon empire a disparu et je ne sais pas pourquoi » est impossible �
 4. **Ordre d'exécution explicite** : chaque système déclare une `priority: number`.
    Jamais l'ordre d'enregistrement.
 5. **Tri stable partout** : tout tri qui influence le jeu se termine par un tie-break sur `id`.
+6. **Toute boucle qui écrit passe par un accesseur trié** : `world.living()`,
+   `world.houseList()`, `world.activeFactions()`. L'ordre d'itération d'une `Map` est
+   chronologique en partie et *trié* après un rechargement — un système qui écrit la
+   Chronique en la parcourant brute fait diverger une partie rechargée. Invisible à la
+   relecture, attrapé par le test d'aller-retour ([doc 14](14-factions-et-conflits.md) §5).
 
 ### Test de non-régression
 `tools/` lance N parties complètes depuis une graine fixe et hache l'état final.

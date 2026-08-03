@@ -125,14 +125,14 @@ Une demande n'est « livrée » que lorsqu'elle est **jouable**, pas lorsqu'elle
 | Neuroatypie, maladie mentale | ✅ livré | [09](09-echelle-totale.md) §8, traits + 2 naissances |
 | Esclavage | ✅ livré | naissance `esclave` + affranchissement |
 | PNJ qui vivent sans le joueur | ✅ livré | [13](13-agentivite.md) — 10 pulsions, 32 conduites, fil de rumeurs |
-| PNJ qui trahissent et deviennent puissants | 🟡 partiel | ils s'allient, rançonnent, dénoncent, fondent des maisons, tuent ; pas encore de factions |
-| PNJ qui déclenchent des guerres | 📐 conçu | [09](09-echelle-totale.md) §2 — après les factions, Phase 3 |
+| PNJ qui trahissent et deviennent puissants | ✅ livré | serments, bandes et guildes qui tiennent des villes — [14](14-factions-et-conflits.md) |
+| PNJ qui déclenchent des guerres | 🟡 partiel | les groupes se font la guerre et on en meurt ; le joueur la regarde sans la vivre |
+| Conflits rixe → guerre stellaire | 🟡 partiel | un seul résolveur pour les 8 paliers ([14](14-factions-et-conflits.md) §3) ; le monde n'en produit encore que les trois premiers |
 | PNJ qui créent des religions | 📐 conçu | cultures et religions — Phase 3 |
 | Mort → descendant **ou un gars random** | ✅ livré | héritier · suivre quelqu'un · nouveau-né |
 | Statistiques partout | ✅ livré | [10](10-chiffres.md) |
 | Arbre généalogique | ✅ livré | écran Dynastie |
 | Métiers émergents et infinis | 📐 conçu | [09](09-echelle-totale.md) §1 — Phase 4 |
-| Conflits rixe → guerre stellaire | 📐 conçu | [09](09-echelle-totale.md) §2 — Phases 4-5 |
 | Armements de toutes les ères | 📐 conçu | [09](09-echelle-totale.md) §3 — Phase 5 |
 | Magie | 📐 conçu | mode de monde *Mythe* — Phase 6 |
 | Patrimoine jusqu'au vaisseau-planète | 📐 conçu | [09](09-echelle-totale.md) §4 — Phase 5 |

@@ -22,6 +22,11 @@ const started = Date.now();
 const lives: LifeRecord[] = [];
 const eventCounts = new Map<string, number>();
 const npcCounts = new Map<string, number>();
+let facFounded = 0;
+let facDissolved = 0;
+let facStanding = 0;
+let clashes = 0;
+let fallen = 0;
 let totalYears = 0;
 let totalSeeds = 0;
 
@@ -38,6 +43,11 @@ for (let i = 0; i < runs; i++) {
   for (const [id, n] of Object.entries(result.npcActions ?? {})) {
     npcCounts.set(id, (npcCounts.get(id) ?? 0) + n);
   }
+  facFounded += result.factionsFounded ?? 0;
+  facDissolved += result.factionsDissolved ?? 0;
+  facStanding += result.factionsStanding ?? 0;
+  clashes += result.clashes ?? 0;
+  fallen += result.fallen ?? 0;
 }
 
 const elapsed = Date.now() - started;
@@ -138,6 +148,14 @@ if (npcNever.length > 0) {
 }
 console.log('');
 
+console.log('  GROUPES ET GUERRES');
+console.log(`    factions fondées ........ ${facFounded}`);
+console.log(`    dissoutes ............... ${facDissolved}`);
+console.log(`    debout en fin de partie . ${(facStanding / Math.max(1, runs)).toFixed(1)} en moyenne`);
+console.log(`    affrontements ........... ${clashes} (${(clashes / Math.max(1, totalYears)).toFixed(2)} par année)`);
+console.log(`    tombés au combat ........ ${fallen}`);
+console.log('');
+
 // ─── verdict ────────────────────────────────────────────────────────────────
 
 const warnings: string[] = [];
@@ -159,6 +177,11 @@ if (npcNever.length > NPC_ACTIONS.length * 0.15) {
 }
 const npcTopShare = (npcRanked[0]?.[1] ?? 0) / Math.max(1, npcTotal);
 if (npcTopShare > 0.45) warnings.push('une seule conduite de PNJ domine le monde');
+if (facFounded === 0) warnings.push('aucune faction ne se forme — les serments ne se concentrent pas');
+if (clashes / Math.max(1, totalYears) > 1) {
+  warnings.push('plus d\'un affrontement par année — le monde est en guerre permanente');
+}
+if (facFounded > 0 && clashes === 0) warnings.push('des factions, mais jamais un conflit');
 
 if (warnings.length === 0) {
   console.log('  ✓ Aucun signal d\'alarme.');

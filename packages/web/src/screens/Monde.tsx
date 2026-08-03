@@ -1,14 +1,22 @@
 import { useState } from 'react';
 import type { Game } from '@ed/game';
-import { worldView } from '@ed/game';
+import { factions, worldView } from '@ed/game';
 import { RECORD_LABELS, formatSous, renderEntry, type RecordId } from '@ed/engine';
 import { Bar, Btn, Card, Chips, Row, Section, pct } from '../ui.js';
 
-type Onglet = 'lieu' | 'rumeurs' | 'chiffres' | 'classements' | 'records' | 'chronique';
+type Onglet =
+  | 'lieu'
+  | 'rumeurs'
+  | 'groupes'
+  | 'chiffres'
+  | 'classements'
+  | 'records'
+  | 'chronique';
 
 const ONGLETS: { id: Onglet; label: string }[] = [
   { id: 'lieu', label: 'Lieu' },
   { id: 'rumeurs', label: 'Rumeurs' },
+  { id: 'groupes', label: 'Groupes' },
   { id: 'chiffres', label: 'Chiffres' },
   { id: 'classements', label: 'Classements' },
   { id: 'records', label: 'Records' },
@@ -26,6 +34,8 @@ export function Monde({ game }: { game: Game }) {
       {tab === 'lieu' && <Lieu game={game} />}
 
       {tab === 'rumeurs' && <Rumeurs game={game} />}
+
+      {tab === 'groupes' && <Groupes game={game} />}
 
       {tab === 'chiffres' && (
         <>
@@ -261,6 +271,54 @@ function Rumeurs({ game }: { game: Game }) {
           </div>
         ))}
       </Card>
+    </>
+  );
+}
+
+/**
+ * Les bandes, compagnies et guildes qui tiennent le pays. Aucune n'a été
+ * décrétée : elles sont nées de serments entre gens (doc 14 §1).
+ */
+function Groupes({ game }: { game: Game }) {
+  const list = factions(game);
+  if (list.length === 0) {
+    return (
+      <Card>
+        <div className="prose" style={{ fontSize: 15, opacity: 0.65 }}>
+          Personne n'a encore assez d'hommes derrière lui pour qu'on lui donne un nom.
+        </div>
+      </Card>
+    );
+  }
+  return (
+    <>
+      <Section>{list.length} groupe(s) debout</Section>
+      {list.slice(0, 20).map((f) => (
+        <Card key={f.id}>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: 10,
+            }}
+          >
+            <strong style={{ fontSize: 16 }}>{f.name}</strong>
+            <span style={{ opacity: 0.55, fontSize: 13, whiteSpace: 'nowrap' }}>
+              {f.mien ? 'les vôtres' : f.ici ? 'ici' : f.seat}
+            </span>
+          </div>
+          <div className="prose" style={{ fontSize: 14, opacity: 0.7, margin: '2px 0 8px' }}>
+            {f.kind} · fondé{f.kind === 'bande' || f.kind === 'compagnie' || f.kind === 'guilde' ? 'e' : ''} en {f.since}
+            {f.connu && !f.mien ? ' · vous en connaissez le chef' : ''}
+          </div>
+          <Row k="Hommes" v={f.members} />
+          <Row k="Force" v={f.power} />
+          <Row k="Cherche à" v={f.goal} />
+          {f.losses > 0 && <Row k="Tombés" v={f.losses} tone="danger" />}
+          {f.grip > 0 && <Row k="Emprise ici" v={`${f.grip} %`} tone={f.grip >= 60 ? 'danger' : undefined} />}
+        </Card>
+      ))}
     </>
   );
 }

@@ -493,13 +493,16 @@ export const NPC_ACTIONS: NpcActionDef[] = [
     id: 's_allier',
     label: 'se mettre au service d\'un plus grand',
     serves: { pouvoir: 0.45, securite: 0.4, statut: 0.25 },
-    target: 'voisin',
+    // On jure à quelqu'un qui a déjà des hommes. C'est ce qui fait qu'une
+    // allégeance en appelle une autre, et qu'un réseau finit par avoir un nom.
+    target: 'patron',
     minAge: 16,
     cooldown: 10,
     requires: (c) =>
       !!c.target &&
       !c.target.isPlayer &&
-      classRank(c.target.socialClass) > classRank(c.self.socialClass),
+      (classRank(c.target.socialClass) >= classRank(c.self.socialClass) ||
+        c.target.hidden.influence > c.self.hidden.influence + 10),
     effects: () => [
       { k: 'rel', to: 'cible', type: 'serment', label: 'mon seigneur', respect: 25, trust: 15 },
       { k: 'rel', to: 'cible', from: 'cible', type: 'serment', label: 'mon homme', trust: 10, affection: 6 },
@@ -516,7 +519,7 @@ export const NPC_ACTIONS: NpcActionDef[] = [
     serves: { pouvoir: 0.55 },
     target: 'cadet',
     minAge: 22,
-    cooldown: 4,
+    cooldown: 3,
     requires: (c) => c.self.hidden.influence >= 30 && richerThan(c, 500),
     effects: (c) => [
       { k: 'wealth', d: -Math.round(c.self.wealth * 0.06) },

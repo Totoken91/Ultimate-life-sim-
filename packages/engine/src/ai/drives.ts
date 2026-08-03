@@ -69,6 +69,12 @@ export interface Cast {
   pretendant: Character | null;
   /** Un jeune du lieu, à instruire ou à employer. */
   cadet: Character | null;
+  /**
+   * Quelqu'un du lieu qui a déjà des hommes à lui. Sans ce rôle, les serments
+   * se dispersaient sur tout le village et personne n'atteignait jamais le
+   * seuil qui fait naître une faction (doc 14 §1).
+   */
+  patron: Character | null;
 }
 
 export function emptyCast(): Cast {
@@ -81,6 +87,7 @@ export function emptyCast(): Cast {
     voisin: null,
     pretendant: null,
     cadet: null,
+    patron: null,
   };
 }
 

@@ -2,6 +2,7 @@ import type {
   Character,
   ChronicleEntry,
   EntityId,
+  Faction,
   FlagValue,
   House,
   Seed,
@@ -52,6 +53,7 @@ export class World {
 
   readonly characters = new Map<EntityId, Character>();
   readonly houses = new Map<string, House>();
+  readonly factions = new Map<string, Faction>();
   readonly settlements = new Map<string, Settlement>();
   readonly relations = new RelationGraph();
   readonly memories = new MemoryStore();
@@ -115,6 +117,25 @@ export class World {
 
   house(id: string | null | undefined): House | undefined {
     return id ? this.houses.get(id) : undefined;
+  }
+
+  /**
+   * Les maisons, triées. Toute boucle qui *écrit* (Chronique, journal, monde)
+   * doit passer par là : l'ordre d'une Map est chronologique en partie et trié
+   * après rechargement, et une partie rechargée doit se dérouler à l'identique.
+   */
+  houseList(): House[] {
+    const out = [...this.houses.values()];
+    out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    return out;
+  }
+
+  /** Les groupes encore debout, triés — l'ordre doit être déterministe. */
+  activeFactions(): Faction[] {
+    const out: Faction[] = [];
+    for (const f of this.factions.values()) if (f.dissolvedYear === null) out.push(f);
+    out.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    return out;
   }
 
   settlement(id: string): Settlement | undefined {

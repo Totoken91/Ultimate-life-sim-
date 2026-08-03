@@ -160,6 +160,37 @@ export {
 } from './ai/actions.js';
 export { Agency } from './systems/agency.js';
 
+// ─── factions & conflits ────────────────────────────────────────────────────
+export {
+  SEUIL_FONDATION,
+  SEUIL_DISSOLUTION,
+  swornTo,
+  kindOf,
+  nameFaction,
+  joinName,
+  recomputePower,
+  livingMembers,
+  factionOf,
+  membershipIndex,
+  chooseGoal,
+  foundFaction,
+  replaceLeader,
+} from './factions/factions.js';
+export {
+  clash,
+  power,
+  sideOf,
+  tierOf,
+  fighterValue,
+  describeClash,
+  ofName,
+  TIER_LABELS,
+  type ClashTier,
+  type Side,
+  type ClashResult,
+} from './conflict/clash.js';
+export { FactionAI, FactionFormation, Conflicts } from './systems/factions.js';
+
 // ─── simulation ─────────────────────────────────────────────────────────────
 export {
   Simulation,

@@ -26,6 +26,12 @@ export interface LifeRecord {
 export interface AutoplayResult {
   /** Conduites de PNJ jouées pendant la partie (doc 13 §6). */
   npcActions?: Record<string, number>;
+  /** Ce que les groupes ont fait de leur côté (doc 14 §6). */
+  factionsFounded?: number;
+  factionsDissolved?: number;
+  factionsStanding?: number;
+  clashes?: number;
+  fallen?: number;
   seed: number;
   lives: LifeRecord[];
   years: number;
@@ -125,6 +131,11 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
             chronicleEntries: game.world.chronicle.length,
             seedsPlanted,
             npcActions: game.world.tally.npcActions,
+            factionsFounded: game.world.tally.factionsFounded,
+            factionsDissolved: game.world.tally.factionsDissolved,
+            factionsStanding: game.world.activeFactions().length,
+            clashes: game.world.tally.clashes,
+            fallen: game.world.tally.fallen,
           };
         }
         const heir = rng.pick(heirs);
@@ -141,6 +152,11 @@ export function autoplay(ruleset: Ruleset, opts: AutoplayOptions): AutoplayResul
           chronicleEntries: game.world.chronicle.length,
           seedsPlanted,
           npcActions: game.world.tally.npcActions,
+          factionsFounded: game.world.tally.factionsFounded,
+          factionsDissolved: game.world.tally.factionsDissolved,
+          factionsStanding: game.world.activeFactions().length,
+          clashes: game.world.tally.clashes,
+          fallen: game.world.tally.fallen,
         };
     }
   }

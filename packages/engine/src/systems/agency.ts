@@ -1,5 +1,6 @@
 import type { System, TickContext } from './types.js';
 import type { Character } from '../model/types.js';
+import type { World } from '../world/world.js';
 import type { EventCtx } from '../events/types.js';
 import type { Rng } from '../rng/rng.js';
 import { ageOf } from '../model/character.js';
@@ -31,24 +32,37 @@ interface Locals {
   libres: Map<string, Character[]>;
   /** Les jeunes, à instruire ou à employer. */
   jeunes: Map<string, Character[]>;
+  /** Ceux qui ont déjà des hommes à eux — les serments vont aux serments. */
+  patrons: Map<string, Character[]>;
 }
 
-function buildLocals(living: readonly Character[], year: number): Locals {
+function buildLocals(world: World, living: readonly Character[], year: number): Locals {
   const all = new Map<string, Character[]>();
   const libres = new Map<string, Character[]>();
   const jeunes = new Map<string, Character[]>();
+  const patrons = new Map<string, Character[]>();
   const push = (m: Map<string, Character[]>, key: string, c: Character): void => {
     let b = m.get(key);
     if (!b) m.set(key, (b = []));
     b.push(c);
   };
+
+  // Un seul parcours des arêtes pour compter les jurés de chacun. Le faire par
+  // personne serait quadratique ; ici c'est le même coût qu'une dérive.
+  const sworn = new Map<number, number>();
+  world.relations.forEach((rel) => {
+    if (rel.type !== 'serment') return;
+    sworn.set(rel.to, (sworn.get(rel.to) ?? 0) + 1);
+  });
+
   for (const c of living) {
     push(all, c.settlement, c);
     const age = year - c.birthYear;
     if (!c.spouseId && age >= 17 && age <= 55) push(libres, c.settlement, c);
     if (age >= 8 && age <= 20) push(jeunes, c.settlement, c);
+    if (!c.isPlayer && (sworn.get(c.id) ?? 0) >= 1) push(patrons, c.settlement, c);
   }
-  return { all, libres, jeunes };
+  return { all, libres, jeunes, patrons };
 }
 
 /** Complète la distribution avec ce que le lieu offre. */
@@ -79,6 +93,17 @@ function castLocals(
       if (Math.abs(year - pick.birthYear - sit.age) > 14) continue;
       cast.pretendant = pick;
       break;
+    }
+  }
+
+  const patrons = locals.patrons.get(self.settlement);
+  if (patrons && patrons.length > 0) {
+    for (let tries = 0; tries < 3; tries++) {
+      const pick = patrons[rng.int(0, patrons.length - 1)];
+      if (pick && pick.id !== self.id) {
+        cast.patron = pick;
+        break;
+      }
     }
   }
 
@@ -169,7 +194,7 @@ export const Agency: System = {
     const actions = ruleset.npcActions ?? [];
     if (actions.length === 0) return;
     const idx = new ActionIndex(actions);
-    const locals = buildLocals(ctx.living, world.year);
+    const locals = buildLocals(world, ctx.living, world.year);
     const eventCtx = new ActContext();
     eventCtx.world = world;
     eventCtx.ruleset = ruleset;

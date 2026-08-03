@@ -51,8 +51,15 @@ export function renderEntry(e: ChronicleEntry): string {
       return `${who} ${str(e, 'quoi', 'commit un crime')}.`;
     case 'violence':
       return `${who} ${str(e, 'quoi', 'versa le sang')}.`;
-    case 'fondation':
+    case 'fondation': {
+      // Une maison et une bande se fondent toutes les deux, mais on ne dit pas
+      // « la Maison les gens de Vaur ».
+      const groupe = str(e, 'groupe');
+      if (groupe) return `${who} rassembla ${groupe}.`;
       return `${who} fonda la Maison ${str(e, 'maison')}.`;
+    }
+    case 'guerre':
+      return str(e, 'quoi', 'On se battit.');
     case 'rencontre': {
       const what = str(e, 'quoi');
       return `${who} rencontra ${other ?? 'quelqu\'un'}${what ? ` — ${what}` : ''}.`;

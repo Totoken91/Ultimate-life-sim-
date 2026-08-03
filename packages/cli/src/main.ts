@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync, readdirSync } from 
 import { resolve } from 'node:path';
 
 import { loadRuleset } from '@ed/content';
-import { Game, body as bodyView, relations, self, status, worldView } from '@ed/game';
+import { Game, body as bodyView, factions, relations, self, status, worldView } from '@ed/game';
 import type { RelationView } from '@ed/game';
 import {
   RECORD_LABELS,
@@ -442,6 +442,36 @@ async function placeScreen(): Promise<void> {
   await ask();
 }
 
+async function factionsScreen(): Promise<void> {
+  const list = factions(game);
+  clear();
+  say(heading('les groupes'));
+  say();
+  if (list.length === 0) {
+    say(c('  Personne n\'a encore assez d\'hommes derrière lui pour qu\'on lui', 'grey'));
+    say(c('  donne un nom.', 'grey'));
+  }
+  for (const f of list.slice(0, 16)) {
+    const marque = f.mien ? c(' ◆', 'yellow') : f.ici ? c(' ·', 'cyan') : '  ';
+    const titre = f.mien || f.ici ? c(f.name, 'bold') : f.name;
+    say(`${marque} ${titre}`);
+    const bits = [
+      `${f.members} h`,
+      `force ${f.power}`,
+      f.kind,
+      f.ici ? 'ici' : f.seat,
+      f.goal,
+    ];
+    if (f.losses > 0) bits.push(`${f.losses} tombé(s)`);
+    if (f.grip > 0) bits.push(`emprise ${f.grip} %`);
+    say(c(`     ${bits.join(' · ')}`, 'grey'));
+  }
+  say();
+  say(rule());
+  say(c('  [entrée] retour', 'grey'));
+  await ask();
+}
+
 function bar(share: number, width = 16): string {
   const filled = Math.max(0, Math.min(width, Math.round(share * width)));
   return c('▓'.repeat(filled), 'cyan') + c('░'.repeat(width - filled), 'grey');
@@ -649,18 +679,20 @@ async function worldMenu(): Promise<void> {
     say(heading('le monde'));
     say();
     menu([
-      { key: '1', label: 'Le lieu où vous êtes' },
-      { key: '2', label: 'Statistiques du monde' },
-      { key: '3', label: 'Le livre des records' },
-      { key: '4', label: 'Chronique' },
+      { key: '1', label: 'Le lieu où vous êtes', note: 'et ce qu\'on y raconte' },
+      { key: '2', label: 'Les groupes', note: 'bandes, compagnies, guildes' },
+      { key: '3', label: 'Statistiques du monde' },
+      { key: '4', label: 'Le livre des records' },
+      { key: '5', label: 'Chronique' },
       { key: '0', label: 'Retour' },
     ]);
     say();
     const answer = await ask();
     if (answer === '1') await placeScreen();
-    else if (answer === '2') await statsScreen();
-    else if (answer === '3') await recordsScreen();
-    else if (answer === '4') await chronicleMenu();
+    else if (answer === '2') await factionsScreen();
+    else if (answer === '3') await statsScreen();
+    else if (answer === '4') await recordsScreen();
+    else if (answer === '5') await chronicleMenu();
     else return;
   }
 }

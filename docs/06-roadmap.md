@@ -79,6 +79,10 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
   choix utilitaire, fil de nouvelles. 663 000 décisions de PNJ au banc, zéro conduite morte
 - ✅ **inimitiés émergentes** : l'inégalité fabrique des rivaux, les querelles ne guérissent
   plus toutes seules, et le monde connaît ses premiers meurtres sans le joueur
+- ✅ **factions avec objectifs** ([doc 14](14-factions-et-conflits.md)) : elles naissent du
+  réseau de serments, se donnent un but, paient leurs hommes et se dissolvent
+- ✅ **guerres et conflits entre PNJ** ([doc 14](14-factions-et-conflits.md) §3) : un seul
+  résolveur, du duel à la guerre de civilisations, avec le carré sur le palier technologique
 - ✅ **profileur de tick** (`pnpm profile`) : où passent les millisecondes, système par système
 - **économie par domaines** ([doc 11](11-economie-pouvoir.md)) : foyer → région, biens de
   base, prix locaux, routes, stocks — une seule structure récursive à toutes les échelles
@@ -86,11 +90,11 @@ un héritier qui reçoit les biens **et les inimitiés** du défunt. Le reste de
   combinaisons produisent chefferie, féodalité, république, dictature, théocratie…
 - régions, implantations, démographie
 - cultures et religions (dérive, coutumes)
-- factions avec objectifs
+- diplomatie entre factions (alliances, trahisons, traités)
+- le joueur *dans* la bataille — couche B du [doc 09](09-echelle-totale.md) §2
 - propagation de l'information et rumeurs *(le fil existe ; la déformation, non)*
 - secrets et chantage
 - réputation contextuelle par groupe
-- guerres et conflits entre PNJ
 - **banc d'émergence** : 1 000 parties headless + rapport de métriques
 
 **Fin de phase :** on lance 500 ans sans jouer, et le rapport montre un monde plausible — des

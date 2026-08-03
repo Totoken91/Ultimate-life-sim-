@@ -46,6 +46,11 @@ export function protectedIds(world: World, opts: PruneOptions = {}): Set<EntityI
     keep.add(house.headId);
     for (const id of house.headHistory) keep.add(id);
   }
+  // Un groupe encore debout garde son chef : sans quoi une faction se retrouve
+  // menée par une référence pendante.
+  for (const faction of world.factions.values()) {
+    if (faction.dissolvedYear === null) keep.add(faction.leaderId);
+  }
   // les grands moments gardent leurs acteurs nommés
   for (const entry of world.chronicle) {
     if (entry.importance >= 4) for (const actor of entry.actors) keep.add(actor.id);
@@ -83,6 +88,9 @@ export function pruneDead(world: World, opts: PruneOptions = {}): number {
   for (const house of world.houses.values()) {
     house.memberIds = house.memberIds.filter((id) => !gone.has(id));
     house.cadetIds = house.cadetIds.filter((id) => !gone.has(id));
+  }
+  for (const faction of world.factions.values()) {
+    faction.memberIds = faction.memberIds.filter((id) => !gone.has(id));
   }
 
   return doomed.length;
